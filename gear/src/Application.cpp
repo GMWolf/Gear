@@ -1,5 +1,9 @@
-#include <iostream>
+//
+// Created by felix on 03/01/2020.
+//
 
+#include <gear/Application.h>
+#include <iostream>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
@@ -13,13 +17,13 @@ static void glfw_key_callback(GLFWwindow* window, int key, int scancode, int act
     }
 }
 
-int main() {
+void gear::run(const AppConfig& config, ApplicationAdapter& app) {
 
     glfwSetErrorCallback(glfw_error_callback);
 
     if (!glfwInit()) {
         std::cerr << "Could not initialize glfw\n";
-        return 1;
+        return;
     }
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -31,7 +35,7 @@ int main() {
     if (!window) {
         std::cerr << "Could not create window\n";
         glfwTerminate();
-        return 1;
+        return;
     }
 
     glfwSetKeyCallback(window, glfw_key_callback);
@@ -41,15 +45,16 @@ int main() {
         std::cerr << "Failed to initialize opengl context\n";
         glfwDestroyWindow(window);
         glfwTerminate();
-        return 0;
+        return;
     }
     glfwSwapInterval(1);
 
     glViewport(0, 0, width, height);
 
+    app.init();
+
     while(!glfwWindowShouldClose(window)) {
-        glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        app.update();
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -58,5 +63,5 @@ int main() {
     glfwDestroyWindow(window);
 
     glfwTerminate();
-    return 0;
+    return;
 }
