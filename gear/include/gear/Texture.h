@@ -14,7 +14,7 @@ namespace gear {
     class Texture {
     public:
         explicit Texture(const std::string& name);
-
+        ~Texture();
         GLuint tex{0};
     private:
         int width{0};
