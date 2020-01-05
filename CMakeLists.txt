@@ -7,6 +7,8 @@ include(glfw.cmake)
 include(stb.cmake)
 add_subdirectory(deps/glad)
 add_subdirectory(deps/glm)
+add_subdirectory(deps/indicators)
+add_subdirectory(deps/Lyra)
 add_subdirectory(gear)
 add_subdirectory(tools/texture_pack)
 
