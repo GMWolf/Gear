@@ -6,6 +6,7 @@
 #define GEAR_SPRITEBATCH_H
 
 #include <glad/glad.h>
+#include <glm/glm.hpp>
 
 namespace gear {
 
@@ -13,8 +14,8 @@ namespace gear {
     class SpriteBatch {
 
         struct Vertex {
-            float pos[2];
-            float uv[2];
+            glm::vec2 pos;
+            glm::vec2 uv;
         };
 
     public:
@@ -26,14 +27,12 @@ namespace gear {
 
         ~SpriteBatch();
 
-        void draw(const Texture& tex, float x, float y, float w, float h);
+        void draw(const Texture& tex, glm::vec2 pos, glm::vec2 size);
 
         void flush();
 
     private:
-        const size_t spriteBytes = 6 * sizeof(Vertex);
         const size_t batchSize; //number of sprites in a batch
-
 
         /// Map the remainder of the buffer range UNSYNCHRONIZED
         void bufferUpdate();
@@ -45,6 +44,8 @@ namespace gear {
         void* map = nullptr;
         size_t count = 0;
         size_t first = 0;
+
+        GLuint batchTex = 0;
 
         GLuint vbo{};
         GLuint vao{};

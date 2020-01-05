@@ -3,6 +3,7 @@
 #include <gear/Application.h>
 #include <glad/glad.h>
 #include <gear/SpriteBatch.h>
+#include <gear/Texture.h>
 #include <memory>
 
 
@@ -25,7 +26,7 @@ in vec2 uv;
 out vec4 color;
 uniform sampler2D tex;
 void main(){
-  color = vec4(0,0,0,1);//texture(tex, uv);
+  color = texture(tex, uv);
 }
 )";
 
@@ -55,6 +56,8 @@ public:
         glDetachShader(program, fs);
         glDeleteShader(vs);
         glDeleteShader(fs);
+
+        tex = std::make_unique<gear::Texture>("potato.jpg");
     }
 
     void update() override {
@@ -62,8 +65,10 @@ public:
         glClear(GL_COLOR_BUFFER_BIT);
 
         glUseProgram(program);
+        glUniform1i(glGetUniformLocation(program, "tex"), 0);
 
-        batch->draw(0, 0, 25, 25);
+        batch->draw(*tex, {0, 0}, {0.5, 0.5});
+        batch->draw(*tex, {-0.4, 0.2}, {0.1, 0.1});
         batch->flush();
 
     }
@@ -74,6 +79,7 @@ public:
 
     std::unique_ptr<gear::SpriteBatch> batch;
     GLuint program = 0;
+    std::unique_ptr<gear::Texture> tex;
 };
 
 

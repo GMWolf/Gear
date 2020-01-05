@@ -9,7 +9,7 @@
 #include <string>
 
 
-namespace Gear {
+namespace gear {
 
     class Texture {
     public:

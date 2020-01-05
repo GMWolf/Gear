@@ -5,7 +5,7 @@
 #include <gear/SpriteBatch.h>
 #include <gear/Texture.h>
 
-void gear::SpriteBatch::draw(const Texture& tex, float x, float y, float w, float h) {
+void gear::SpriteBatch::draw(const Texture& tex, glm::vec2 pos, glm::vec2 size) {
     if (map == nullptr) {
         if (first < batchSize) {
             bufferUpdate();
@@ -14,21 +14,28 @@ void gear::SpriteBatch::draw(const Texture& tex, float x, float y, float w, floa
         }
     }
 
+    if (batchTex == 0) {
+        batchTex = tex.tex;
+    } else if (batchTex != tex.tex) {
+        flush();
+        batchTex = tex.tex;
+    }
+
 
     {
         auto *vertices = static_cast<Vertex *>(map) + count;
-        vertices[0].pos[0] = x;
-        vertices[0].pos[1] = y;
-        vertices[1].pos[0] = x;
-        vertices[1].pos[1] = y + h;
-        vertices[2].pos[0] = x + w;
-        vertices[2].pos[1] = y;
-        vertices[3].pos[0] = x + w;
-        vertices[3].pos[1] = y;
-        vertices[4].pos[0] = x;
-        vertices[4].pos[1] = y + h;
-        vertices[5].pos[0] = x + w;
-        vertices[5].pos[1] = y + h;
+        vertices[0].pos = pos;
+        vertices[0].uv = {0,0};
+        vertices[1].pos = pos + glm::vec2{0, size.y};
+        vertices[1].uv = {0, 1};
+        vertices[2].pos = pos + glm::vec2{size.x, 0};
+        vertices[2].uv = {1, 0};
+        vertices[3].pos = pos + glm::vec2{size.x, 0};
+        vertices[3].uv = {1, 0};
+        vertices[4].pos = pos + glm::vec2{0, size.y};
+        vertices[4].uv = {0, 1};
+        vertices[5].pos = pos + size;
+        vertices[5].uv = {1, 1};
     }
 
     count += 6;
@@ -52,6 +59,9 @@ void gear::SpriteBatch::flush() {
         glBindVertexArray(vao);
         glDrawArrays(GL_TRIANGLES, first, count);
         glBindVertexArray(0);
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, batchTex);
 
         glBindBuffer(GL_ARRAY_BUFFER, 0);
 

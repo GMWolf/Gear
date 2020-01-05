@@ -5,7 +5,7 @@
 #include <gear/Texture.h>
 #include <stb_image.h>
 
-Gear::Texture::Texture(const std::string &name) {
+gear::Texture::Texture(const std::string &name) {
     int x, y, n;
     unsigned char* data = stbi_load(name.c_str(), &x, &y, &n, 4);
 
