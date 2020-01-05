@@ -17,9 +17,37 @@ static void glfw_key_callback(GLFWwindow* window, int key, int scancode, int act
     }
 }
 
+
+#ifdef GLAD_DEBUG
+void post_call_callback(const char *name, void *funcptr, int len_args, ...) {
+    GLenum err;
+    while((err = glad_glGetError()) != GL_NO_ERROR) {
+
+        std::string errorName;
+#define ERROR_NAME_CASE(x) case x : errorName = #x; break;
+
+        switch (err) {
+            ERROR_NAME_CASE(GL_INVALID_ENUM)
+            ERROR_NAME_CASE(GL_INVALID_VALUE)
+            ERROR_NAME_CASE(GL_INVALID_OPERATION)
+            ERROR_NAME_CASE(GL_OUT_OF_MEMORY)
+            ERROR_NAME_CASE(GL_INVALID_FRAMEBUFFER_OPERATION)
+            default: errorName = "<Unknown error>";
+        }
+
+#undef ERROR_NAME_CASE
+        std::cerr << errorName << " in " << name << "\n";
+    }
+
+}
+#endif //GLAD_DEBUG
+
 void gear::run(const AppConfig& config, ApplicationAdapter& app) {
 
     glfwSetErrorCallback(glfw_error_callback);
+#ifdef GLAD_DEBUG
+    glad_set_post_callback(post_call_callback);
+#endif //GLAD_DEBUG
 
     if (!glfwInit()) {
         std::cerr << "Could not initialize glfw\n";
@@ -29,8 +57,7 @@ void gear::run(const AppConfig& config, ApplicationAdapter& app) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_SRGB_CAPABLE, GLFW_TRUE);
-    int width = 640, height = 480;
-    GLFWwindow* window = glfwCreateWindow(width, height, "Gear", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(config.width, config.height, config.title.c_str(), nullptr, nullptr);
 
     if (!window) {
         std::cerr << "Could not create window\n";
@@ -49,7 +76,7 @@ void gear::run(const AppConfig& config, ApplicationAdapter& app) {
     }
     glfwSwapInterval(1);
 
-    glViewport(0, 0, width, height);
+    glViewport(0, 0, config.width, config.height);
 
     app.init();
 
@@ -60,8 +87,9 @@ void gear::run(const AppConfig& config, ApplicationAdapter& app) {
         glfwPollEvents();
     }
 
+    app.end();
+
     glfwDestroyWindow(window);
 
     glfwTerminate();
-    return;
 }

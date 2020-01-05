@@ -10,45 +10,42 @@
 namespace gear {
 
     class SpriteBatch {
+
         struct Vertex {
             float pos[2];
             float uv[2];
         };
 
     public:
-        SpriteBatch() {
-            glGenBuffers(1, &vbo);
-            glGenVertexArrays(1, &vao);
-
-            glBindVertexArray(vao);
-            glBindBuffer(GL_ARRAY_BUFFER, vbo);
-            glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, pos));
-            glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, uv));
-            glBindVertexArray(0);
-            glBindBuffer(GL_ARRAY_BUFFER, 0);
-        }
+        explicit SpriteBatch(size_t size);
 
         SpriteBatch(const SpriteBatch& spriteBatch) = delete;
         SpriteBatch& operator=(const SpriteBatch& spriteBatch) = delete;
 
 
-        ~SpriteBatch() {
-            glDeleteBuffers(1, &vbo);
-            glDeleteVertexArrays(1, &vao);
-        }
+        ~SpriteBatch();
+
+        void draw(float x, float y, float w, float h);
 
 
-        void draw(float x, float y, float w, float h) {
-
-        }
-
-
-        void flush() {
-
-        }
-
+        void flush();
 
     private:
+        const size_t spriteBytes = 6 * sizeof(Vertex);
+        const size_t batchSize; //number of sprites in a batch
+
+
+        /// Map the remainder of the buffer range UNSYNCHRONIZED
+        void bufferUpdate();
+
+        /// Map the entire buffer orphaning the previous data
+        void bufferOrphan();
+
+
+        void* map = nullptr;
+        size_t count = 0;
+        size_t first = 0;
+
         GLuint vbo{};
         GLuint vao{};
     };

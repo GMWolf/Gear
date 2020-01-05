@@ -17,6 +17,7 @@ namespace gear {
     };
 
 
+
     void run(const AppConfig& config, ApplicationAdapter& app);
 
 }
