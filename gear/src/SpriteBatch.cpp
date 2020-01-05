@@ -3,14 +3,13 @@
 //
 
 #include <gear/SpriteBatch.h>
+#include <gear/Texture.h>
 
-void gear::SpriteBatch::draw(float x, float y, float w, float h) {
+void gear::SpriteBatch::draw(const Texture& tex, float x, float y, float w, float h) {
     if (map == nullptr) {
         if (first < batchSize) {
-            bufferOrphan();
-            //bufferUpdate();
+            bufferUpdate();
         } else {
-            //bufferUpdate();
             bufferOrphan();
         }
     }

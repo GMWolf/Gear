@@ -9,6 +9,7 @@
 
 namespace gear {
 
+    class Texture;
     class SpriteBatch {
 
         struct Vertex {
@@ -25,8 +26,7 @@ namespace gear {
 
         ~SpriteBatch();
 
-        void draw(float x, float y, float w, float h);
-
+        void draw(const Texture& tex, float x, float y, float w, float h);
 
         void flush();
 
