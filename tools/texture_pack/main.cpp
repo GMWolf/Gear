@@ -23,7 +23,13 @@ int main(int argc, char* argv[]) {
     bool showHelp;
     auto cli = lyra::cli_parser()
             | lyra::arg(inputDir, "input")
-              ("Directory to pack")
+            ("Directory to pack")
+            | lyra::opt(pageWidth, "page width")
+            ["-w"]["--width"]
+            ("Width of page")
+            | lyra::opt(pageHeight, "page height")
+            ["-h"]["--height"]
+            ("Height of page")
             | lyra::help(showHelp);
 
     auto result = cli.parse({argc, argv});
