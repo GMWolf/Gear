@@ -12,6 +12,7 @@
 #include <string>
 #include <filesystem>
 #include "TexturePacker.h"
+#include <numeric>
 
 namespace fs = std::filesystem;
 namespace tp = gear::texture_pack;
@@ -19,11 +20,11 @@ namespace tp = gear::texture_pack;
 int main(int argc, char* argv[]) {
 
     int pageWidth = 256, pageHeight = 256;
-    std::string inputDir;
+    std::vector<std::string> inputPaths;
     bool showHelp;
     auto cli = lyra::cli_parser()
-            | lyra::arg(inputDir, "input")
-            ("Directory to pack")
+            | lyra::arg(inputPaths, "input files")
+            ("Files to pack").cardinality(1, std::numeric_limits<size_t>::max())
             | lyra::opt(pageWidth, "page width")
             ["-w"]["--width"]
             ("Width of page")
@@ -44,43 +45,23 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
-
-    fs::path dir = fs::absolute(inputDir);
-    if (!fs::is_directory(dir)) {
-        std::cerr << "No such directory " << dir << "\n";
-        return -1;
-    }
-
-
     std::vector<tp::Sprite> sprites;
     {
         indicators::ProgressBar bar;
         bar.set_prefix_text("Loading images");
 
-        auto dt = fs::directory_iterator(dir);
-
-        std::vector<fs::path> spritePaths;
-        for (auto &p : dt) {
-            if (p.is_regular_file()) {
-                if (p.path().extension() == ".jpg"
-                | p.path().extension() == ".png") {
-                    spritePaths.push_back(p.path());
-                }
-            }
-        }
-
-        sprites.reserve(spritePaths.size());
-        for(int i = 0; i < spritePaths.size(); i++) {
-            auto& path = spritePaths[i];
+        sprites.reserve(inputPaths.size());
+        for(int i = 0; i < inputPaths.size(); i++) {
+            auto& path = inputPaths[i];
             int w, h, c;
-            unsigned char* data = stbi_load(path.string().c_str(), &w, &h, &c, 4);
+            unsigned char* data = stbi_load(path.c_str(), &w, &h, &c, 4);
             sprites.push_back({
-               path.filename().string(),
+               fs::path(path).filename().string(),
                0, 0,
                (unsigned short)w, (unsigned short)h,
                (tp::Pixel*)data
             });
-            bar.set_progress((i * 100.0f) / spritePaths.size());
+            bar.set_progress((i * 100.0f) / inputPaths.size());
         }
 
         bar.mark_as_completed();
