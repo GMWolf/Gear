@@ -1,2 +1,2 @@
-add_executable(texture_pack main.cpp)
+add_executable(texture_pack main.cpp TexturePacker.cpp TexturePacker.h)
 target_link_libraries(texture_pack PUBLIC bfg_lyra indica stb)

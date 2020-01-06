@@ -5,19 +5,26 @@
 #include <lyra/lyra.hpp>
 #include <iostream>
 #include <indicators/progress_bar.hpp>
-#include <stb_rect_pack.h>
 #include <memory>
 #include <vector>
+#include <stb_image.h>
 #include <stb_image_write.h>
+#include <string>
+#include <filesystem>
+#include "TexturePacker.h"
+
+namespace fs = std::filesystem;
+namespace tp = gear::texture_pack;
 
 int main(int argc, char* argv[]) {
 
-    int test = 0;
     int pageWidth = 256, pageHeight = 256;
+    std::string inputDir;
+    bool showHelp;
     auto cli = lyra::cli_parser()
-            | lyra::opt( test, "test" )
-            ["-t"]["--test"]
-            ("Test option");
+            | lyra::arg(inputDir, "input")
+              ("Directory to pack")
+            | lyra::help(showHelp);
 
     auto result = cli.parse({argc, argv});
     if (!result){
@@ -25,61 +32,66 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    indicators::ProgressBar bar;
-    bar.set_bar_width(50);
-
-
-    stbrp_context ctx;
-
-    int numNodes = pageWidth;
-    std::unique_ptr<stbrp_node[]> nodes = std::make_unique<stbrp_node[]>(numNodes);
-
-    stbrp_init_target(&ctx, pageWidth, pageHeight, nodes.get(), numNodes);
-
-    std::vector<stbrp_rect> rects;
-    for(int i = 0; i < 10; i++) {
-        stbrp_coord w = rand() % 150;
-        stbrp_coord h = rand() % 150;
-        rects.push_back({i, w, h});
+    if (showHelp)
+    {
+        std::cout << cli << std::endl;
+        return 0;
     }
 
-    bar.set_postfix_text("Packing rectangles");
-    if (!stbrp_pack_rects(&ctx, rects.data(), rects.size())) {
-        bar.set_progress(33);
-        bar.mark_as_completed();
-        std::cerr << "Could not pack\n";
-    } else {
-        bar.set_progress(33);
-        bar.set_postfix_text("Writing page");
 
-        std::vector<unsigned char[4]> data(pageWidth*pageHeight);
-        for(auto& p : data) {
-            p[0] = p[1] = p[2] = p[3] = 0;
-        }
-        for(int i = 0; i < 10; i++) {
-            auto rect = rects[i];
-            for(int ix = 0; ix < rect.w; ix++) {
-                for(int iy = 0; iy < rect.h; iy++) {
-                    auto px = rect.x + ix;
-                    auto py = rect.y + iy;
-                    auto& p = data[px + py * pageWidth];
-                    p[0] = (rect.id *25);
-                    p[1] = p[0];
-                    p[2] = p[0];
-                    p[3] = 255;
+    fs::path dir = fs::absolute(inputDir);
+    if (!fs::is_directory(dir)) {
+        std::cerr << "No such directory " << dir << "\n";
+        return -1;
+    }
+
+
+    std::vector<tp::Sprite> sprites;
+    {
+        indicators::ProgressBar bar;
+        bar.set_prefix_text("Loading images");
+
+        auto dt = fs::directory_iterator(dir);
+
+        std::vector<fs::path> spritePaths;
+        for (auto &p : dt) {
+            if (p.is_regular_file()) {
+                if (p.path().extension() == ".jpg"
+                | p.path().extension() == ".png") {
+                    spritePaths.push_back(p.path());
                 }
             }
         }
 
-        bar.set_progress(66);
-        bar.set_postfix_text("Writing file");
+        sprites.reserve(spritePaths.size());
+        for(int i = 0; i < spritePaths.size(); i++) {
+            auto& path = spritePaths[i];
+            int w, h, c;
+            unsigned char* data = stbi_load(path.string().c_str(), &w, &h, &c, 4);
+            sprites.push_back({
+               path.filename().string(),
+               0, 0,
+               (unsigned short)w, (unsigned short)h,
+               (tp::Pixel*)data
+            });
+            bar.set_progress((i * 100.0f) / spritePaths.size());
+        }
 
-        stbi_write_png("out.png", pageWidth, pageHeight, 4, data.data(), pageWidth*4);
-
-        bar.set_progress(100);
-        bar.set_postfix_text("done!");
         bar.mark_as_completed();
     }
+
+
+    {
+        tp::packSprites(sprites.data(), sprites.size(), pageWidth, pageHeight);
+    }
+
+    {
+        std::unique_ptr<tp::Pixel[]> data = std::make_unique<tp::Pixel[]>(pageWidth * pageHeight);
+        tp::writeSprites(sprites.data(), sprites.size(), pageWidth, pageHeight, data.get());
+
+        stbi_write_png("out.png", pageWidth, pageHeight, 4, data.get(), pageWidth * sizeof(tp::Pixel));
+    }
+
 
     return 0;
 }
