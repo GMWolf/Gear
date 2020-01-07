@@ -8,6 +8,7 @@ add_library(gear
         src/Texture.cpp
         include/gear/Shader.h
         src/Shader.cpp
-        include/gear/TextureAtlas.h src/TextureAtlas.cpp include/gear/Sprite.h)
+        include/gear/TextureAtlas.h
+        src/TextureAtlas.cpp)
 target_link_libraries(gear PUBLIC glfw glad stb glm nlohmann_json::nlohmann_json)
 target_include_directories(gear PUBLIC include)

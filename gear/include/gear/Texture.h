@@ -8,7 +8,7 @@
 #include <glad/glad.h>
 #include <string>
 #include <glm/vec2.hpp>
-
+#include <memory>
 
 namespace gear {
 
@@ -20,6 +20,11 @@ namespace gear {
         glm::ivec2 size {0,0};
     };
 
+    struct Sprite {
+        glm::vec2 pos;
+        glm::vec2 size;
+        std::weak_ptr<const Texture> tex;
+    };
 
 }
 

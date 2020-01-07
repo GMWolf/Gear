@@ -8,8 +8,7 @@
 #include <string>
 #include <memory>
 #include <unordered_map>
-
-#include "Sprite.h"
+#include "Texture.h"
 
 namespace gear {
 

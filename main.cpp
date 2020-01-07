@@ -47,13 +47,15 @@ public:
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
         shader->use();
         glUniform1i(shader->uniformLocation("tex"), 0);
 
         batch->draw(a, {0, 0}, {0.5, 0.5});
         batch->draw(b, {-0.4, 0.2}, {0.1, 0.1});
         batch->flush();
-
     }
 
     void end() override {

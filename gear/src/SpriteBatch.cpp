@@ -4,7 +4,6 @@
 
 #include <gear/SpriteBatch.h>
 #include <gear/Texture.h>
-#include <gear/Sprite.h>
 
 void gear::SpriteBatch::draw(const Texture& tex, glm::vec2 pos, glm::vec2 size, glm::vec2 srcPos, glm::vec2 srcSize) {
     if (map == nullptr) {

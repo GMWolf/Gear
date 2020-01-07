@@ -12,6 +12,7 @@ namespace gear {
 
     class Texture;
     class Sprite;
+
     class SpriteBatch {
 
         struct Vertex {
