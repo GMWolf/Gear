@@ -4,8 +4,9 @@
 
 #include <gear/SpriteBatch.h>
 #include <gear/Texture.h>
+#include <gear/Sprite.h>
 
-void gear::SpriteBatch::draw(const Texture& tex, glm::vec2 pos, glm::vec2 size) {
+void gear::SpriteBatch::draw(const Texture& tex, glm::vec2 pos, glm::vec2 size, glm::vec2 srcPos, glm::vec2 srcSize) {
     if (map == nullptr) {
         if (first < batchSize) {
             bufferUpdate();
@@ -21,21 +22,20 @@ void gear::SpriteBatch::draw(const Texture& tex, glm::vec2 pos, glm::vec2 size) 
         batchTex = tex.tex;
     }
 
-
     {
         auto *vertices = static_cast<Vertex *>(map) + count;
         vertices[0].pos = pos;
-        vertices[0].uv = {0,0};
+        vertices[0].uv  = srcPos;
         vertices[1].pos = pos + glm::vec2{0, size.y};
-        vertices[1].uv = {0, 1};
+        vertices[1].uv = {srcPos.x, srcPos.y + srcSize.y};
         vertices[2].pos = pos + glm::vec2{size.x, 0};
-        vertices[2].uv = {1, 0};
+        vertices[2].uv = {srcPos.x + srcSize.x, srcPos.y};
         vertices[3].pos = pos + glm::vec2{size.x, 0};
-        vertices[3].uv = {1, 0};
+        vertices[3].uv = {srcPos.x + srcSize.x, srcPos.y};
         vertices[4].pos = pos + glm::vec2{0, size.y};
-        vertices[4].uv = {0, 1};
+        vertices[4].uv = {srcPos.x, srcPos.y + srcSize.y};
         vertices[5].pos = pos + size;
-        vertices[5].uv = {1, 1};
+        vertices[5].uv = srcPos + srcSize;
     }
 
     count += 6;
@@ -109,4 +109,12 @@ gear::SpriteBatch::SpriteBatch(size_t size) : batchSize(size) {
     glEnableVertexAttribArray(1);
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+void gear::SpriteBatch::draw(const gear::Sprite &sprite, glm::vec2 pos, glm::vec2 size) {
+    auto tex = sprite.tex.lock();
+
+    if (tex) {
+        draw(*tex, pos, size, sprite.pos, sprite.size);
+    }
 }

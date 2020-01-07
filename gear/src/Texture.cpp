@@ -18,8 +18,11 @@ gear::Texture::Texture(const std::string &name) {
 
     glBindTexture(GL_TEXTURE_2D, 0);
     stbi_image_free(data);
+
+    size = {x, y};
 }
 
 gear::Texture::~Texture() {
     glDeleteTextures(1, &tex);
 }
+

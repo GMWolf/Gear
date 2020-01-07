@@ -7,6 +7,7 @@
 
 #include <glad/glad.h>
 #include <string>
+#include <glm/vec2.hpp>
 
 
 namespace gear {
@@ -15,10 +16,8 @@ namespace gear {
     public:
         explicit Texture(const std::string& name);
         ~Texture();
-        GLuint tex{0};
-    private:
-        int width{0};
-        int height{0};
+        GLuint tex {0};
+        glm::ivec2 size {0,0};
     };
 
 

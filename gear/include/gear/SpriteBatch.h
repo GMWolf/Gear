@@ -11,6 +11,7 @@
 namespace gear {
 
     class Texture;
+    class Sprite;
     class SpriteBatch {
 
         struct Vertex {
@@ -27,7 +28,9 @@ namespace gear {
 
         ~SpriteBatch();
 
-        void draw(const Texture& tex, glm::vec2 pos, glm::vec2 size);
+        void draw(const Texture& tex, glm::vec2 pos, glm::vec2 size, glm::vec2 srcPos = {0,0}, glm::vec2 srcSize = {1,1});
+
+        void draw(const Sprite& sprite, glm::vec2 pos, glm::vec2 size);
 
         void flush();
 

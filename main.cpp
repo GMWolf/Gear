@@ -3,7 +3,7 @@
 #include <gear/Application.h>
 #include <glad/glad.h>
 #include <gear/SpriteBatch.h>
-#include <gear/Texture.h>
+#include <gear/TextureAtlas.h>
 #include <memory>
 #include <gear/Shader.h>
 
@@ -36,8 +36,11 @@ class Game : public gear::ApplicationAdapter {
 public:
     void init() override {
         batch = std::make_unique<gear::SpriteBatch>(100);
-        tex = std::make_unique<gear::Texture>("potato.jpg");
+        tex = std::make_unique<gear::TextureAtlas>("out.json");
         shader = std::make_unique<gear::Shader>(vertexSource, fragmentSource);
+
+        a = tex->getSprite("potato.png");
+        b = tex->getSprite("potato2.png");
     }
 
     void update() override {
@@ -47,8 +50,8 @@ public:
         shader->use();
         glUniform1i(shader->uniformLocation("tex"), 0);
 
-        batch->draw(*tex, {0, 0}, {0.5, 0.5});
-        batch->draw(*tex, {-0.4, 0.2}, {0.1, 0.1});
+        batch->draw(a, {0, 0}, {0.5, 0.5});
+        batch->draw(b, {-0.4, 0.2}, {0.1, 0.1});
         batch->flush();
 
     }
@@ -61,7 +64,9 @@ public:
 
     std::unique_ptr<gear::SpriteBatch> batch;
     std::unique_ptr<gear::Shader> shader;
-    std::unique_ptr<gear::Texture> tex;
+    std::unique_ptr<gear::TextureAtlas> tex;
+    gear::Sprite a;
+    gear::Sprite b;
 };
 
 
