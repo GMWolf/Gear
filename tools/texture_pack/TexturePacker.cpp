@@ -6,6 +6,7 @@
 #include <vector>
 #include <stb_rect_pack.h>
 #include <stb_image.h>
+#include <nlohmann/json.hpp>
 
 void gear::texture_pack::packSprites(gear::texture_pack::Sprite *sprites, size_t count,
                                      unsigned short width, unsigned short height) {

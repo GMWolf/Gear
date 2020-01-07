@@ -12,7 +12,8 @@
 #include <string>
 #include <filesystem>
 #include "TexturePacker.h"
-#include <numeric>
+#include <nlohmann/json.hpp>
+#include <fstream>
 
 namespace fs = std::filesystem;
 namespace tp = gear::texture_pack;
@@ -21,6 +22,7 @@ int main(int argc, char* argv[]) {
 
     int pageWidth = 256, pageHeight = 256;
     std::vector<std::string> inputPaths;
+    std::string outFileName = "out";
     bool showHelp;
     auto cli = lyra::cli_parser()
             | lyra::arg(inputPaths, "input files")
@@ -44,6 +46,9 @@ int main(int argc, char* argv[]) {
         std::cout << cli << std::endl;
         return 0;
     }
+
+    auto outTexName = (outFileName + ".png");
+    auto outAtlasName = (outFileName + ".json");
 
     std::vector<tp::Sprite> sprites;
     {
@@ -76,9 +81,28 @@ int main(int argc, char* argv[]) {
         std::unique_ptr<tp::Pixel[]> data = std::make_unique<tp::Pixel[]>(pageWidth * pageHeight);
         tp::writeSprites(sprites.data(), sprites.size(), pageWidth, pageHeight, data.get());
 
-        stbi_write_png("out.png", pageWidth, pageHeight, 4, data.get(), pageWidth * sizeof(tp::Pixel));
+        stbi_write_png(outTexName.c_str(), pageWidth, pageHeight, 4, data.get(), pageWidth * sizeof(tp::Pixel));
     }
 
+    {
+        nlohmann::json j;
+        j["texture"] = outTexName;
+        j["sprites"] = {};
+        for(auto& spr : sprites) {
+            nlohmann::json o;
+            o["x"] = spr.x;
+            o["y"] = spr.y;
+            o["w"] = spr.width;
+            o["h"] = spr.height;
+            o["name"] = spr.name;
+            j["sprites"].push_back(o);
+        }
+
+        {
+            std::ofstream ofs(outAtlasName);
+            ofs << std::setw(4) << j << std::endl;
+        }
+    }
 
     return 0;
 }

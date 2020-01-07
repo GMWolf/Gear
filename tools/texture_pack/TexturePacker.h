@@ -24,8 +24,8 @@ namespace gear::texture_pack {
 
     void packSprites(Sprite* sprites, size_t count, unsigned short width, unsigned short height);
 
-
     void writeSprites(Sprite* sprite, size_t count, unsigned short width, unsigned short height, Pixel* data);
+
 }
 
 
