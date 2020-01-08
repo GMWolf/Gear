@@ -27,6 +27,9 @@ int main(int argc, char* argv[]) {
     auto cli = lyra::cli_parser()
             | lyra::arg(inputPaths, "input files")
             ("Files to pack").cardinality(1, std::numeric_limits<size_t>::max())
+            | lyra::opt(outFileName, "output file name").required(1)
+            ["-o"]["--output"]
+            ("output file name")
             | lyra::opt(pageWidth, "page width")
             ["-w"]["--width"]
             ("Width of page")
@@ -76,6 +79,7 @@ int main(int argc, char* argv[]) {
         for(auto & path : inputFiles) {
             int w, h, c;
             std::string pathStr = path.string();
+            std::cout << "loading " << pathStr << std::endl;
             unsigned char* data = stbi_load(pathStr.c_str(), &w, &h, &c, 4);
             sprites.push_back({
                fs::path(path).filename().stem().string(),
