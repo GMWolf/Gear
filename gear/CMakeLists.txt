@@ -14,6 +14,8 @@ add_library(gear
         include/gear/CollisionDetection.h
         src/CollisionDetection.cpp
         include/gear/View.h
-        src/View.cpp)
+        src/View.cpp
+        include/gear/KeyboardKeys.h
+        include/gear/World.h)
 target_link_libraries(gear PUBLIC glfw glad stb glm nlohmann_json::nlohmann_json)
 target_include_directories(gear PUBLIC include)

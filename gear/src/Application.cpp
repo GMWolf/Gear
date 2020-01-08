@@ -108,3 +108,7 @@ gear::Application::~Application() {
     glfwDestroyWindow(window);
     glfwTerminate();
 }
+
+bool gear::Application::keyPressed(KEYS key) {
+    return glfwGetKey(window, (int)key) == GLFW_PRESS;
+}

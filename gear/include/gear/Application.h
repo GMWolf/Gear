@@ -7,8 +7,7 @@
 
 #include <string>
 #include "ApplicationAdapter.h"
-
-
+#include "KeyboardKeys.h"
 
 struct GLFWwindow;
 namespace gear {
@@ -20,19 +19,23 @@ namespace gear {
 
     class Application {
     public:
-        explicit Application(const AppConfig& config);
+        explicit Application(const AppConfig &config);
+
         ~Application();
 
-        void run(ApplicationAdapter& adapter);
+        void run(ApplicationAdapter &adapter);
+
+        bool keyPressed(KEYS key);
 
         operator bool();
+
     private:
         int width, height;
         bool initialized = false;
-        GLFWwindow* window{};
+        GLFWwindow *window{};
     };
 
-    void run(const AppConfig& config, ApplicationAdapter& app);
+    void run(const AppConfig &config, ApplicationAdapter &app);
 
 }
 
