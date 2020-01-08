@@ -6,9 +6,10 @@
 #define GEAR_APPLICATIONADAPTER_H
 
 namespace gear {
+    class Application;
     class ApplicationAdapter {
     public:
-        virtual void init() = 0;
+        virtual void init(Application* app) = 0;
         virtual void update() = 0;
         virtual void end() = 0;
     };

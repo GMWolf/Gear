@@ -9,6 +9,8 @@
 #include "ApplicationAdapter.h"
 
 
+
+struct GLFWwindow;
 namespace gear {
 
     struct AppConfig {
@@ -16,7 +18,19 @@ namespace gear {
         std::string title = "";
     };
 
+    class Application {
+    public:
+        explicit Application(const AppConfig& config);
+        ~Application();
 
+        void run(ApplicationAdapter& adapter);
+
+        operator bool();
+    private:
+        int width, height;
+        bool initialized = false;
+        GLFWwindow* window{};
+    };
 
     void run(const AppConfig& config, ApplicationAdapter& app);
 

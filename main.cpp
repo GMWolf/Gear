@@ -41,7 +41,8 @@ void main(){
 
 class Game : public gear::ApplicationAdapter {
 public:
-    void init() override {
+    void init(gear::Application* app) override {
+        this->app = app;
         batch = std::make_unique<gear::SpriteBatch>(100);
         tex = std::make_unique<gear::TextureAtlas>("out.json");
         shader = std::make_unique<gear::Shader>(vertexSource, fragmentSource);
@@ -54,26 +55,24 @@ public:
     }
 
     void update() override {
-
         dropTimer--;
         if (dropTimer <= 0) {
             dropTimer = 60;
-            drops.push_back({{0, 480},
-                             gear::Circle{{0,0}, 64},
-                             spr[rand() % 2]});
+            auto s = spr[rand() % 2];
+            s.size *= 0.5;
+            drops.push_back({{rand() % 640, 480},
+                             gear::Rectangle{{0,0}, s.size},
+                             s});
         }
 
         for(auto& d : drops) {
             d.pos.y -= 4;
         }
 
-        deltextimer--;
-        if (deltextimer <= 0) {
-            tex.reset();
-        }
+        gear::Rectangle floor {{0,-1}, {640, 0}};
 
         drops.erase(std::remove_if(drops.begin(), drops.end(),
-                [](Drop& d){return d.pos.y < -1;}), drops.end());
+                [floor](Drop& d){return gear::collide(d.shape, d.pos, floor, {0,0});}), drops.end());
 
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -108,15 +107,14 @@ public:
     std::vector<Drop> drops;
     int dropTimer = 60;
 
-    int deltextimer = 600;
-
-    gear::View view;
-
+    gear::View view{};
 
     std::unique_ptr<gear::SpriteBatch> batch;
     std::unique_ptr<gear::Shader> shader;
     std::unique_ptr<gear::TextureAtlas> tex;
     gear::Sprite spr[2];
+
+    gear::Application* app = nullptr;
 };
 
 
@@ -127,8 +125,10 @@ int main() {
         640, 480,"Game"
     };
 
+
     Game game;
-    gear::run(config, game);
+    gear::Application app(config);
+    app.run(game);
 
     return 0;
 }
