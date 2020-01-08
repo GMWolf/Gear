@@ -19,8 +19,14 @@ gear::TextureAtlas::TextureAtlas(const std::string &name) {
 
     for(auto& o : j["sprites"]) {
         Sprite spr;
-        spr.pos = glm::vec2{ o["x"], o["y"] } / glm::vec2{texture->size};
-        spr.size = glm::vec2{ o["w"], o["h"]} / glm::vec2{texture->size};
+
+        int x = o["x"];
+        int y = o["y"];
+        int w = o["w"];
+        int h = o["h"];
+
+        spr.uv = glm::vec4{x, y, x + w, y + h} / glm::vec4{texture->size, texture->size};
+        spr.size = glm::vec2{w, h};
         spr.tex = texture;
         sprites.emplace(std::make_pair(o["name"], spr));
     }

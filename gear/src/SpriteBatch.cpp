@@ -5,7 +5,7 @@
 #include <gear/SpriteBatch.h>
 #include <gear/Texture.h>
 
-void gear::SpriteBatch::draw(const Texture& tex, glm::vec2 pos, glm::vec2 size, glm::vec2 srcPos, glm::vec2 srcSize) {
+void gear::SpriteBatch::draw(const Texture& tex, glm::vec2 pos, glm::vec2 size, glm::vec4 uv) {
     if (map == nullptr) {
         if (first < batchSize) {
             bufferUpdate();
@@ -24,17 +24,17 @@ void gear::SpriteBatch::draw(const Texture& tex, glm::vec2 pos, glm::vec2 size, 
     {
         auto *vertices = static_cast<Vertex *>(map) + count;
         vertices[0].pos = pos;
-        vertices[0].uv  = srcPos;
+        vertices[0].uv  = {uv.x, uv.y};
         vertices[1].pos = pos + glm::vec2{0, size.y};
-        vertices[1].uv = {srcPos.x, srcPos.y + srcSize.y};
+        vertices[1].uv = {uv.x, uv.w};
         vertices[2].pos = pos + glm::vec2{size.x, 0};
-        vertices[2].uv = {srcPos.x + srcSize.x, srcPos.y};
+        vertices[2].uv = {uv.z, uv.y};
         vertices[3].pos = pos + glm::vec2{size.x, 0};
-        vertices[3].uv = {srcPos.x + srcSize.x, srcPos.y};
+        vertices[3].uv = {uv.z, uv.y};
         vertices[4].pos = pos + glm::vec2{0, size.y};
-        vertices[4].uv = {srcPos.x, srcPos.y + srcSize.y};
+        vertices[4].uv = {uv.x, uv.w};
         vertices[5].pos = pos + size;
-        vertices[5].uv = srcPos + srcSize;
+        vertices[5].uv = {uv.z, uv.w};
     }
 
     count += 6;
@@ -108,12 +108,18 @@ gear::SpriteBatch::SpriteBatch(size_t size) : batchSize(size) {
     glEnableVertexAttribArray(1);
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+
+    nulltex = std::make_unique<Texture>(glm::vec4{1, 0, 1, 1});
 }
 
 void gear::SpriteBatch::draw(const gear::Sprite &sprite, glm::vec2 pos, glm::vec2 size) {
     auto tex = sprite.tex.lock();
 
-    if (tex) {
-        draw(*tex, pos, size, sprite.pos, sprite.size);
-    }
+    draw(tex ? *tex : *nulltex, pos, size, sprite.uv);
+
+}
+
+void gear::SpriteBatch::draw(const gear::Sprite &sprite, glm::vec2 pos) {
+    draw(sprite, pos, sprite.size);
 }

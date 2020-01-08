@@ -59,12 +59,17 @@ public:
         if (dropTimer <= 0) {
             dropTimer = 60;
             drops.push_back({{0, 480},
-                             gear::Circle{{0,0}, 0.1},
+                             gear::Circle{{0,0}, 64},
                              spr[rand() % 2]});
         }
 
         for(auto& d : drops) {
             d.pos.y -= 4;
+        }
+
+        deltextimer--;
+        if (deltextimer <= 0) {
+            tex.reset();
         }
 
         drops.erase(std::remove_if(drops.begin(), drops.end(),
@@ -82,7 +87,7 @@ public:
         glUniformMatrix4fv(shader->uniformLocation("view"), 1, GL_FALSE, glm::value_ptr(vm));
 
         for(auto& d : drops) {
-            batch->draw(d.spr, d.pos, {64, 64});
+            batch->draw(d.spr, d.pos);
         }
         batch->flush();
     }
@@ -102,6 +107,8 @@ public:
 
     std::vector<Drop> drops;
     int dropTimer = 60;
+
+    int deltextimer = 600;
 
     gear::View view;
 

@@ -7,6 +7,7 @@
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>
+#include <memory>
 
 namespace gear {
 
@@ -29,9 +30,11 @@ namespace gear {
 
         ~SpriteBatch();
 
-        void draw(const Texture& tex, glm::vec2 pos, glm::vec2 size, glm::vec2 srcPos = {0,0}, glm::vec2 srcSize = {1,1});
+        void draw(const Texture& tex, glm::vec2 pos, glm::vec2 size, glm::vec4 uv = {0, 0, 1, 1});
 
         void draw(const Sprite& sprite, glm::vec2 pos, glm::vec2 size);
+
+        void draw(const Sprite& sprite, glm::vec2 pos);
 
         void flush();
 
@@ -53,6 +56,8 @@ namespace gear {
 
         GLuint vbo{};
         GLuint vao{};
+
+        std::unique_ptr<Texture> nulltex;
     };
 
 }
