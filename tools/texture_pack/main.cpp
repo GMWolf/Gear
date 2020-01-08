@@ -4,7 +4,6 @@
 
 #include <lyra/lyra.hpp>
 #include <iostream>
-#include <indicators/progress_bar.hpp>
 #include <memory>
 #include <vector>
 #include <stb_image.h>
@@ -23,7 +22,8 @@ int main(int argc, char* argv[]) {
     int pageWidth = 256, pageHeight = 256;
     std::vector<std::string> inputPaths;
     std::string outFileName = "out";
-    bool showHelp;
+    bool showHelp = false;
+    bool directoryMode = false;
     auto cli = lyra::cli_parser()
             | lyra::arg(inputPaths, "input files")
             ("Files to pack").cardinality(1, std::numeric_limits<size_t>::max())
@@ -33,6 +33,9 @@ int main(int argc, char* argv[]) {
             | lyra::opt(pageHeight, "page height")
             ["-h"]["--height"]
             ("Height of page")
+            | lyra::opt(directoryMode)
+            ["-d"]["--directory"]
+            ("Use directory")
             | lyra::help(showHelp);
 
     auto result = cli.parse({argc, argv});
@@ -50,28 +53,38 @@ int main(int argc, char* argv[]) {
     auto outTexName = (outFileName + ".png");
     auto outAtlasName = (outFileName + ".json");
 
+    std::vector<fs::path> inputFiles;
+
+    if (directoryMode) {
+        for(auto& d : inputPaths) {
+            for(auto& f : fs::directory_iterator(d)) {
+                if (f.path().extension() == ".png") {
+                    inputFiles.push_back(f.path());
+                }
+            }
+        }
+    } else {
+        inputFiles.reserve(inputPaths.size());
+        for(auto& s : inputPaths) {
+            inputFiles.emplace_back(s);
+        }
+    }
+
     std::vector<tp::Sprite> sprites;
     {
-        indicators::ProgressBar bar;
-        bar.set_prefix_text("Loading images");
-
         sprites.reserve(inputPaths.size());
-        for(int i = 0; i < inputPaths.size(); i++) {
-            auto& path = inputPaths[i];
+        for(auto & path : inputFiles) {
             int w, h, c;
-            unsigned char* data = stbi_load(path.c_str(), &w, &h, &c, 4);
+            std::string pathStr = path.string();
+            unsigned char* data = stbi_load(pathStr.c_str(), &w, &h, &c, 4);
             sprites.push_back({
-               fs::path(path).filename().string(),
+               fs::path(path).filename().stem().string(),
                0, 0,
                (unsigned short)w, (unsigned short)h,
                (tp::Pixel*)data
             });
-            bar.set_progress((i * 100.0f) / inputPaths.size());
         }
-
-        bar.mark_as_completed();
     }
-
 
     {
         tp::packSprites(sprites.data(), sprites.size(), pageWidth, pageHeight);
@@ -82,6 +95,13 @@ int main(int argc, char* argv[]) {
         tp::writeSprites(sprites.data(), sprites.size(), pageWidth, pageHeight, data.get());
 
         stbi_write_png(outTexName.c_str(), pageWidth, pageHeight, 4, data.get(), pageWidth * sizeof(tp::Pixel));
+    }
+
+    {
+        for(auto& s : sprites) {
+            stbi_image_free((void *) s.data);
+            s.data = nullptr;
+        }
     }
 
     {
