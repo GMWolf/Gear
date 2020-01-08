@@ -6,7 +6,10 @@
 #include <gear/TextureAtlas.h>
 #include <memory>
 #include <gear/Shader.h>
-
+#include <gear/CollisionShape.h>
+#include <gear/CollisionDetection.h>
+#include <vector>
+#include <algorithm>
 
 std::string vertexSource = R"(
 #version 330 core
@@ -39,11 +42,27 @@ public:
         tex = std::make_unique<gear::TextureAtlas>("out.json");
         shader = std::make_unique<gear::Shader>(vertexSource, fragmentSource);
 
-        a = tex->getSprite("potato.png");
-        b = tex->getSprite("potato2.png");
+        spr[0] = tex->getSprite("potato.png");
+        spr[1] = tex->getSprite("potato2.png");
     }
 
     void update() override {
+
+        dropTimer--;
+        if (dropTimer <= 0) {
+            dropTimer = 60;
+            drops.push_back({{0, 1},
+                             gear::Circle{{0,0}, 0.1},
+                             spr[rand() % 2]});
+        }
+
+        for(auto& d : drops) {
+            d.pos.y -= 0.01;
+        }
+
+        drops.erase(std::remove_if(drops.begin(), drops.end(),
+                [](Drop& d){return d.pos.y < -1;}), drops.end());
+
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
@@ -53,8 +72,9 @@ public:
         shader->use();
         glUniform1i(shader->uniformLocation("tex"), 0);
 
-        batch->draw(a, {0, 0}, {0.5, 0.5});
-        batch->draw(b, {-0.4, 0.2}, {0.1, 0.1});
+        for(auto& d : drops) {
+            batch->draw(d.spr, d.pos - glm::vec2{0.05, 0.05}, {0.1, 0.1});
+        }
         batch->flush();
     }
 
@@ -64,11 +84,21 @@ public:
         shader.reset();
     }
 
+
+    struct Drop {
+        glm::vec2 pos;
+        gear::CollisionShape shape;
+        gear::Sprite spr;
+    };
+
+    std::vector<Drop> drops;
+    int dropTimer = 60;
+
+
     std::unique_ptr<gear::SpriteBatch> batch;
     std::unique_ptr<gear::Shader> shader;
     std::unique_ptr<gear::TextureAtlas> tex;
-    gear::Sprite a;
-    gear::Sprite b;
+    gear::Sprite spr[2];
 };
 
 
