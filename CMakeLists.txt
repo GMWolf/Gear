@@ -18,5 +18,8 @@ add_subdirectory(gear)
 add_subdirectory(tools/texture_pack)
 
 
+add_subdirectory(examples/gearhell)
+
 add_executable(gear_test main.cpp)
 target_link_libraries(gear_test PUBLIC gear)
+

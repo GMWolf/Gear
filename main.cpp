@@ -39,8 +39,6 @@ void main(){
 }
 )";
 
-
-
 struct Drop {
     glm::vec2 pos;
     gear::CollisionShape shape;
