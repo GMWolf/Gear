@@ -16,6 +16,6 @@ add_library(gear
         include/gear/View.h
         src/View.cpp
         include/gear/KeyboardKeys.h
-        include/gear/World.h)
+        include/gear/World.h include/gear/ECS_a.h include/gear/ECS.h include/gear/StaticVector.h)
 target_link_libraries(gear PUBLIC glfw glad stb glm nlohmann_json::nlohmann_json)
 target_include_directories(gear PUBLIC include)

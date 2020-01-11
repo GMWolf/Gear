@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <glm/gtc/type_ptr.hpp>
 #include <gear/World.h>
+#include <gear/ECS.h>
 
 std::string vertexSource = R"(
 #version 330 core
@@ -157,7 +158,7 @@ public:
 
 
 
-int main() {
+int main_() {
 
     gear::AppConfig config {
         640, 480,"Game"
@@ -169,4 +170,36 @@ int main() {
     app.run(game);
 
     return 0;
+}
+
+
+int main() {
+
+    struct A {
+        int a, b;
+        A(int a, int b) : a(a), b(b) {}
+    };
+
+    struct B {
+        int c;
+        float d;
+
+        B(int c, float q, float w) : c(c), d(q + w) {
+        }
+    };
+
+
+    gear::ecs::Chunk<A, B> chunk;
+    chunk.emplace_back(std::forward_as_tuple(1, 2), std::forward_as_tuple(1,2,3));
+
+    std::cout << std::get<A&>(chunk[0]).a << std::endl;
+    std::get<A&>(chunk[0]).a = 55;
+    std::cout << std::get<A&>(chunk[0]).a << std::endl;
+
+
+    gear::ecs::World world;
+    world.create<A, B>(std::forward_as_tuple(1, 2), std::forward_as_tuple(1,2,3));
+
+    return 0;
+
 }
