@@ -176,11 +176,11 @@ int main_() {
 int main() {
 
     struct A {
-        int a, b;
+        int a = 4, b;
     };
 
     struct B {
-        int c;
+        int c = 42;
         float d;
     };
 
@@ -188,22 +188,17 @@ int main() {
         int a;
     };
 
-    gear::ecs::Chunk chunk;
+    gear::ecs::World world;
 
-    chunk.addArray<A>();
-    chunk.addArray<B>();
-    chunk.addArray<C>();
+    world.create<A, B>();
+    world.create<A, B>();
 
-
-    chunk.emplace_back();
-    std::get<A&>(chunk.view<A, B>()[0]).a = 5;
-
-
-    for(auto [a, b] : chunk.view<A, B>()) {
-
-        std::cout << a.a << std::endl;
-
+    for(auto& chunk : world.getChunks<A, B>()) {
+        for(auto [a, b] : chunk) {
+            std::cout << a.a << " " << b.c << std::endl;
+        }
     }
+
     return 0;
 
 }

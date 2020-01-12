@@ -17,7 +17,6 @@
 #include <map>
 #include <cstddef>
 #include <cstdlib>
-#include <any>
 
 namespace gear::ecs {
 
@@ -30,6 +29,15 @@ namespace gear::ecs {
         template<class... A>
         static Archetype create();
 
+        bool operator<(const Archetype& o) const {
+            return types < o.types;
+        }
+
+
+        template<class... T>
+        bool matches() const {
+            return ((std::lower_bound(types.begin(), types.end(), std::type_index(typeid(T))) != types.end()) && ...);
+        }
     private:
         std::vector<std::type_index> types;
     };
@@ -151,7 +159,7 @@ namespace gear::ecs {
 
     class Chunk {
         std::map<std::type_index, std::unique_ptr<BaseComponentArray>> arrays;
-        size_t size = 0;
+        size_t m_size = 0;
     public:
 
         template<class T>
@@ -164,111 +172,62 @@ namespace gear::ecs {
 
         template<class... T>
         ChunkView<T...> view() {
-            return ChunkView<T...>(size, *static_cast<ComponentArray<T>*>(arrays[std::type_index(typeid(T))].get())...);
+            return ChunkView<T...>(m_size, *static_cast<ComponentArray<T>*>(arrays[std::type_index(typeid(T))].get())...);
         }
-
 
         void emplace_back() {
             for(auto& [type, array] : arrays) {
-                array->emplace(size);
+                array->emplace(m_size);
             }
-            size++;
+            m_size++;
         }
 
-
+        size_t size() {
+            return m_size;
+        }
     };
 
 
-    namespace bloobiboulga {
 
-        template<class... Components>
-        class Chunk {
-            std::tuple<ComponentArray<Components>...> arrays;
-            size_t m_size = 0;
+    class World {
+        std::map<Archetype, std::vector<Chunk>> chunks;
 
-        public:
-            template<class... Args>
-            void emplace_back(Args &&... args) {
-                static_assert(sizeof...(Components) == sizeof...(Args));
-                (std::get<ComponentArray<Components>>(arrays).emplace(m_size, std::forward<Args>(args)), ...);
-                m_size++;
+    public:
+        template<class... T>
+        void create() {
+            Archetype a = Archetype::create<T...>();
+
+            auto& vec = chunks[a];
+
+            //Get free chunk (it)
+            auto it = std::find_if(vec.begin(), vec.end(), [](auto& c) {
+                return c.size() < ChunkSize;
+            });
+
+            if (it == vec.end()) {
+                vec.emplace_back();
+                it = vec.end() - 1;
+                (it->template addArray<T>(), ...);
             }
 
-            void emplace_back() {
-                (std::get<ComponentArray<Components>>(arrays).emplace(m_size), ...);
-                m_size++;
-            }
-
-            auto operator[](size_t index) {
-                return std::forward_as_tuple(std::get<ComponentArray<Components>>(arrays)[index]...);
-            }
-
-            ~Chunk() {
-                for (size_t i = 0; i < m_size; i++) {
-                    (std::get<ComponentArray<Components>>(arrays)[i].~Components(), ...);
-                }
-            }
-
-            size_t size() {
-                return m_size;
-            }
-        };
-
-        class BaseArchetypeStore {
-        public:
-            const Archetype archetype;
-
-            explicit BaseArchetypeStore(Archetype &&a) : archetype(std::move(a)) {
-            }
-
-            virtual ~BaseArchetypeStore() = default;
-        };
+            //Add entity ad end of chunk
+            it->emplace_back();
+        }
 
 
-        template<class... Components>
-        class ArchetypeStore : public BaseArchetypeStore {
-            std::vector<std::unique_ptr<Chunk<Components...>>> vec;
-
-        public:
-            ArchetypeStore() {};
-
-            ~ArchetypeStore() override = default;
-
-            template<class... Tuples>
-            void create(Tuples &&...t) {
-                for (int i = 0; i < vec.size(); i++) {
-                    if (vec[i]->size() < ChunkSize) {
-                        vec[i]->emplace_back(std::forward(t)...);
+        template<class... T>
+        std::vector<ChunkView<T...>> getChunks() {
+            std::vector<ChunkView<T...>> ret;
+            for(auto& [arch, vec] : chunks) {
+                if (arch. template matches<T...>()) {
+                    for(auto& c : vec) {
+                        ret.push_back(c.template view<T...>());
                     }
                 }
-
-                vec.resize(vec.size() + 1);
-                vec.back()->emplace_back(std::forward(t)...);
             }
-
-        };
-
-        class World {
-            std::map<Archetype, std::unique_ptr<BaseArchetypeStore>> stores;
-        public:
-
-            template<class... T, class... Tuples>
-            void create(Tuples &&... t) {
-
-                Archetype a = Archetype({std::type_index(typeid(T))...});
-                auto f = stores.find(a);
-
-
-                if (f == stores.end()) {
-                    f = stores.emplace(std::make_pair(a, std::make_unique<ArchetypeStore<T...>>())).first;
-                }
-
-                static_cast<ArchetypeStore<T...> *>(f->second.get())->create(std::forward<Tuples>(t)...);
-            }
-
-        };
-    }
-
+            return ret;
+        }
+    };
 
 }
 #endif //GEAR_ECS_H
