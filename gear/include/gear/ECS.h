@@ -39,8 +39,8 @@ namespace gear::ecs {
 
 
         template<class... T>
-        bool matches() const {
-            return ((std::lower_bound(types.begin(), types.end(), std::type_index(typeid(T))) != types.end()) && ...);
+        [[nodiscard]] bool matches() const {
+            return ((std::find(types.begin(), types.end(), std::type_index(typeid(T))) != types.end()) && ...);
         }
     private:
         std::vector<std::type_index> types;
@@ -190,11 +190,14 @@ namespace gear::ecs {
 
             if (ptr == nullptr) {
                 auto cs = std::make_unique<ComponentStore<T>>();
-                cs->vec.resize(chunk+1);
+                ptr = std::move(cs);
+            }
+
+            {
+                auto cs = static_cast<ComponentStore<T>*>(ptr.get());
+                cs->vec.resize(chunk + 1);
 
                 cs->vec[chunk] = std::make_unique<ComponentChunk<T>>();
-
-                ptr = std::move(cs);
             }
 
         }
@@ -231,21 +234,20 @@ namespace gear::ecs {
 
         template<class... T>
         struct WorldView {
-            using chunkIditerator = decltype(archetypeChunks)::mapped_type::iterator;
-            chunkIditerator chunkIdBegin;
-            chunkIditerator chunkIdEnd;
+            std::vector<chunkId> chunks;
 
             std::tuple<ComponentStore<T> *...> stores;
-            size_t *chunkSizes;
+            size_t *chunkSizes{};
 
             struct ChunkIter {
-                chunkIditerator c;
-                size_t *chunkSizesPtr;
+                std::vector<chunkId>::iterator c;
+                size_t *chunkSizesPtr{};
                 std::tuple<std::unique_ptr<ComponentChunk<T>>*...> stores;
 
                 ChunkView<T...> operator*() {
                     chunkId chunk = *c;
-                    return ChunkView<T...>(chunkSizesPtr[*c], *std::get<std::unique_ptr<ComponentChunk<T>> *>(stores)->get()...);
+                    return ChunkView<T...>(chunkSizesPtr[chunk],
+                            *(std::get<std::unique_ptr<ComponentChunk<T>> *>(stores)[chunk].get())...);
                 }
 
                 bool operator!=(const ChunkIter& o) {
@@ -261,14 +263,15 @@ namespace gear::ecs {
 
             ChunkIter begin() {
                 return ChunkIter{
-                        chunkIdBegin,
+                        chunks.begin(),
                         chunkSizes,
                         std::make_tuple(std::get<ComponentStore<T>*>(stores)->vec.data()...)
                 };
             }
 
             ChunkIter end() {
-                return ChunkIter{chunkIdEnd,
+                return ChunkIter{
+                        chunks.end(),
                         chunkSizes,
                         std::make_tuple(std::get<ComponentStore<T>*>(stores)->vec.data()...)
                 };
@@ -277,13 +280,17 @@ namespace gear::ecs {
 
         template<class... T>
         WorldView<T...> getChunks() {
-            Archetype a = Archetype::create<T...>();
 
-            auto& chunks = archetypeChunks[a];
+            std::vector<chunkId> retChunks;
+            for(auto& [arch, chunks] : archetypeChunks) {
+                if (arch.matches<T...>()) {
+                    retChunks.reserve(retChunks.size() + chunks.size());
+                    retChunks.insert(retChunks.end(), chunks.begin(), chunks.end());
+                }
+            }
 
             return WorldView<T...>{
-                chunks.begin(),
-                chunks.end(),
+                std::move(retChunks),
                 std::make_tuple(static_cast<ComponentStore<T>*>(stores[std::type_index(typeid(T))].get())...),
                 chunkSizes.data()
             };

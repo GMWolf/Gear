@@ -16,6 +16,7 @@
 #include <vector>
 #include <optional>
 #include <gear/ECS.h>
+#include <gear/CoreComponents.h>
 
 std::string vertexSource = R"(
 #version 330 core
@@ -42,27 +43,78 @@ void main(){
 }
 )";
 
+struct Player {
+    float moveSpeed = 4;
+};
 
-using Position = glm::vec2;
+struct Danger {
+
+};
 
 static void createStage(gear::TextureAtlas& atlas, gear::ecs::World& world) {
     {
         gear::Sprite spr = atlas.getSprite("ship1");
         for (int i = 0; i < 5; i++) {
 
-            auto e = world.create<gear::Sprite, Position>();
+            auto e = world.create<gear::Sprite, gear::Transform, gear::CollisionShape, Danger>();
 
             world.get<gear::Sprite>(e) = spr;
-            world.get<Position>(e) = glm::vec2{480 * i / 5, 600};
+            world.get<gear::Transform>(e).pos = glm::vec2{480 * i / 5, 600};
+            world.get<gear::CollisionShape>(e) = gear::Rectangle{{0,0}, {spr.size}};
         }
     }
 
     {
 
-        auto e = world.create<gear::Sprite, Position>();
+        gear::Sprite spr = atlas.getSprite("ship2");
+        auto e = world.create<gear::Sprite, gear::Transform, Player, gear::CollisionShape>();
 
-        world.get<gear::Sprite>(e) = atlas.getSprite("ship2");;
-        world.get<Position>(e) = {480 / 2, 32};
+        world.get<gear::Sprite>(e) = spr;
+        world.get<gear::Transform>(e).pos = {480 / 2, 32};
+        world.get<gear::CollisionShape>(e) = gear::Rectangle{{0,0}, {spr.size}};
+    }
+}
+
+static void movePlayer(gear::Application* app, gear::ecs::World& world) {
+    auto chunks = world.getChunks<Player, gear::Transform>();
+    for(auto chunk : chunks) {
+        for(auto [player, transform] : chunk) {
+            if (app->keyPressed(gear::KEYS::RIGHT)) {
+                transform.pos.x += player.moveSpeed;
+            }
+            if (app->keyPressed(gear::KEYS::LEFT)) {
+                transform.pos.x -= player.moveSpeed;
+            }
+            if (app->keyPressed(gear::KEYS::UP)) {
+                transform.pos.y += player.moveSpeed;
+            }
+            if (app->keyPressed(gear::KEYS::DOWN)) {
+                transform.pos.y -= player.moveSpeed;
+            }
+        }
+    }
+}
+
+static void checkCollisions(gear::ecs::World& world) {
+
+    for(auto chunkA : world.getChunks<gear::Transform, gear::CollisionShape, Player>()) {
+        for(auto [transformA, shapeA, player] : chunkA) {
+
+            for(auto chunkB : world.getChunks<gear::Transform, gear::CollisionShape, Danger>()) {
+                for(auto [transformB, shapeB, danger] : chunkB) {
+
+                    if (gear::collide(shapeA, transformA.pos, shapeB, transformB.pos)) {
+
+                        player.moveSpeed = 0;
+
+                    }
+
+
+                }
+            }
+
+
+        }
     }
 }
 
@@ -81,10 +133,10 @@ void render(gear::SpriteBatch& batch, gear::Shader& shd, gear::ecs::World& ecsWo
     auto vm = view.matrix();
     glUniformMatrix4fv(shd.uniformLocation("view"), 1, GL_FALSE, glm::value_ptr(vm));
 
-    for(auto chunk : ecsWorld.getChunks<gear::Sprite, Position>())
+    for(auto chunk : ecsWorld.getChunks<gear::Sprite, gear::Transform>())
     {
-        for(auto [sprite, pos] : chunk) {
-            batch.draw(sprite, pos);
+        for(auto [sprite, transform] : chunk) {
+            batch.draw(sprite, transform.pos);
         }
     }
 
@@ -104,8 +156,9 @@ public:
         di.invoke(createStage);
     }
 
-
     void update() override {
+        di.invoke(movePlayer);
+        di.invoke(checkCollisions);
         di.invoke(render);
     }
 

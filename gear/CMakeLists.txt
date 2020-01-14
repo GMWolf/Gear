@@ -18,6 +18,6 @@ add_library(gear
         include/gear/KeyboardKeys.h
         include/gear/DI.h
         include/gear/ECS.h
-        )
+        include/gear/CoreComponents.h)
 target_link_libraries(gear PUBLIC glfw glad stb glm nlohmann_json::nlohmann_json)
 target_include_directories(gear PUBLIC include)
