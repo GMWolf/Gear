@@ -13,7 +13,7 @@
 
 namespace gear {
 
-    class World {
+    class DI {
     public:
 
         template<class T, class... Args>
@@ -45,7 +45,7 @@ namespace gear {
     };
 
     template<class T, class... Args>
-    void World::emplace(Args &&... args) {
+    void DI::emplace(Args &&... args) {
         store.emplace(std::make_pair(
                 std::type_index(typeid(T)),
                 std::make_shared<T>(args...))
@@ -53,7 +53,7 @@ namespace gear {
     }
 
     template<class T>
-    T& World::get() {
+    T& DI::get() {
         auto f = store.find(std::type_index(typeid(T)));
         if (f != store.end()) {
             return *std::static_pointer_cast<T>( f->second );
@@ -62,29 +62,29 @@ namespace gear {
         }
     }
 
-    void World::reset() {
+    void DI::reset() {
         store.clear();
     }
 
     template<class R, class... Args,
             std::enable_if_t<!std::is_void<R>::value, int>>
-    R World::invoke(std::function<R(Args...)> f) {
+    R DI::invoke(std::function<R(Args...)> f) {
         return f(get<std::remove_reference_t<Args>>()...);
     }
 
     template<class R, class... Args, std::enable_if_t<!std::is_void<R>::value, int>>
-    R World::invoke(R (*f)(Args...)) {
+    R DI::invoke(R (*f)(Args...)) {
         return f(get<std::remove_reference_t<Args>>()...);
     }
 
     template<class R, class... Args,
             std::enable_if_t<std::is_void<R>::value, int>>
-    void World::invoke(std::function<R(Args...)> f) {
+    void DI::invoke(std::function<R(Args...)> f) {
         f(get<std::remove_reference_t<Args>>()...);
     }
 
     template<class R, class... Args, std::enable_if_t<std::is_void<R>::value, int>>
-    void World::invoke(R (*f)(Args...)) {
+    void DI::invoke(R (*f)(Args...)) {
         f(get<std::remove_reference_t<Args>>()...);
     }
 

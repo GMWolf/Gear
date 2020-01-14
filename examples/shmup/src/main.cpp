@@ -4,7 +4,7 @@
 
 #include <gear/Application.h>
 #include <gear/ApplicationAdapter.h>
-#include <gear/World.h>
+#include <gear/DI.h>
 #include <gear/TextureAtlas.h>
 #include <gear/SpriteBatch.h>
 #include <glm/vec2.hpp>
@@ -88,7 +88,6 @@ void render(gear::SpriteBatch& batch, gear::Shader& shd, gear::ecs::World& ecsWo
         }
     }
 
-
     batch.flush();
 }
 
@@ -96,26 +95,26 @@ void render(gear::SpriteBatch& batch, gear::Shader& shd, gear::ecs::World& ecsWo
 class Game : public gear::ApplicationAdapter {
 public:
     void init(gear::Application *app) override {
-        world.emplace<gear::ecs::World>();
-        world.emplace<gear::TextureAtlas>("sprites.json");
-        world.emplace<gear::SpriteBatch>(500);
-        world.emplace<gear::Shader>(vertexSource, fragmentSource);
-        world.emplace<gear::Application*>(app);
+        di.emplace<gear::ecs::World>();
+        di.emplace<gear::TextureAtlas>("sprites.json");
+        di.emplace<gear::SpriteBatch>(500);
+        di.emplace<gear::Shader>(vertexSource, fragmentSource);
+        di.emplace<gear::Application*>(app);
 
-        world.invoke(createStage);
+        di.invoke(createStage);
     }
 
 
     void update() override {
-        world.invoke(render);
+        di.invoke(render);
     }
 
     void end() override {
-        world.reset();
+        di.reset();
     }
 
 private:
-    gear::World world;
+    gear::DI di;
 };
 
 int main() {

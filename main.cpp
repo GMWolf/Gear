@@ -12,7 +12,7 @@
 #include <vector>
 #include <algorithm>
 #include <glm/gtc/type_ptr.hpp>
-#include <gear/World.h>
+#include <gear/DI.h>
 #include <gear/ECS.h>
 
 std::string vertexSource = R"(
@@ -56,23 +56,23 @@ class Game : public gear::ApplicationAdapter {
 public:
     void init(gear::Application* app) override {
 
-        world.emplace<gear::SpriteBatch>(100);
-        world.emplace<std::vector<Drop>>();
-        world.emplace<gear::TextureAtlas>("out.json");
+        di.emplace<gear::SpriteBatch>(100);
+        di.emplace<std::vector<Drop>>();
+        di.emplace<gear::TextureAtlas>("out.json");
 
-        auto& batch = world.get<gear::SpriteBatch>();
+        auto& batch = di.get<gear::SpriteBatch>();
 
         this->app = app;
-        world.emplace<gear::Shader>(vertexSource, fragmentSource);
+        di.emplace<gear::Shader>(vertexSource, fragmentSource);
 
-        world.emplace<gear::View>(gear::View{{0,0}, {640, 480}});
+        di.emplace<gear::View>(gear::View{{0, 0}, {640, 480}});
 
-        auto tex = world.get<gear::TextureAtlas>();
+        auto tex = di.get<gear::TextureAtlas>();
         spr[0] = tex.getSprite("potato");
         spr[1] = tex.getSprite("potato2");
 
         gear::Sprite sprBat = tex.getSprite("bat");
-        world.emplace<Bat>(Bat{
+        di.emplace<Bat>(Bat{
             {256, 32},
             gear::Rectangle{{0,0}, sprBat.size},
             sprBat
@@ -81,16 +81,16 @@ public:
 
     void update() override {
 
-        auto& drops = world.get<std::vector<Drop>>();
-        auto& bat = world.get<Bat>();
+        auto& drops = di.get<std::vector<Drop>>();
+        auto& bat = di.get<Bat>();
 
         dropTimer--;
         if (dropTimer <= 0) {
             dropTimer = 30;
-            world.invoke(spawnDrop);
+            di.invoke(spawnDrop);
         }
 
-        world.invoke(updateDrops);
+        di.invoke(updateDrops);
 
         if (app->keyPressed(gear::KEYS::LEFT)) {
             bat.pos.x -= 4;
@@ -99,7 +99,7 @@ public:
             bat.pos.x += 4;
         }
 
-        world.invoke(render);
+        di.invoke(render);
     }
 
     static void render(gear::SpriteBatch& batch, gear::Shader& shader, gear::View& view, std::vector<Drop>& drops, Bat& bat) {
@@ -145,10 +145,10 @@ public:
     }
 
     void end() override {
-        world.reset();
+        di.reset();
     }
 
-    gear::World world;
+    gear::DI di;
     int dropTimer = 60;
 
     gear::Sprite spr[2];
