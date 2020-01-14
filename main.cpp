@@ -190,10 +190,16 @@ int main() {
 
     gear::ecs::World world;
 
-    world.create<A, B>();
-    world.create<A, B>();
+    auto e = world.create<A, B>();
+    std::cout << e << std::endl;
+    world.get<A>(e).a = 900;
 
-    for(auto& chunk : world.getChunks<A, B>()) {
+    e = world.create<A, B>();
+    std::cout << e << std::endl;
+    world.get<B>(e).c = 33;
+
+
+    for(auto chunk : world.getChunks<A, B>()) {
         for(auto [a, b] : chunk) {
             std::cout << a.a << " " << b.c << std::endl;
         }

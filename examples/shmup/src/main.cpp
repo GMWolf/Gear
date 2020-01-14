@@ -15,6 +15,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <vector>
 #include <optional>
+#include <gear/ECS.h>
 
 std::string vertexSource = R"(
 #version 330 core
@@ -42,35 +43,30 @@ void main(){
 )";
 
 
-template<class T> using Store = std::vector<std::optional<T>>;
-
-
 using Position = glm::vec2;
 
-static void createStage(gear::TextureAtlas& atlas, Store<gear::Sprite>& sprites, Store<Position>& pos) {
+static void createStage(gear::TextureAtlas& atlas, gear::ecs::World& world) {
     {
         gear::Sprite spr = atlas.getSprite("ship1");
         for (int i = 0; i < 5; i++) {
-           int n = glm::max(sprites.size(), pos.size());
-           if (sprites.size() <= n) sprites.resize(n+1);
-           if (pos.size() <= n) pos.resize(n+1);
 
-            sprites[n] = spr;
-            pos[n] = glm::vec2{480 * i / 5, 600};
+            auto e = world.create<gear::Sprite, Position>();
+
+            world.get<gear::Sprite>(e) = spr;
+            world.get<Position>(e) = glm::vec2{480 * i / 5, 600};
         }
     }
 
     {
-        int n = glm::max(sprites.size(), pos.size());
-        if (sprites.size() <= n) sprites.resize(n+1);
-        if (pos.size() <= n) pos.resize(n+1);
 
-        sprites[n] = atlas.getSprite("player");
-        pos[n] = {480 / 2, 32};
+        auto e = world.create<gear::Sprite, Position>();
+
+        world.get<gear::Sprite>(e) = atlas.getSprite("ship2");;
+        world.get<Position>(e) = {480 / 2, 32};
     }
 }
 
-void render(gear::SpriteBatch& batch, gear::Shader& shd, Store<gear::Sprite>& sprites, Store<Position>& pos) {
+void render(gear::SpriteBatch& batch, gear::Shader& shd, gear::ecs::World& ecsWorld) {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
@@ -85,46 +81,26 @@ void render(gear::SpriteBatch& batch, gear::Shader& shd, Store<gear::Sprite>& sp
     auto vm = view.matrix();
     glUniformMatrix4fv(shd.uniformLocation("view"), 1, GL_FALSE, glm::value_ptr(vm));
 
-    int n = glm::min(sprites.size(), pos.size());
-
-    for(int i = 0; i < n; i++) {
-        if (sprites[i] && pos[i]) {
-            batch.draw(*sprites[i], *pos[i]);
+    for(auto chunk : ecsWorld.getChunks<gear::Sprite, Position>())
+    {
+        for(auto [sprite, pos] : chunk) {
+            batch.draw(sprite, pos);
         }
     }
 
+
     batch.flush();
 }
-/*
-void updatePlayer(gear::Application* app, Player& player) {
-    glm::vec2 d{0,0};
-    if (app->keyPressed(gear::KEYS::LEFT)) {
-        d.x -= 1;
-    }
-    if (app->keyPressed(gear::KEYS::RIGHT)) {
-        d.x += 1;
-    }
-    if (app->keyPressed(gear::KEYS::UP)) {
-        d.y += 1;
-    }
-    if (app->keyPressed(gear::KEYS::DOWN)) {
-        d.y -= 1;
-    }
-    if (d != glm::vec2{0,0}) {
-        player.pos += glm::normalize(d) * 3.f;
-    }
-}
-*/
+
+
 class Game : public gear::ApplicationAdapter {
 public:
     void init(gear::Application *app) override {
+        world.emplace<gear::ecs::World>();
         world.emplace<gear::TextureAtlas>("sprites.json");
         world.emplace<gear::SpriteBatch>(500);
-        world.emplace<Store<gear::Sprite>>();
-        world.emplace<Store<Position>>();
         world.emplace<gear::Shader>(vertexSource, fragmentSource);
         world.emplace<gear::Application*>(app);
-
 
         world.invoke(createStage);
     }
@@ -132,7 +108,6 @@ public:
 
     void update() override {
         world.invoke(render);
-//        world.invoke(updatePlayer);
     }
 
     void end() override {
