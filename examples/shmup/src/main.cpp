@@ -104,11 +104,8 @@ static void checkCollisions(gear::ecs::World& world) {
                 for(auto [transformB, shapeB, danger] : chunkB) {
 
                     if (gear::collide(shapeA, transformA.pos, shapeB, transformB.pos)) {
-
                         player.moveSpeed = 0;
-
                     }
-
 
                 }
             }
