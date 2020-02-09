@@ -26,9 +26,15 @@
 
 namespace gear::ecs {
 
+    //Entity Component
+    struct Entity {
+        EntityId id = 0;
+    };
+
     struct Chunk {
         const Archetype archetype;
         size_t size = 0;
+        Entity entity[ChunkSize]; //entity component is special case
         void* ptr[MaxComponents]{};
 
         explicit Chunk(const Archetype& archetype): archetype(archetype) {
@@ -78,8 +84,6 @@ namespace gear::ecs {
         (createCommand.components.push_back(std::make_pair(Component<std::remove_reference_t<T>>::ID(), static_cast<void*>(new std::remove_reference_t<T>(t)))), ...);
     }
 
-
-
     template<class... T>
     class ChunkIterator {
         std::tuple<T*...> ptr;
@@ -124,17 +128,20 @@ namespace gear::ecs {
         }
 
         ChunkIterator<T...> begin() {
-            return ChunkIterator<T...>(static_cast<T*>(chunk->get(Component<T>::ID(), 0))...);
+            return ChunkIterator<T...>( static_cast<T*>(std::is_same_v<T, Entity> ? chunk->entity : chunk->get(Component<T>::ID(), 0))...);
         }
 
         ChunkIterator<T...> end() {
-            return ChunkIterator<T...>(static_cast<T*>(chunk->get(Component<T>::ID(), chunk->size))...);
+            return ChunkIterator<T...>(static_cast<T*>(std::is_same_v<T, Entity> ? chunk->entity + chunk->size : chunk->get(Component<T>::ID(), chunk->size))...);
         }
     };
 
 
     class World {
         Registry registry;
+        EntityId nextEntityId = 0;
+        std::vector<std::pair<Chunk*, uint16_t>> entities;
+
     public:
         void execute(const CreateCommand& createCommand);
         void executeCommandBuffer(const CommandBuffer& commandBuffer);

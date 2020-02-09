@@ -55,6 +55,13 @@ namespace gear::ecs {
         for(auto& [componentId, componentPointer] : createCommand.components) {
             ComponentInfo::component[componentId].functions.emplace(chunk->get(componentId, eid), componentPointer);
         }
+
+        EntityId entityid = nextComponentId++;
+        chunk->entity[eid].id = entityid;
+        if (entities.size() <= entityid)
+            entities.resize(entityid + 1);
+
+        entities[entityid] = std::make_pair(chunk, eid);
     }
 
     void World::executeCommandBuffer(const CommandBuffer &commandBuffer) {
