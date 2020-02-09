@@ -18,6 +18,7 @@
 #include <cstddef>
 #include <cstdlib>
 #include <variant>
+#include <any>
 
 #include "Config.h"
 #include "Component.h"
@@ -25,63 +26,45 @@
 
 namespace gear::ecs {
 
-    class ComponentStore {
-        std::vector<void*> chunks;
-        ComponentInfo componentInfo;
+    struct Chunk {
+        const Archetype archetype;
+        size_t size = 0;
+        void* ptr[MaxComponents]{};
 
-        void (*moveFunc)(void* from, void* to){nullptr};
-        void (*emplaceFunc)(void* pos, void* from){nullptr};
-        void (*destroy)(void* ptr){nullptr};
-    public:
-
-        explicit ComponentStore(ComponentId id) : componentInfo(ComponentInfo::component[id]) {
+        explicit Chunk(const Archetype& archetype): archetype(archetype) {
         }
 
-        void createChunk(ChunkId id);
-
-        void freeChunk(ChunkId id);
-
-        bool hasChunk(ChunkId id);
-
-        void* getItem(ChunkId chunk, uint16_t index);
-
-        void move(ChunkId chunk, uint16_t from, uint16_t to);
-
-        void emplace(ChunkId chunk, uint16_t index, void* from);
-
+        void* getData(ComponentId id);
+        void* get(ComponentId componentId, uint16_t index);
     };
 
     class Registry {
-        std::array<std::optional<ComponentStore>, MaxComponents> stores;
-
-        std::unordered_map<Archetype, std::vector<ChunkId>, Archetype::Hash> archetypeChunks;
-        std::vector<uint16_t> chunkSize;
-
     public:
+        std::unordered_map<Archetype, std::vector<std::unique_ptr<Chunk>>, Archetype::Hash> archetypeChunks;
 
+        Registry() = default;
         Registry(const Registry&) = delete;
         Registry& operator=(const Registry&) = delete;
 
-        std::optional<ComponentStore>& getStore(ComponentId id);
+        Chunk* createChunk(const Archetype& a);
+        Chunk* getFreeChunk(const Archetype& a);
 
-        std::pair<ChunkId, uint16_t> getFreeIndex(const Archetype& a) const;
-
-        void createStore(ComponentId id);
-
-        void createChunk(ComponentId componentId, ChunkId chunkId);
-
-        std::pair<ChunkId, uint16_t> createEntity(const Archetype& archetype);
+        std::pair<Chunk*, uint16_t> emplaceEntity(const Archetype& archetype);
     };
-
 
     struct CreateCommand {
         Archetype archetype;
-        std::vector<std::pair<ComponentId, std::unique_ptr<void>>> components;
+        std::vector<std::pair<ComponentId, void*>> components;
+
+        ~CreateCommand() {
+            for(auto [id, ptr] : components) {
+                ComponentInfo::component[id].functions.destroy(ptr);
+            }
+        }
     };
 
     struct CommandBuffer {
         std::vector<std::variant<CreateCommand>> commands;
-
         template<class... T>
         void createEntity(T&&... t);
     };
@@ -90,21 +73,87 @@ namespace gear::ecs {
     void CommandBuffer::createEntity(T&&... t) {
         auto& command = commands.emplace_back(CreateCommand{});
         auto& createCommand = std::get<CreateCommand>(command);
-        createCommand.archetype = Archetype::create<T...>();
+        createCommand.archetype = Archetype::create<std::remove_reference_t<T>...>();
 
-        (createCommand.components.emplace_back(std::make_pair(Component<std::remove_reference_t<T>>::ID(), std::make_unique<std::remove_reference_t<T>>(t))), ...);
+        (createCommand.components.push_back(std::make_pair(Component<std::remove_reference_t<T>>::ID(), static_cast<void*>(new std::remove_reference_t<T>(t)))), ...);
     }
+
+
+
+    template<class... T>
+    class ChunkIterator {
+        std::tuple<T*...> ptr;
+    public:
+        explicit ChunkIterator(T*... ptrs) : ptr(ptrs...) {
+        }
+
+        std::tuple<T&...> operator*() noexcept {
+            return std::forward_as_tuple(*std::get<T*>(ptr)...);
+        }
+
+        ChunkIterator& operator+(size_t i) const noexcept {
+            return ChunkIterator(std::get<T*>(ptr) + i ...);
+        }
+
+        ChunkIterator& operator++() noexcept {
+            (++std::get<T*>(ptr),...);
+            return *this;
+        }
+
+        ChunkIterator operator++(int) &noexcept {
+            auto t = *this;
+            ++*this;
+            return t;
+        }
+
+        bool operator==(const ChunkIterator& o) {
+            return (std::get<0>(ptr) == std::get<0>(o.ptr));
+        }
+
+        bool operator!=(const ChunkIterator& o) {
+            return !(*this == o);
+        }
+    };
+
+    template<class... T>
+    class ChunkView {
+        Chunk* chunk;
+    public:
+
+        explicit ChunkView(Chunk* chunk) : chunk(chunk){
+        }
+
+        ChunkIterator<T...> begin() {
+            return ChunkIterator<T...>(static_cast<T*>(chunk->get(Component<T>::ID(), 0))...);
+        }
+
+        ChunkIterator<T...> end() {
+            return ChunkIterator<T...>(static_cast<T*>(chunk->get(Component<T>::ID(), chunk->size))...);
+        }
+    };
+
 
     class World {
         Registry registry;
-
     public:
-
         void execute(const CreateCommand& createCommand);
-
         void executeCommandBuffer(const CommandBuffer& commandBuffer);
 
+        template<class... T, class Fun>
+        void foreachChunk(Fun fun) {
+            Archetype archetype = Archetype::create<T...>();
+            for(auto& [arch, chunks] : registry.archetypeChunks) {
+                if (arch.matches(archetype)) {
+                    for(auto& chunk : chunks) {
+                        fun(ChunkView<T...>(chunk.get()));
+                    }
+                }
+            }
+        }
     };
+
+
+
 
 }
 #endif //GEAR_ECS_H

@@ -10,9 +10,6 @@
 namespace gear::ecs {
 
 
-
-
-
 }
 
 

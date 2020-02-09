@@ -16,6 +16,7 @@
 #include <gear/ECS/ECS.h>
 #include <gear/CoreComponents.h>
 #include <gear/ECS/System.h>
+#include <iostream>
 
 std::string vertexSource = R"(
 #version 330 core
@@ -89,110 +90,51 @@ static void createStage(gear::TextureAtlas& atlas, gear::ecs::World& world) {
     world.executeCommandBuffer(cmd);
 }
 
-class PlayerMoveSystem : public gear::ecs::IteratingSystem<PlayerMoveSystem, Player, gear::Transform> {
-public:
-
-    union {
-        std::tuple<gear::Application *> di{};
-        struct {
-            gear::Application* app;
-        };
-    };
-
-    void execute(Player& player, gear::Transform& transform) {
-
-        if (app->keyPressed(gear::KEYS::RIGHT)) {
-            transform.pos.x += player.moveSpeed;
-        }
-        if (app->keyPressed(gear::KEYS::LEFT)) {
-            transform.pos.x -= player.moveSpeed;
-        }
-        if (app->keyPressed(gear::KEYS::UP)) {
-            transform.pos.y += player.moveSpeed;
-        }
-        if (app->keyPressed(gear::KEYS::DOWN)) {
-            transform.pos.y -= player.moveSpeed;
-        }
-
-        if (player.shootTimer > 0) player.shootTimer--;
-
-        if (app->keyPressed(gear::KEYS::SPACE) && player.shootTimer <= 0) {
-
-            player.shootTimer = 0;
-
-            /*
-            auto e = world.create<gear::Sprite, gear::CollisionShape, gear::Transform, Bullet>();
-            world.get<gear::Sprite>(e) = player.bulletSprite;
-            world.get<gear::CollisionShape>(e) = player.bulletShape;
-            world.get<gear::Transform>(e).pos = transform.pos + glm::vec2{0, 24};
-            world.get<Bullet>(e).vel = {0, 10};
-
-            player.shootTimer = 12;
-             */
-        }
-    }
-
-};
 static void movePlayer(gear::Application* app, gear::ecs::World& world) {
-    auto chunks = world.getChunks<Player, gear::Transform>();
-    for(auto chunk : chunks) {
-        for(auto [player, transform] : chunk) {
-            if (app->keyPressed(gear::KEYS::RIGHT)) {
-                transform.pos.x += player.moveSpeed;
-            }
-            if (app->keyPressed(gear::KEYS::LEFT)) {
-                transform.pos.x -= player.moveSpeed;
-            }
-            if (app->keyPressed(gear::KEYS::UP)) {
-                transform.pos.y += player.moveSpeed;
-            }
-            if (app->keyPressed(gear::KEYS::DOWN)) {
-                transform.pos.y -= player.moveSpeed;
-            }
 
-            if (player.shootTimer > 0) player.shootTimer--;
+    gear::ecs::CommandBuffer cmd;
 
-            if (app->keyPressed(gear::KEYS::SPACE) && player.shootTimer <= 0) {
-
-                auto e = world.create<gear::Sprite, gear::CollisionShape, gear::Transform, Bullet>();
-                world.get<gear::Sprite>(e) = player.bulletSprite;
-                world.get<gear::CollisionShape>(e) = player.bulletShape;
-                world.get<gear::Transform>(e).pos = transform.pos + glm::vec2{0, 24};
-                world.get<Bullet>(e).vel = {0, 10};
-
-                player.shootTimer = 12;
-            }
-
-        }
-    }
-
-
-    for (auto chunk : world.getChunks<gear::Transform, Bullet>()) {
-        for(auto [transform, bullet] : chunk) {
-            transform.pos += bullet.vel;
-        }
-    }
-}
-
-static void checkCollisions(gear::ecs::World& world) {
-
-    for(auto chunkA : world.getChunks<gear::Transform, gear::CollisionShape, Bullet>()) {
-        for(auto [transformA, shapeA, bullet] : chunkA) {
-
-            for(auto chunkB : world.getChunks<gear::Transform, gear::CollisionShape, Danger>()) {
-                for(auto [transformB, shapeB, danger] : chunkB) {
-
-                    if (gear::collide(shapeA, transformA.pos, shapeB, transformB.pos)) {
-
+    world.foreachChunk<Player, gear::Transform>(
+            [&](gear::ecs::ChunkView<Player, gear::Transform> chunk){
+                for(auto [player, transform] : chunk) {
+                    if (app->keyPressed(gear::KEYS::RIGHT)) {
+                        transform.pos.x += player.moveSpeed;
+                    }
+                    if (app->keyPressed(gear::KEYS::LEFT)) {
+                        transform.pos.x -= player.moveSpeed;
+                    }
+                    if (app->keyPressed(gear::KEYS::UP)) {
+                        transform.pos.y += player.moveSpeed;
+                    }
+                    if (app->keyPressed(gear::KEYS::DOWN)) {
+                        transform.pos.y -= player.moveSpeed;
                     }
 
+                    if (player.shootTimer > 0) player.shootTimer--;
+
+                    if (app->keyPressed(gear::KEYS::SPACE) && player.shootTimer <= 0) {
+
+
+                        cmd.createEntity( player.bulletSprite,
+                                player.bulletShape,
+                                gear::Transform{transform.pos + glm::vec2(0, 24)},
+                                Bullet{{0, 10}}
+                                );
+
+                        player.shootTimer = 12;
+                    }
                 }
-            }
-        }
-    }
+            });
 
 
+    world.foreachChunk<gear::Transform, Bullet>(
+            [](auto chunk){
+                for(auto [transform, bullet] : chunk) {
+                    transform.pos += bullet.vel;
+                }
+            });
 
+    world.executeCommandBuffer(cmd);
 }
 
 void render(gear::SpriteBatch& batch, gear::Shader& shd, gear::ecs::World& ecsWorld) {
@@ -210,12 +152,12 @@ void render(gear::SpriteBatch& batch, gear::Shader& shd, gear::ecs::World& ecsWo
     auto vm = view.matrix();
     glUniformMatrix4fv(shd.uniformLocation("view"), 1, GL_FALSE, glm::value_ptr(vm));
 
-    for(auto chunk : ecsWorld.getChunks<gear::Sprite, gear::Transform>())
-    {
-        for(auto [sprite, transform] : chunk) {
-            batch.draw(sprite, transform.pos);
-        }
-    }
+    ecsWorld.foreachChunk<gear::Sprite, gear::Transform>(
+            [&](gear::ecs::ChunkView<gear::Sprite, gear::Transform> chunk){
+                for(auto [sprite, transform] : chunk) {
+                    batch.draw(sprite, transform.pos);
+                }
+            });
 
     batch.flush();
 }
@@ -234,11 +176,8 @@ public:
     }
 
     void update() override {
-        PlayerMoveSystem p;
-        di.inject(p);
-        gear::ecs::execute(p, di.get<gear::ecs::World>());
-
-        di.invoke(checkCollisions);
+        //gear::ecs::execute(p, di.get<gear::ecs::World>());
+        di.invoke(movePlayer);
         di.invoke(render);
     }
 

@@ -26,8 +26,6 @@ namespace gear::ecs {
         static ComponentInfo component[MaxComponents];
     };
 
-
-
     template<class T>
     struct Component {
         static ComponentInfo info();
@@ -87,7 +85,6 @@ namespace gear::ecs {
         T& tTo = *static_cast<T*>(to);
         tTo = std::move(tFrom);
     }
-
 
 }
 

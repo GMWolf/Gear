@@ -4,113 +4,71 @@
 
 #include <gear/ECS/ECS.h>
 #include <gear/ECS/Component.h>
+#include <iostream>
 
 namespace gear::ecs {
 
     ComponentId nextComponentId = 0;
 
-
-    std::optional<ComponentStore>& Registry::getStore(ComponentId id) {
-        return stores[id];
-    }
-
-    std::pair<ChunkId, uint16_t> Registry::getFreeIndex(const Archetype &a) const {
+    Chunk* Registry::getFreeChunk(const Archetype &a)  {
         auto s = archetypeChunks.find(a);
         if (s != archetypeChunks.end()) {
             auto& [key, chunks] = *s;
-            for(ChunkId chunkid : chunks) {
-                if (chunkSize[chunkid] < ChunkSize) {
-                    return std::make_pair(chunkid, chunkSize[chunkid]);
+            for(auto& chunk : chunks) {
+                if (chunk->size < ChunkSize) {
+                    return chunk.get();
                 }
             }
         }
 
-        return std::make_pair(chunkSize.size(), 0);
+        return nullptr;
     }
 
-    void Registry::createChunk(ComponentId componentId, ChunkId chunkId) {
-        if (!stores[componentId]) {
-            createStore(componentId);
-        }
+    Chunk* Registry::createChunk(const Archetype& a) {
+        auto&[key, chunks] = *archetypeChunks.try_emplace(a).first;
 
-        if (!stores[componentId]->hasChunk(chunkId)) {
-            stores[componentId]->createChunk(chunkId);
-        }
-    }
+        Chunk* chunk = chunks.emplace_back(std::make_unique<Chunk>(a)).get();
 
-    void ComponentStore::createChunk(ChunkId id) {
-        if (chunks.size() <= id) {
-            chunks.resize(id + 1, nullptr);
-        }
-
-        if (chunks[id] == nullptr) {
-            chunks[id] = malloc(componentInfo.size * ChunkSize);
-        }
-    }
-
-    void ComponentStore::freeChunk(ChunkId id) {
-        free(chunks[id]);
-        chunks[id] = nullptr;
-    }
-
-    bool ComponentStore::hasChunk(ChunkId id) {
-        if (id >= chunks.size()) {
-            return false;
-        }
-        return chunks[id] != nullptr;
-    }
-
-    void *ComponentStore::getItem(ChunkId chunk, uint16_t index) {
-        return (char*)chunks[chunk] + (index * componentInfo.size);
-    }
-
-    void ComponentStore::move(ChunkId chunk, uint16_t from, uint16_t to) {
-        moveFunc(getItem(chunk, from), getItem(chunk, to));
-    }
-
-    void ComponentStore::emplace(ChunkId chunk, uint16_t index, void *from) {
-        emplaceFunc(getItem(chunk, index), from);
-    }
-
-    void Registry::createStore(ComponentId id) {
-        if (!stores[id]) {
-            stores[id] = ComponentStore(id);
-        }
-    }
-
-    std::pair<ChunkId, uint16_t> Registry::createEntity(const Archetype &archetype) {
-
-        auto [chunkId, index] = getFreeIndex(archetype);
-
-        for(ComponentId componentId = 0; componentId < MaxComponents; componentId++) {
-            if (archetype[componentId]) {
-                if (!getStore(componentId)) {
-                    createStore(componentId);
-                }
-
-                auto& store = *getStore(componentId);
-                if (!store.hasChunk(chunkId)) {
-                    store.createChunk(chunkId);
-                }
+        for (ComponentId i = 0; i < MaxComponents; i++) {
+            if (a[i]) {
+                chunk->ptr[i] = malloc(ComponentInfo::component[i].size * ChunkSize);
             }
         }
 
-        return std::make_pair(chunkId, index);
+        return chunk;
     }
+
+    std::pair<Chunk *, uint16_t> Registry::emplaceEntity(const Archetype &archetype) {
+        auto chunk = getFreeChunk(archetype);
+        if (!chunk) {
+            chunk = createChunk(archetype);
+        }
+
+        chunk->size++;
+
+        return std::make_pair(chunk, chunk->size - 1);
+    }
+
 
     void World::execute(const CreateCommand &createCommand) {
-        auto [chunkId, eid] = registry.createEntity(createCommand.archetype);
-
-        for(auto& [componentId, ptr] : createCommand.components) {
-            registry.getStore(componentId)->emplace(chunkId, eid, ptr.get());
+        auto [chunk, eid] = registry.emplaceEntity(createCommand.archetype);
+        for(auto& [componentId, componentPointer] : createCommand.components) {
+            ComponentInfo::component[componentId].functions.emplace(chunk->get(componentId, eid), componentPointer);
         }
     }
 
     void World::executeCommandBuffer(const CommandBuffer &commandBuffer) {
         for(auto& c : commandBuffer.commands) {
-
             execute(std::get<CreateCommand>(c));
-
         }
     }
+
+    void *Chunk::getData(ComponentId id) {
+        return ptr[id];
+    }
+
+    void *Chunk::get(ComponentId componentId, uint16_t index) {
+        return (char*)getData(componentId) + (index * ComponentInfo::component[componentId].size);
+    }
+
 }
