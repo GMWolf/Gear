@@ -30,7 +30,7 @@ namespace gear::ecs {
         Chunk* chunk = chunks.emplace_back(std::make_unique<Chunk>(a)).get();
 
         for (ComponentId i = 0; i < MaxComponents; i++) {
-            if (a[i]) {
+            if (a[i] || i == Component<Entity>::ID()) {
                 chunk->ptr[i] = malloc(ComponentInfo::component[i].size * ChunkSize);
             }
         }
@@ -49,25 +49,51 @@ namespace gear::ecs {
         return std::make_pair(chunk, chunk->size - 1);
     }
 
+    void CommandBuffer::destroyEntity(const Entity &entity) {
+        commands.emplace_back(DestroyCommand{entity.id});
+    }
+
 
     void World::execute(const CreateCommand &createCommand) {
         auto [chunk, eid] = registry.emplaceEntity(createCommand.archetype);
         for(auto& [componentId, componentPointer] : createCommand.components) {
             ComponentInfo::component[componentId].functions.emplace(chunk->get(componentId, eid), componentPointer);
         }
+        Entity entity;
+        entity.id = nextComponentId++;
+        if (entities.size() <= entity.id)
+            entities.resize(entity.id + 1);
+        entities[entity.id] = std::make_pair(chunk, eid);
 
-        EntityId entityid = nextComponentId++;
-        chunk->entity[eid].id = entityid;
-        if (entities.size() <= entityid)
-            entities.resize(entityid + 1);
-
-        entities[entityid] = std::make_pair(chunk, eid);
+        Component<Entity>::Functions::emplace(chunk->get(Component<Entity>::ID(), eid), &entity);
     }
 
     void World::executeCommandBuffer(const CommandBuffer &commandBuffer) {
         for(auto& c : commandBuffer.commands) {
-            execute(std::get<CreateCommand>(c));
+            std::visit([this](auto c){execute(c);}, c);
         }
+
+    }
+
+    void World::execute(const DestroyCommand& command) {
+        auto [chunk, index] = entities[command.entityId];
+
+        uint16_t idFrom = chunk->size - 1;
+
+        for(int i = 0; i < MaxComponents; i++) {
+            if (chunk->archetype[i]) {
+                void* from = chunk->get(i, idFrom);
+                void* to = chunk->get(i, index);
+                if (from != to) {
+                    ComponentInfo::component[i].functions.move(from, to);
+                }
+                ComponentInfo::component[i].functions.destroy(from);
+            }
+        }
+        chunk->size--;
+
+        Entity entityFrom = *static_cast<Entity*>(chunk->get(Component<Entity>::ID(), idFrom));
+        entities[entityFrom.id].second = index;
     }
 
     void *Chunk::getData(ComponentId id) {

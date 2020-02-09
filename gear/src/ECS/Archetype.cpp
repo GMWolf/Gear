@@ -10,6 +10,7 @@ namespace gear::ecs {
         for (auto &id : componentIds) {
             bits.set(id);
         }
+        bits.set(Component<Entity>::ID());
     }
 
     bool Archetype::matches(const Archetype &o) const {

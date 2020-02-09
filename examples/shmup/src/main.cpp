@@ -127,10 +127,13 @@ static void movePlayer(gear::Application* app, gear::ecs::World& world) {
             });
 
 
-    world.foreachChunk<gear::Transform, Bullet>(
-            [](auto chunk){
-                for(auto [transform, bullet] : chunk) {
+    world.foreachChunk<gear::ecs::Entity, gear::Transform, Bullet>(
+            [&](auto chunk){
+                for(auto [entity, transform, bullet] : chunk) {
                     transform.pos += bullet.vel;
+                    if (transform.pos.y > 480) {
+                        cmd.destroyEntity(entity);
+                    }
                 }
             });
 

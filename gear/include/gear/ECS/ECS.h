@@ -26,15 +26,11 @@
 
 namespace gear::ecs {
 
-    //Entity Component
-    struct Entity {
-        EntityId id = 0;
-    };
+
 
     struct Chunk {
         const Archetype archetype;
         size_t size = 0;
-        Entity entity[ChunkSize]; //entity component is special case
         void* ptr[MaxComponents]{};
 
         explicit Chunk(const Archetype& archetype): archetype(archetype) {
@@ -69,10 +65,16 @@ namespace gear::ecs {
         }
     };
 
+    struct DestroyCommand {
+        EntityId entityId;
+    };
+
     struct CommandBuffer {
-        std::vector<std::variant<CreateCommand>> commands;
+        std::vector<std::variant<CreateCommand, DestroyCommand>> commands;
         template<class... T>
         void createEntity(T&&... t);
+
+        void destroyEntity(const Entity& entity);
     };
 
     template<class... T>
@@ -83,6 +85,8 @@ namespace gear::ecs {
 
         (createCommand.components.push_back(std::make_pair(Component<std::remove_reference_t<T>>::ID(), static_cast<void*>(new std::remove_reference_t<T>(t)))), ...);
     }
+
+
 
     template<class... T>
     class ChunkIterator {
@@ -128,11 +132,11 @@ namespace gear::ecs {
         }
 
         ChunkIterator<T...> begin() {
-            return ChunkIterator<T...>( static_cast<T*>(std::is_same_v<T, Entity> ? chunk->entity : chunk->get(Component<T>::ID(), 0))...);
+            return ChunkIterator<T...>( static_cast<T*>(chunk->get(Component<T>::ID(), 0))...);
         }
 
         ChunkIterator<T...> end() {
-            return ChunkIterator<T...>(static_cast<T*>(std::is_same_v<T, Entity> ? chunk->entity + chunk->size : chunk->get(Component<T>::ID(), chunk->size))...);
+            return ChunkIterator<T...>(static_cast<T*>(chunk->get(Component<T>::ID(), chunk->size))...);
         }
     };
 
@@ -144,6 +148,7 @@ namespace gear::ecs {
 
     public:
         void execute(const CreateCommand& createCommand);
+        void execute(const DestroyCommand& destroyCommand);
         void executeCommandBuffer(const CommandBuffer& commandBuffer);
 
         template<class... T, class Fun>
