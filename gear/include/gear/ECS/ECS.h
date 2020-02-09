@@ -23,6 +23,7 @@
 #include "Config.h"
 #include "Component.h"
 #include "Archetype.h"
+#include <cassert>
 
 namespace gear::ecs {
 
@@ -56,7 +57,7 @@ namespace gear::ecs {
 
     struct CreateCommand {
         Archetype archetype;
-        std::vector<std::pair<ComponentId, void*>> components;
+        std::vector<std::pair<ComponentId, void*>> components{};
 
         ~CreateCommand() {
             for(auto [id, ptr] : components) {
@@ -79,11 +80,13 @@ namespace gear::ecs {
 
     template<class... T>
     void CommandBuffer::createEntity(T&&... t) {
-        auto& command = commands.emplace_back(CreateCommand{});
-        auto& createCommand = std::get<CreateCommand>(command);
+        commands.emplace_back(CreateCommand{});
+        auto& createCommand = std::get<CreateCommand>(commands.back());
+        assert(createCommand.components.empty());
         createCommand.archetype = Archetype::create<std::remove_reference_t<T>...>();
 
         (createCommand.components.push_back(std::make_pair(Component<std::remove_reference_t<T>>::ID(), static_cast<void*>(new std::remove_reference_t<T>(t)))), ...);
+        assert(createCommand.components.size() == sizeof...(T));
     }
 
 
@@ -145,6 +148,8 @@ namespace gear::ecs {
         Registry registry;
         EntityId nextEntityId = 0;
         std::vector<std::pair<Chunk*, uint16_t>> entities;
+
+        EntityId getFreeEntityId();
 
     public:
         void execute(const CreateCommand& createCommand);

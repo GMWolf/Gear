@@ -5,6 +5,7 @@
 #include <gear/ECS/ECS.h>
 #include <gear/ECS/Component.h>
 #include <iostream>
+#include <cassert>
 
 namespace gear::ecs {
 
@@ -60,40 +61,61 @@ namespace gear::ecs {
             ComponentInfo::component[componentId].functions.emplace(chunk->get(componentId, eid), componentPointer);
         }
         Entity entity;
-        entity.id = nextComponentId++;
+        entity.id = getFreeEntityId();
         if (entities.size() <= entity.id)
             entities.resize(entity.id + 1);
+
         entities[entity.id] = std::make_pair(chunk, eid);
 
         Component<Entity>::Functions::emplace(chunk->get(Component<Entity>::ID(), eid), &entity);
     }
 
+    void World::execute(const DestroyCommand& command) {
+        auto [chunk, index] = entities[command.entityId];
+
+        if (chunk && (chunk->size > 0)) {
+            uint16_t idFrom = chunk->size - 1;
+
+            EntityId entityIdFrom = static_cast<Entity *>(chunk->get(Component<Entity>::ID(), idFrom))->id;
+
+            for (int i = 0; i < MaxComponents; i++) {
+                if (chunk->archetype[i]) {
+                    void *from = chunk->get(i, idFrom);
+                    void *to = chunk->get(i, index);
+                    if (from != to) {
+                        ComponentInfo::component[i].functions.move(from, to);
+                    }
+                    ComponentInfo::component[i].functions.destroy(from);
+                }
+            }
+            chunk->size--;
+
+            static_cast<Entity*>(chunk->get(Component<Entity>::ID(), index))->id = entityIdFrom;
+
+            entities[entityIdFrom].second = index;
+            entities[command.entityId].first = nullptr;
+        }
+    }
+
     void World::executeCommandBuffer(const CommandBuffer &commandBuffer) {
         for(auto& c : commandBuffer.commands) {
-            std::visit([this](auto c){execute(c);}, c);
+            //std::visit([this](auto c){execute(c);}, c);
+            if (std::holds_alternative<DestroyCommand>(c)) {
+                execute(std::get<DestroyCommand>(c));
+            } else if (std::holds_alternative<CreateCommand>(c)) {
+                execute(std::get<CreateCommand>(c));
+            }
         }
 
     }
 
-    void World::execute(const DestroyCommand& command) {
-        auto [chunk, index] = entities[command.entityId];
-
-        uint16_t idFrom = chunk->size - 1;
-
-        for(int i = 0; i < MaxComponents; i++) {
-            if (chunk->archetype[i]) {
-                void* from = chunk->get(i, idFrom);
-                void* to = chunk->get(i, index);
-                if (from != to) {
-                    ComponentInfo::component[i].functions.move(from, to);
-                }
-                ComponentInfo::component[i].functions.destroy(from);
+    EntityId World::getFreeEntityId() {
+        /*for(int i = 0; i < entities.size(); i++) {
+            if (entities[i].first == nullptr) {
+                return i;
             }
-        }
-        chunk->size--;
-
-        Entity entityFrom = *static_cast<Entity*>(chunk->get(Component<Entity>::ID(), idFrom));
-        entities[entityFrom.id].second = index;
+        }*/
+        return nextEntityId++;
     }
 
     void *Chunk::getData(ComponentId id) {

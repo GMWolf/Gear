@@ -114,17 +114,17 @@ static void movePlayer(gear::Application* app, gear::ecs::World& world) {
 
                     if (app->keyPressed(gear::KEYS::SPACE) && player.shootTimer <= 0) {
 
-
                         cmd.createEntity( player.bulletSprite,
                                 player.bulletShape,
                                 gear::Transform{transform.pos + glm::vec2(0, 24)},
                                 Bullet{{0, 10}}
                                 );
 
-                        player.shootTimer = 12;
+                       // player.shootTimer = 12;
                     }
                 }
             });
+
 
 
     world.foreachChunk<gear::ecs::Entity, gear::Transform, Bullet>(
