@@ -38,6 +38,11 @@ namespace gear {
                 std::enable_if_t<std::is_void<R>::value, int> = 0>
         void invoke(R(*f)(Args...));
 
+        template<class... T>
+        void inject(std::tuple<T...>& tuple);
+
+        template<class T>
+        void inject(T& t);
         void reset();
 
     private:
@@ -75,6 +80,16 @@ namespace gear {
     template<class R, class... Args, std::enable_if_t<!std::is_void<R>::value, int>>
     R DI::invoke(R (*f)(Args...)) {
         return f(get<std::remove_reference_t<Args>>()...);
+    }
+
+    template<class... T>
+    void DI::inject(std::tuple<T...> &tuple) {
+        ((std::get<T>(tuple) = get<std::remove_reference_t<T>>()), ...);
+    }
+
+    template<class T>
+    void DI::inject(T &t) {
+        inject(t.di);
     }
 
     template<class R, class... Args,

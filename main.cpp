@@ -13,7 +13,7 @@
 #include <algorithm>
 #include <glm/gtc/type_ptr.hpp>
 #include <gear/DI.h>
-#include <gear/ECS.h>
+#include <gear/ECS/ECS.h>
 
 std::string vertexSource = R"(
 #version 330 core
