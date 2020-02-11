@@ -7,7 +7,6 @@
 #include <gear/DI.h>
 #include <gear/TextureAtlas.h>
 #include <gear/SpriteBatch.h>
-#include <glm/vec2.hpp>
 #include <gear/CollisionDetection.h>
 #include <gear/CollisionShape.h>
 #include <gear/Shader.h>
@@ -15,8 +14,6 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <gear/ECS/ECS.h>
 #include <gear/CoreComponents.h>
-#include <gear/ECS/System.h>
-#include <iostream>
 
 std::string vertexSource = R"(
 #version 330 core
@@ -50,25 +47,23 @@ struct Player {
     float shootTimer = 0;
 };
 
-struct Danger {
+struct Enemy {
 };
 
 struct Bullet {
     glm::vec2 vel;
 };
 
-static void createStage(gear::TextureAtlas& atlas, gear::ecs::World& world) {
-
-    gear::ecs::CommandBuffer cmd;
+static void createStage(gear::TextureAtlas& atlas, gear::ecs::World& world, gear::ecs::CommandBuffer& cmd) {
 
     {
         gear::Sprite spr = atlas.getSprite("ship1");
         for (int i = 0; i < 5; i++) {
 
             cmd.createEntity(spr,
-                    gear::Transform{{480 * i / 5, 600}},
-                    gear::CollisionShape{gear::Rectangle{{0,0}, {spr.size}}},
-                    Danger{}
+                             gear::Transform{{480 * i / 5, 600}},
+                             gear::CollisionShape{gear::Rectangle{{0,0}, {spr.size}}},
+                             Enemy{}
                     );
         }
     }
@@ -87,15 +82,12 @@ static void createStage(gear::TextureAtlas& atlas, gear::ecs::World& world) {
 
     }
 
-    world.executeCommandBuffer(cmd);
 }
 
-static void movePlayer(gear::Application* app, gear::ecs::World& world) {
-
-    gear::ecs::CommandBuffer cmd;
+static void movePlayer(gear::Application* app, gear::ecs::World& world, gear::ecs::CommandBuffer& cmd) {
 
     world.foreachChunk<Player, gear::Transform>(
-            [&](gear::ecs::ChunkView<Player, gear::Transform> chunk){
+            [&](auto chunk){
                 for(auto [player, transform] : chunk) {
                     if (app->keyPressed(gear::KEYS::RIGHT)) {
                         transform.pos.x += player.moveSpeed;
@@ -120,7 +112,7 @@ static void movePlayer(gear::Application* app, gear::ecs::World& world) {
                                 Bullet{{0, 10}}
                                 );
 
-                       // player.shootTimer = 12;
+                        player.shootTimer = 12;
                     }
                 }
             });
@@ -131,14 +123,38 @@ static void movePlayer(gear::Application* app, gear::ecs::World& world) {
             [&](auto chunk){
                 for(auto [entity, transform, bullet] : chunk) {
                     transform.pos += bullet.vel;
-                    if (transform.pos.y > 480) {
+                    if (transform.pos.y > 720) {
                         cmd.destroyEntity(entity);
                     }
                 }
             });
 
-    world.executeCommandBuffer(cmd);
 }
+
+
+static void collisionDetection(gear::ecs::World& world, gear::ecs::CommandBuffer& cmd) {
+
+
+    world.foreachChunk<gear::ecs::Entity, Enemy, gear::Transform, gear::CollisionShape>(
+            [&](auto enemyChunk) {
+                world.foreachChunk<gear::ecs::Entity, Bullet, gear::Transform, gear::CollisionShape>(
+                  [&](auto bulletChunk) {
+                      for(auto [enemyEntity, enemy, enemyTransform, enemyShape] : enemyChunk) {
+                        for(auto [bulletEntity, bullet, bulletTransform, bulletShape] : bulletChunk) {
+
+                            if (gear::collide(enemyShape, enemyTransform.pos, bulletShape, bulletTransform.pos)) {
+                                cmd.destroyEntity(enemyEntity);
+                                cmd.destroyEntity(bulletEntity);
+                            }
+
+                        }
+                      }
+                  }
+                );
+            });
+
+}
+
 
 void render(gear::SpriteBatch& batch, gear::Shader& shd, gear::ecs::World& ecsWorld) {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -156,7 +172,7 @@ void render(gear::SpriteBatch& batch, gear::Shader& shd, gear::ecs::World& ecsWo
     glUniformMatrix4fv(shd.uniformLocation("view"), 1, GL_FALSE, glm::value_ptr(vm));
 
     ecsWorld.foreachChunk<gear::Sprite, gear::Transform>(
-            [&](gear::ecs::ChunkView<gear::Sprite, gear::Transform> chunk){
+            [&](auto chunk){
                 for(auto [sprite, transform] : chunk) {
                     batch.draw(sprite, transform.pos);
                 }
@@ -165,6 +181,10 @@ void render(gear::SpriteBatch& batch, gear::Shader& shd, gear::ecs::World& ecsWo
     batch.flush();
 }
 
+static void executeCommandBuffer(gear::ecs::World& world, gear::ecs::CommandBuffer& cmd) {
+    world.executeCommandBuffer(cmd);
+    cmd.commands.clear();
+}
 
 class Game : public gear::ApplicationAdapter {
 public:
@@ -174,14 +194,16 @@ public:
         di.emplace<gear::SpriteBatch>(500);
         di.emplace<gear::Shader>(vertexSource, fragmentSource);
         di.emplace<gear::Application*>(app);
+        di.emplace<gear::ecs::CommandBuffer>();
 
         di.invoke(createStage);
     }
 
     void update() override {
-        //gear::ecs::execute(p, di.get<gear::ecs::World>());
         di.invoke(movePlayer);
+        di.invoke(collisionDetection);
         di.invoke(render);
+        di.invoke(executeCommandBuffer);
     }
 
     void end() override {

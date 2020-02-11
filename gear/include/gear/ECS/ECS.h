@@ -25,8 +25,6 @@
 #include "Archetype.h"
 #include <cassert>
 
-#include <iostream>
-
 namespace gear::ecs {
 
 
