@@ -149,7 +149,6 @@ namespace gear::ecs {
         Registry registry;
         EntityId nextEntityId = 0;
         std::vector<std::pair<Chunk*, uint16_t>> entities;
-
         EntityId getFreeEntityId();
 
     public:

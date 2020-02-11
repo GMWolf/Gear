@@ -22,13 +22,14 @@ struct Player {
 };
 
 struct Enemy {
+    int health = 3;
 };
 
 struct Bullet {
     glm::vec2 vel;
 };
 
-static void createStage(gear::TextureAtlas& atlas, gear::ecs::World& world, gear::ecs::CommandBuffer& cmd) {
+static void createStage(gear::TextureAtlas& atlas, gear::ecs::CommandBuffer& cmd) {
 
     {
         gear::Sprite spr = atlas.getSprite("ship1");
@@ -91,8 +92,6 @@ static void movePlayer(gear::Application* app, gear::ecs::World& world, gear::ec
                 }
             });
 
-
-
     world.foreachChunk<gear::ecs::Entity, gear::Transform, Bullet>(
             [&](auto chunk){
                 for(auto [entity, transform, bullet] : chunk) {
@@ -103,8 +102,17 @@ static void movePlayer(gear::Application* app, gear::ecs::World& world, gear::ec
                 }
             });
 
+    world.foreachChunk<gear::ecs::Entity, Enemy, gear::Transform>(
+            [&](auto chunk) {
+                for(auto [entity, enemy, transform] : chunk) {
+                    if (transform.pos.y > 32) {
+                        transform.pos.y -= 2;
+                    } else {
+                        cmd.destroyEntity(entity);
+                    }
+                }
+            });
 }
-
 
 static void collisionDetection(gear::ecs::World& world, gear::ecs::CommandBuffer& cmd) {
     world.foreachChunk<gear::ecs::Entity, Enemy, gear::Transform, gear::CollisionShape>(
@@ -114,10 +122,10 @@ static void collisionDetection(gear::ecs::World& world, gear::ecs::CommandBuffer
                       for(auto [enemyEntity, enemy, enemyTransform, enemyShape] : enemyChunk) {
                         for(auto [bulletEntity, bullet, bulletTransform, bulletShape] : bulletChunk) {
                             if (gear::collide(enemyShape, enemyTransform.pos, bulletShape, bulletTransform.pos)) {
-                                cmd.destroyEntity(enemyEntity);
+                                if (--enemy.health <= 0)
+                                    cmd.destroyEntity(enemyEntity);
                                 cmd.destroyEntity(bulletEntity);
                             }
-
                         }
                       }
                   }
@@ -125,6 +133,16 @@ static void collisionDetection(gear::ecs::World& world, gear::ecs::CommandBuffer
             });
 }
 
+
+static void spawnEnemy(gear::TextureAtlas& atlas, gear::ecs::CommandBuffer& cmd) {
+    gear::Sprite spr = atlas.getSprite("ship1");
+    cmd.createEntity(spr,
+                     gear::Transform{{480.0f * (rand()/(float)RAND_MAX), 720+spr.size.y}},
+                     gear::CollisionShape{gear::Rectangle{{0,0}, {spr.size}}},
+                     Enemy{}
+    );
+
+}
 
 void render(gear::SpriteBatch& batch, gear::Shader& shd, gear::ecs::World& ecsWorld) {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -174,6 +192,10 @@ public:
         di.invoke(collisionDetection);
         di.invoke(render);
         di.invoke(executeCommandBuffer);
+        if (--spawnTimer <= 0) {
+            di.invoke(spawnEnemy);
+            spawnTimer = 60;
+        }
     }
 
     void end() override {
@@ -182,6 +204,7 @@ public:
 
 private:
     gear::DI di;
+    int spawnTimer = 10;
 };
 
 int main() {

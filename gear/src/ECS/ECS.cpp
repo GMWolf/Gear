@@ -135,7 +135,7 @@ namespace gear::ecs {
     }
 
     CreateCommand::CreateCommand(CreateCommand && o) noexcept :
-    archetype(std::move(o.archetype)),
+    archetype(o.archetype),
     components(std::move(o.components)){
         o.components.clear();
     }
