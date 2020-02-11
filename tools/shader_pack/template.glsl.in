@@ -1,0 +1,7 @@
+#ifdef VERTEX_SHADER
+${vertexText}
+#endif
+
+#ifdef FRAGMENT_SHADER
+${fragmentText}
+#endif

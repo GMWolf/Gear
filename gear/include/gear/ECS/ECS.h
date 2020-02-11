@@ -27,8 +27,6 @@
 
 namespace gear::ecs {
 
-
-
     struct Chunk {
         const Archetype archetype;
         size_t size = 0;
@@ -59,7 +57,7 @@ namespace gear::ecs {
 
         CreateCommand() = default;
         CreateCommand(const CreateCommand&) = delete;
-        CreateCommand(CreateCommand&&);
+        CreateCommand(CreateCommand&&) noexcept;
         CreateCommand& operator=(const CreateCommand&) = delete;
 
         Archetype archetype{};

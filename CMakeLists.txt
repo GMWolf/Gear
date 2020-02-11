@@ -16,6 +16,7 @@ add_subdirectory(deps/json)
 
 add_subdirectory(gear)
 add_subdirectory(tools/texture_pack)
+add_subdirectory(tools/shader_pack)
 
 
 add_subdirectory(examples/shmup)

@@ -11,7 +11,9 @@
 namespace gear {
 
     class Shader {
+        void init(const char** vs, int vsCount, const char** fs, int fsCount);
     public:
+        explicit Shader(const std::string& path);
         Shader(const std::string& vs, const std::string& fs);
         ~Shader();
         void use();

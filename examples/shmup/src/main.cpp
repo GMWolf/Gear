@@ -1,7 +1,6 @@
 //
 // Created by felix on 08/01/2020.
 //
-
 #include <gear/Application.h>
 #include <gear/ApplicationAdapter.h>
 #include <gear/DI.h>
@@ -14,31 +13,6 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <gear/ECS/ECS.h>
 #include <gear/CoreComponents.h>
-
-std::string vertexSource = R"(
-#version 330 core
-layout(location = 0) in vec2 Position;
-layout(location = 1) in vec2 Texcoord;
-
-uniform mat4 view;
-
-out vec2 uv;
-void main()
-{
-    gl_Position = view * vec4(Position, 0, 1);
-    uv = Texcoord;
-}
-)";
-
-std::string fragmentSource = R"(
-#version 330 core
-in vec2 uv;
-out vec4 color;
-uniform sampler2D tex;
-void main(){
-  color = texture(tex, uv);
-}
-)";
 
 struct Player {
     float moveSpeed = 4;
@@ -133,15 +107,12 @@ static void movePlayer(gear::Application* app, gear::ecs::World& world, gear::ec
 
 
 static void collisionDetection(gear::ecs::World& world, gear::ecs::CommandBuffer& cmd) {
-
-
     world.foreachChunk<gear::ecs::Entity, Enemy, gear::Transform, gear::CollisionShape>(
             [&](auto enemyChunk) {
                 world.foreachChunk<gear::ecs::Entity, Bullet, gear::Transform, gear::CollisionShape>(
                   [&](auto bulletChunk) {
                       for(auto [enemyEntity, enemy, enemyTransform, enemyShape] : enemyChunk) {
                         for(auto [bulletEntity, bullet, bulletTransform, bulletShape] : bulletChunk) {
-
                             if (gear::collide(enemyShape, enemyTransform.pos, bulletShape, bulletTransform.pos)) {
                                 cmd.destroyEntity(enemyEntity);
                                 cmd.destroyEntity(bulletEntity);
@@ -152,7 +123,6 @@ static void collisionDetection(gear::ecs::World& world, gear::ecs::CommandBuffer
                   }
                 );
             });
-
 }
 
 
@@ -192,7 +162,7 @@ public:
         di.emplace<gear::ecs::World>();
         di.emplace<gear::TextureAtlas>("sprites.json");
         di.emplace<gear::SpriteBatch>(500);
-        di.emplace<gear::Shader>(vertexSource, fragmentSource);
+        di.emplace<gear::Shader>("simple_textured");
         di.emplace<gear::Application*>(app);
         di.emplace<gear::ecs::CommandBuffer>();
 
