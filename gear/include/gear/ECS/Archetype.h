@@ -16,7 +16,7 @@ namespace gear::ecs {
     class Archetype {
     public:
         Archetype(std::initializer_list<ComponentId> t);
-
+        Archetype() = default;
         template<class... A>
         static Archetype create();
 

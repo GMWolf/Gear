@@ -73,6 +73,7 @@ namespace gear::ecs {
     void World::execute(const DestroyCommand& command) {
         auto [chunk, index] = entities[command.entityId];
 
+
         if (chunk && (chunk->size > 0)) {
             uint16_t idFrom = chunk->size - 1;
 
@@ -95,6 +96,7 @@ namespace gear::ecs {
             entities[entityIdFrom].second = index;
             entities[command.entityId].first = nullptr;
         }
+
     }
 
     void World::executeCommandBuffer(const CommandBuffer &commandBuffer) {
@@ -110,11 +112,11 @@ namespace gear::ecs {
     }
 
     EntityId World::getFreeEntityId() {
-        /*for(int i = 0; i < entities.size(); i++) {
+        for(int i = 0; i < entities.size(); i++) {
             if (entities[i].first == nullptr) {
                 return i;
             }
-        }*/
+        }
         return nextEntityId++;
     }
 
@@ -126,4 +128,15 @@ namespace gear::ecs {
         return (char*)getData(componentId) + (index * ComponentInfo::component[componentId].size);
     }
 
+    CreateCommand::~CreateCommand() {
+        for(auto [id, ptr] : components) {
+            ComponentInfo::component[id].functions.destroy(ptr);
+        }
+    }
+
+    CreateCommand::CreateCommand(CreateCommand && o) :
+    archetype(std::move(o.archetype)),
+    components(std::move(o.components)){
+        o.components.clear();
+    }
 }

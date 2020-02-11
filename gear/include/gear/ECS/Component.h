@@ -8,6 +8,7 @@
 #include <cstddef>
 #include <utility>
 #include "Config.h"
+#include <typeinfo>
 
 namespace gear::ecs {
     extern ComponentId nextComponentId;
@@ -16,6 +17,7 @@ namespace gear::ecs {
         size_t size{0};
         size_t align{0};
         ComponentId id{0};
+        const char* debugName;
 
         struct {
             void (*emplace)(void* ptr, void* from);
@@ -47,6 +49,7 @@ namespace gear::ecs {
         i.size = sizeof(T);
         i.align = alignof(T);
         i.id = nextComponentId++;
+        i.debugName = typeid(T).name();
         i.functions.emplace = &Functions::emplace;
         i.functions.destroy = &Functions::destroy;
         i.functions.move = &Functions::move;

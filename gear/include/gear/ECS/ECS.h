@@ -25,6 +25,8 @@
 #include "Archetype.h"
 #include <cassert>
 
+#include <iostream>
+
 namespace gear::ecs {
 
 
@@ -56,14 +58,15 @@ namespace gear::ecs {
     };
 
     struct CreateCommand {
-        Archetype archetype;
-        std::vector<std::pair<ComponentId, void*>> components{};
 
-        ~CreateCommand() {
-            for(auto [id, ptr] : components) {
-                ComponentInfo::component[id].functions.destroy(ptr);
-            }
-        }
+        CreateCommand() = default;
+        CreateCommand(const CreateCommand&) = delete;
+        CreateCommand(CreateCommand&&);
+        CreateCommand& operator=(const CreateCommand&) = delete;
+
+        Archetype archetype{};
+        std::vector<std::pair<ComponentId, void*>> components{};
+        ~CreateCommand();
     };
 
     struct DestroyCommand {
@@ -80,7 +83,9 @@ namespace gear::ecs {
 
     template<class... T>
     void CommandBuffer::createEntity(T&&... t) {
-        commands.emplace_back(CreateCommand{});
+        commands.emplace_back();
+        commands.back().emplace<CreateCommand>();
+        assert(std::holds_alternative<CreateCommand>(commands.back()));
         auto& createCommand = std::get<CreateCommand>(commands.back());
         assert(createCommand.components.empty());
         createCommand.archetype = Archetype::create<std::remove_reference_t<T>...>();
