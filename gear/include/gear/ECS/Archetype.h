@@ -39,6 +39,12 @@ namespace gear::ecs {
         return Archetype({Component<A>::ID()...});
     }
 
+    //Entity Component
+    struct Entity {
+        EntityId id = 0;
+        Archetype archetype{};
+    };
+
 }
 
 #endif //GEAR_ARCHETYPE_H

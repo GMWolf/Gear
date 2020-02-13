@@ -62,6 +62,7 @@ namespace gear::ecs {
         }
         Entity entity;
         entity.id = getFreeEntityId();
+        entity.archetype = createCommand.archetype;
         if (entities.size() <= entity.id)
             entities.resize(entity.id + 1);
 

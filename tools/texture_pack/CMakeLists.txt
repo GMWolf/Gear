@@ -3,7 +3,7 @@ target_link_libraries(texture_pack PUBLIC bfg_lyra stb nlohmann_json::nlohmann_j
 
 
 function(add_texture_pack name directory width height)
-    file(GLOB srcs
+    file(GLOB_RECURSE srcs
             CONFIGURE_DEPENDS
             "${directory}/*.png"
             )

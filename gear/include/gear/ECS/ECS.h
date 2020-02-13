@@ -39,9 +39,12 @@ namespace gear::ecs {
         void* get(ComponentId componentId, uint16_t index);
     };
 
+
     class Registry {
     public:
-        std::unordered_map<Archetype, std::vector<std::unique_ptr<Chunk>>, Archetype::Hash> archetypeChunks;
+        using ChunkVec = std::vector<std::unique_ptr<Chunk>>;
+        using Store = std::unordered_map<Archetype, ChunkVec, Archetype::Hash>;
+        Store archetypeChunks;
 
         Registry() = default;
         Registry(const Registry&) = delete;
@@ -53,57 +56,18 @@ namespace gear::ecs {
         std::pair<Chunk*, uint16_t> emplaceEntity(const Archetype& archetype);
     };
 
-    struct CreateCommand {
-
-        CreateCommand() = default;
-        CreateCommand(const CreateCommand&) = delete;
-        CreateCommand(CreateCommand&&) noexcept;
-        CreateCommand& operator=(const CreateCommand&) = delete;
-
-        Archetype archetype{};
-        std::vector<std::pair<ComponentId, void*>> components{};
-        ~CreateCommand();
-    };
-
-    struct DestroyCommand {
-        EntityId entityId;
-    };
-
-    struct CommandBuffer {
-        std::vector<std::variant<CreateCommand, DestroyCommand>> commands;
-        template<class... T>
-        void createEntity(T&&... t);
-
-        void destroyEntity(const Entity& entity);
-    };
-
-    template<class... T>
-    void CommandBuffer::createEntity(T&&... t) {
-        commands.emplace_back();
-        commands.back().emplace<CreateCommand>();
-        assert(std::holds_alternative<CreateCommand>(commands.back()));
-        auto& createCommand = std::get<CreateCommand>(commands.back());
-        assert(createCommand.components.empty());
-        createCommand.archetype = Archetype::create<std::remove_reference_t<T>...>();
-
-        (createCommand.components.push_back(std::make_pair(Component<std::remove_reference_t<T>>::ID(), static_cast<void*>(new std::remove_reference_t<T>(t)))), ...);
-        assert(createCommand.components.size() == sizeof...(T));
-    }
-
-
 
     template<class... T>
     class ChunkIterator {
         std::tuple<T*...> ptr;
     public:
-        explicit ChunkIterator(T*... ptrs) : ptr(ptrs...) {
-        }
+        explicit ChunkIterator(T*... ptrs) : ptr(ptrs...) {}
 
         std::tuple<T&...> operator*() noexcept {
             return std::forward_as_tuple(*std::get<T*>(ptr)...);
         }
 
-        ChunkIterator& operator+(size_t i) const noexcept {
+        ChunkIterator operator+(size_t i) const noexcept {
             return ChunkIterator(std::get<T*>(ptr) + i ...);
         }
 
@@ -144,6 +108,114 @@ namespace gear::ecs {
         }
     };
 
+    template<class... T>
+    class RegistryIterator {
+        Registry::Store::iterator archetypeIt;
+        Registry::Store::iterator archetypeEnd;
+        Registry::ChunkVec::iterator chunkIt;
+        Archetype archetype;
+    public:
+        RegistryIterator(Registry::Store::iterator archetypeIt, Registry::Store::iterator archetypeEnd, Registry::ChunkVec::iterator chunkIt) :
+        archetypeIt(archetypeIt),
+        archetypeEnd(archetypeEnd),
+        chunkIt(chunkIt),
+        archetype(Archetype::create<T...>())
+        {};
+
+        bool operator==(const RegistryIterator& o) const {
+            return chunkIt == o.chunkIt;
+        }
+        bool operator!=(const RegistryIterator& o) const {
+            return !(*this == o);
+        }
+
+        ChunkView<T...> operator*() {
+            return ChunkView<T...>(chunkIt->get());
+        }
+
+        RegistryIterator<T...>& operator++() {
+            chunkIt++;
+            if (chunkIt == archetypeIt->second.end()) {
+                do {
+                    archetypeIt++;
+                } while(
+                        archetypeIt != archetypeEnd &&
+                        !archetypeIt->first.matches(archetype)
+                        );
+                if (archetypeIt != archetypeEnd) {
+                    chunkIt = archetypeIt->second.begin();
+                } else {
+                    chunkIt = Registry::ChunkVec::iterator{};
+                }
+            }
+            return *this;
+        }
+
+        ChunkView<T...> operator++(int)&{
+            auto temp = *this;
+            ++*this;
+            return temp;
+        }
+    };
+
+    template<class... T>
+    class RegistryView {
+        Registry& registry;
+    public:
+
+        RegistryView(Registry& registry) : registry(registry) {
+        }
+
+        RegistryIterator<T...> begin() {
+            return {registry.archetypeChunks.begin(), registry.archetypeChunks.end(),
+                    registry.archetypeChunks.begin() != registry.archetypeChunks.end() ? registry.archetypeChunks.begin()->second.begin() : Registry::ChunkVec::iterator{}};
+        }
+        RegistryIterator<T...> end() {
+            return {registry.archetypeChunks.end(), registry.archetypeChunks.end(), Registry::ChunkVec::iterator{}};
+        }
+    };
+
+
+    struct CreateCommand {
+
+        CreateCommand() = default;
+        CreateCommand(const CreateCommand&) = delete;
+        CreateCommand(CreateCommand&&) noexcept;
+        CreateCommand& operator=(const CreateCommand&) = delete;
+
+        Archetype archetype{};
+        std::vector<std::pair<ComponentId, void*>> components{};
+        ~CreateCommand();
+    };
+
+    struct DestroyCommand {
+        EntityId entityId;
+    };
+
+    struct CommandBuffer {
+        std::vector<std::variant<CreateCommand, DestroyCommand>> commands;
+        template<class... T>
+        void createEntity(T&&... t);
+
+        void destroyEntity(const Entity& entity);
+    };
+
+    template<class... T>
+    void CommandBuffer::createEntity(T&&... t) {
+        commands.emplace_back();
+        commands.back().emplace<CreateCommand>();
+        assert(std::holds_alternative<CreateCommand>(commands.back()));
+        auto& createCommand = std::get<CreateCommand>(commands.back());
+        assert(createCommand.components.empty());
+        createCommand.archetype = Archetype::create<std::remove_reference_t<T>...>();
+
+        (createCommand.components.push_back(std::make_pair(Component<std::remove_reference_t<T>>::ID(), static_cast<void*>(new std::remove_reference_t<T>(t)))), ...);
+        assert(createCommand.components.size() == sizeof...(T));
+    }
+
+
+
+
 
     class World {
         Registry registry;
@@ -167,6 +239,19 @@ namespace gear::ecs {
                 }
             }
         }
+
+        template<class... T>
+        RegistryView<T...> getChunks() {
+            return RegistryView<T...>(registry);
+        }
+
+        template<class... T>
+        std::tuple<T&...> get(Entity entity) {
+            auto [chunk, index] = entities[entity.id];
+            return std::forward_as_tuple(*static_cast<T*>(chunk->get(Component<T>::ID(), index)) ...);
+        }
+
+
     };
 
 

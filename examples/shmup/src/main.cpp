@@ -14,6 +14,9 @@
 #include <gear/ECS/ECS.h>
 #include <gear/CoreComponents.h>
 
+
+#include "Collisions.h"
+
 struct Player {
     float moveSpeed = 4;
     gear::Sprite bulletSprite;
@@ -87,7 +90,7 @@ static void movePlayer(gear::Application* app, gear::ecs::World& world, gear::ec
                                 Bullet{{0, 10}}
                                 );
 
-                        player.shootTimer = 12;
+                        //player.shootTimer = 12;
                     }
                 }
             });
@@ -114,22 +117,21 @@ static void movePlayer(gear::Application* app, gear::ecs::World& world, gear::ec
             });
 }
 
-static void collisionDetection(gear::ecs::World& world, gear::ecs::CommandBuffer& cmd) {
-    world.foreachChunk<gear::ecs::Entity, Enemy, gear::Transform, gear::CollisionShape>(
-            [&](auto enemyChunk) {
-                world.foreachChunk<gear::ecs::Entity, Bullet, gear::Transform, gear::CollisionShape>(
-                  [&](auto bulletChunk) {
-                      for(auto [enemyEntity, enemy, enemyTransform, enemyShape] : enemyChunk) {
-                        for(auto [bulletEntity, bullet, bulletTransform, bulletShape] : bulletChunk) {
-                            if (gear::collide(enemyShape, enemyTransform.pos, bulletShape, bulletTransform.pos)) {
-                                if (--enemy.health <= 0)
-                                    cmd.destroyEntity(enemyEntity);
-                                cmd.destroyEntity(bulletEntity);
-                            }
-                        }
-                      }
-                  }
-                );
+static void processCollisions(gear::ecs::World& world, gear::ecs::CommandBuffer& cmd) {
+    const gear::ecs::Archetype enemyArch = gear::ecs::Archetype::create<Enemy>();
+    const gear::ecs::Archetype bulletArch = gear::ecs::Archetype::create<Bullet>();
+    world.foreachChunk<gear::ecs::Entity, CollisionPair>(
+            [&](auto chunk) {
+                for(auto [collisionEntity, collision] : chunk) {
+                    if (auto entities = collision.get(enemyArch, bulletArch)) {
+                        auto [enemy] = world.get<Enemy>(entities->first);
+
+                        if (--enemy.health <= 0)
+                            cmd.destroyEntity(entities->first);
+                        cmd.destroyEntity(entities->second);
+                    }
+                    cmd.destroyEntity(collisionEntity);
+                }
             });
 }
 
@@ -189,12 +191,14 @@ public:
 
     void update() override {
         di.invoke(movePlayer);
-        di.invoke(collisionDetection);
+        di.invoke(checkCollisions);
+        di.invoke(executeCommandBuffer);
+        di.invoke(processCollisions);
         di.invoke(render);
         di.invoke(executeCommandBuffer);
         if (--spawnTimer <= 0) {
             di.invoke(spawnEnemy);
-            spawnTimer = 60;
+            spawnTimer = 1;
         }
     }
 

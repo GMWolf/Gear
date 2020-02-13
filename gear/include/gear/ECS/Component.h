@@ -89,10 +89,7 @@ namespace gear::ecs {
         tTo = std::move(tFrom);
     }
 
-    //Entity Component
-    struct Entity {
-        EntityId id = 0;
-    };
+
 
 }
 
