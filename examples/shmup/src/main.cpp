@@ -90,7 +90,7 @@ static void movePlayer(gear::Application* app, gear::ecs::World& world, gear::ec
                                 Bullet{{0, 10}}
                                 );
 
-                        //player.shootTimer = 12;
+                        player.shootTimer = 12;
                     }
                 }
             });
@@ -198,7 +198,7 @@ public:
         di.invoke(executeCommandBuffer);
         if (--spawnTimer <= 0) {
             di.invoke(spawnEnemy);
-            spawnTimer = 1;
+            spawnTimer = 60;
         }
     }
 
