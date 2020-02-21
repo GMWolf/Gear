@@ -19,15 +19,28 @@ gear::TextureAtlas::TextureAtlas(const std::string &name) {
 
     for(auto& o : j["sprites"]) {
         Sprite spr;
-
-        int x = o["x"];
-        int y = o["y"];
-        int w = o["w"];
-        int h = o["h"];
-
-        spr.uv = glm::vec4{x, y + h, x + w, y} / glm::vec4{texture->size, texture->size};
-        spr.size = glm::vec2{w, h};
         spr.tex = texture;
+        spr.size = {};
+
+        auto& subimages = o["subimages"];
+
+        spr.texRegions.reserve(subimages.size());
+        for( auto& subimage : subimages) {
+            int x = subimage["x"];
+            int y = subimage["y"];
+            int w = subimage["w"];
+            int h = subimage["h"];
+
+            TexRegion texRegion {};
+            texRegion.uvs = glm::vec4{ x, y+h, x+w, y} / glm::vec4(texture->size, texture->size);
+            texRegion.crop = {0,0,0,0};
+
+            spr.texRegions.push_back(texRegion);
+        }
+
+
+        spr.size = glm::vec2{o["size"]["x"], o["size"]["y"]};
+
         sprites.emplace(std::make_pair(o["name"], spr));
     }
 }

@@ -6,13 +6,12 @@
 #include <iostream>
 #include <memory>
 #include <vector>
-#include <stb_image.h>
-#include <stb_image_write.h>
 #include <string>
 #include <filesystem>
 #include "TexturePacker.h"
 #include <nlohmann/json.hpp>
 #include <fstream>
+#include <regex>
 
 namespace fs = std::filesystem;
 namespace tp = gear::texture_pack;
@@ -23,10 +22,10 @@ int main(int argc, char* argv[]) {
     std::vector<std::string> inputPaths;
     std::string outFileName = "out";
     bool showHelp = false;
-    bool directoryMode = false;
+    bool printInputs = false;
     auto cli = lyra::cli_parser()
-            | lyra::arg(inputPaths, "input files")
-            ("Files to pack").cardinality(1, std::numeric_limits<size_t>::max())
+            | lyra::arg(inputPaths, "input folders")
+            ("folders to pack").cardinality(1, std::numeric_limits<size_t>::max())
             | lyra::opt(outFileName, "output file name").required(1)
             ["-o"]["--output"]
             ("output file name")
@@ -36,8 +35,8 @@ int main(int argc, char* argv[]) {
             | lyra::opt(pageHeight, "page height")
             ["-h"]["--height"]
             ("Height of page")
-            | lyra::opt(directoryMode)
-            ["-d"]["--directory"]
+            | lyra::opt(printInputs)
+            ["-w"]["--printInputs"]
             ("Use directory")
             | lyra::help(showHelp);
 
@@ -56,55 +55,49 @@ int main(int argc, char* argv[]) {
     auto outTexName = (outFileName + ".png");
     auto outAtlasName = (outFileName + ".json");
 
-    std::vector<fs::path> inputFiles;
 
-    if (directoryMode) {
-        for(auto& d : inputPaths) {
-            for(auto& f : fs::directory_iterator(d)) {
-                if (f.path().extension() == ".png") {
-                    inputFiles.push_back(f.path());
-                }
+    std::vector<tp::SpriteDescriptor> descriptors;
+
+    for(auto& d : inputPaths) {
+        if (!fs::is_directory(d)) {
+            std::cerr << d << " is not a directory.\n";
+            return 1;
+        }
+
+        for(auto& p : fs::directory_iterator(d)) {
+            descriptors.push_back(tp::getDescriptorFromPath(p));
+        }
+    }
+
+    if (printInputs) {
+        for(auto& spr : descriptors) {
+            for(auto& img : spr.images) {
+                std::cout << img << " ";
             }
         }
-    } else {
-        inputFiles.reserve(inputPaths.size());
-        for(auto& s : inputPaths) {
-            inputFiles.emplace_back(s);
-        }
+        return 0;
     }
 
     std::vector<tp::Sprite> sprites;
-    {
-        sprites.reserve(inputPaths.size());
-        for(auto & path : inputFiles) {
-            int w, h, c;
-            std::string pathStr = path.string();
-            std::cout << "loading " << pathStr << std::endl;
-            unsigned char* data = stbi_load(pathStr.c_str(), &w, &h, &c, 4);
-            sprites.push_back({
-               fs::path(path).filename().stem().string(),
-               0, 0,
-               (unsigned short)w, (unsigned short)h,
-               (tp::Pixel*)data
-            });
-        }
+    sprites.reserve(descriptors.size());
+    for(auto& desc : descriptors) {
+        sprites.push_back(tp::loadSprite(desc));
     }
 
     {
-        tp::packSprites(sprites.data(), sprites.size(), pageWidth, pageHeight);
+        tp::packSprites(sprites, pageWidth, pageHeight);
     }
 
     {
         std::unique_ptr<tp::Pixel[]> data = std::make_unique<tp::Pixel[]>(pageWidth * pageHeight);
-        tp::writeSprites(sprites.data(), sprites.size(), pageWidth, pageHeight, data.get());
+        tp::writeSprites(sprites, pageWidth, pageHeight, data.get());
 
-        stbi_write_png(outTexName.c_str(), pageWidth, pageHeight, 4, data.get(), pageWidth * sizeof(tp::Pixel));
+        tp::writePageTexture(outTexName, pageWidth, pageHeight, data.get());
     }
 
     {
         for(auto& s : sprites) {
-            stbi_image_free((void *) s.data);
-            s.data = nullptr;
+           tp::freeSprite(s);
         }
     }
 
@@ -114,11 +107,21 @@ int main(int argc, char* argv[]) {
         j["sprites"] = {};
         for(auto& spr : sprites) {
             nlohmann::json o;
-            o["x"] = spr.x;
-            o["y"] = spr.y;
-            o["w"] = spr.width;
-            o["h"] = spr.height;
             o["name"] = spr.name;
+            o["subimages"] = {};
+            int maxWidth = 0, maxHeight = 0;
+            for(auto& img : spr.images) {
+                nlohmann::json s;
+                s["x"] = img.x;
+                s["y"] = img.y;
+                s["w"] = img.width;
+                s["h"] = img.height;
+                o["subimages"].push_back(s);
+                maxWidth = img.width > maxWidth ? img.width : maxWidth;
+                maxHeight = img.height > maxHeight ? img.height : maxHeight;
+            }
+            o["size"]["x"] = maxWidth;
+            o["size"]["y"] = maxHeight;
             j["sprites"].push_back(o);
         }
 

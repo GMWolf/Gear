@@ -10,6 +10,7 @@
 #include <glm/vec2.hpp>
 #include <glm/vec4.hpp>
 #include <memory>
+#include <vector>
 
 namespace gear {
 
@@ -22,12 +23,18 @@ namespace gear {
         glm::ivec2 size {0,0};
     };
 
-    struct Sprite {
-        glm::vec2 size;
-        glm::vec4 uv;
-        std::weak_ptr<const Texture> tex;
+    struct TexRegion {
+        glm::vec4 uvs; // min uv, max uv
+        glm::vec4 crop; //left, top, right, bottom
     };
 
+    struct Sprite {
+        glm::vec2 size {};
+        glm::vec2 origin {};
+        std::vector<TexRegion> texRegions {}; //TODO get rid of this allocation
+        std::weak_ptr<const Texture> tex;
+        uint16_t imageIndex {0};
+    };
 }
 
 

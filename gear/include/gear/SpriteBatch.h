@@ -12,6 +12,7 @@
 namespace gear {
 
     class Texture;
+    class TexRegion;
     class Sprite;
 
     class SpriteBatch {
@@ -31,6 +32,8 @@ namespace gear {
         ~SpriteBatch();
 
         void draw(const Texture& tex, glm::vec2 pos, glm::vec2 size, glm::vec4 uv = {0, 0, 1, 1});
+
+        void draw(const Texture& tex, const TexRegion &texRegion, glm::vec2 pos, glm::vec2 size);
 
         void draw(const Sprite& sprite, glm::vec2 pos, glm::vec2 size);
 
@@ -58,6 +61,7 @@ namespace gear {
         GLuint vao{};
 
         std::unique_ptr<Texture> nulltex;
+
     };
 
 }

@@ -163,7 +163,7 @@ namespace gear::ecs {
         Registry& registry;
     public:
 
-        RegistryView(Registry& registry) : registry(registry) {
+        explicit RegistryView(Registry& registry) : registry(registry) {
         }
 
         RegistryIterator<T...> begin() {
@@ -214,9 +214,6 @@ namespace gear::ecs {
     }
 
 
-
-
-
     class World {
         Registry registry;
         EntityId nextEntityId = 0;
@@ -250,7 +247,6 @@ namespace gear::ecs {
             auto [chunk, index] = entities[entity.id];
             return std::forward_as_tuple(*static_cast<T*>(chunk->get(Component<T>::ID(), index)) ...);
         }
-
 
     };
 

@@ -9,13 +9,13 @@ function(add_texture_pack name directory width height)
             )
 
     add_custom_command(
-            COMMAND texture_pack ARGS -w ${width} -h ${height} -o sprites ${srcs}
-            OUTPUT sprites.json sprites.png
-            DEPENDS "${sprite_srcs}"
+            COMMAND texture_pack ARGS -w ${width} -h ${height} -o ${name} ${CMAKE_CURRENT_LIST_DIR}/${directory}
+            OUTPUT ${name}.json ${name}.png
+            DEPENDS "${sprite_srcs}" texture_pack
             USES_TERMINAL
     )
 
     add_custom_target(${name}
-            DEPENDS "sprites.json" "sprites.png")
+            DEPENDS "${name}.json" "${name}.png")
 
 endfunction()

@@ -32,6 +32,9 @@ struct Bullet {
     glm::vec2 vel;
 };
 
+struct DestroyOnAnimationEnd {
+};
+
 static void createStage(gear::TextureAtlas& atlas, gear::ecs::CommandBuffer& cmd) {
 
     {
@@ -117,17 +120,19 @@ static void movePlayer(gear::Application* app, gear::ecs::World& world, gear::ec
             });
 }
 
-static void processCollisions(gear::ecs::World& world, gear::ecs::CommandBuffer& cmd) {
+static void processCollisions(gear::ecs::World& world, gear::ecs::CommandBuffer& cmd, gear::TextureAtlas& atlas) {
     const gear::ecs::Archetype enemyArch = gear::ecs::Archetype::create<Enemy>();
     const gear::ecs::Archetype bulletArch = gear::ecs::Archetype::create<Bullet>();
     world.foreachChunk<gear::ecs::Entity, CollisionPair>(
             [&](auto chunk) {
                 for(auto [collisionEntity, collision] : chunk) {
                     if (auto entities = collision.get(enemyArch, bulletArch)) {
-                        auto [enemy] = world.get<Enemy>(entities->first);
+                        auto [enemy, t] = world.get<Enemy, gear::Transform>(entities->first);
 
-                        if (--enemy.health <= 0)
+                        if (--enemy.health <= 0) {
                             cmd.destroyEntity(entities->first);
+                            cmd.createEntity( t, gear::CollisionShape{gear::Circle{}}, atlas.getSprite("explosion"), DestroyOnAnimationEnd{});
+                        }
                         cmd.destroyEntity(entities->second);
                     }
                     cmd.destroyEntity(collisionEntity);
@@ -135,6 +140,29 @@ static void processCollisions(gear::ecs::World& world, gear::ecs::CommandBuffer&
             });
 }
 
+
+static void processAnimation(gear::ecs::World& world, gear::ecs::CommandBuffer& cmd) {
+    world.foreachChunk<gear::Sprite>(
+            [&](auto chunk) {
+                for(auto [sprite] : chunk) {
+                    sprite.imageIndex++;
+                    if (sprite.imageIndex >= sprite.texRegions.size()) {
+                        sprite.imageIndex = 0;
+                    }
+                }
+            }
+            );
+
+    world.foreachChunk<gear::ecs::Entity, gear::Sprite, DestroyOnAnimationEnd>(
+            [&](auto chunk) {
+                for(auto [entity, sprite, d] : chunk) {
+                    if (sprite.imageIndex == 0) {
+                        cmd.destroyEntity(entity);
+                    }
+                }
+            }
+            );
+}
 
 static void spawnEnemy(gear::TextureAtlas& atlas, gear::ecs::CommandBuffer& cmd) {
     gear::Sprite spr = atlas.getSprite("ship1");
@@ -180,7 +208,7 @@ class Game : public gear::ApplicationAdapter {
 public:
     void init(gear::Application *app) override {
         di.emplace<gear::ecs::World>();
-        di.emplace<gear::TextureAtlas>("sprites.json");
+        di.emplace<gear::TextureAtlas>("shmup_textures.json");
         di.emplace<gear::SpriteBatch>(500);
         di.emplace<gear::Shader>("simple_textured");
         di.emplace<gear::Application*>(app);
@@ -195,6 +223,7 @@ public:
         di.invoke(executeCommandBuffer);
         di.invoke(processCollisions);
         di.invoke(render);
+        di.invoke(processAnimation);
         di.invoke(executeCommandBuffer);
         if (--spawnTimer <= 0) {
             di.invoke(spawnEnemy);
