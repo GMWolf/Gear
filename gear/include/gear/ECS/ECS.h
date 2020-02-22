@@ -93,88 +93,56 @@ namespace gear::ecs {
 
     template<class... T>
     class ChunkView {
-        Chunk* chunk;
+        Chunk& chunk;
     public:
 
-        explicit ChunkView(Chunk* chunk) : chunk(chunk){
+        explicit ChunkView(Chunk& chunk) : chunk(chunk){
         }
 
         ChunkIterator<T...> begin() {
-            return ChunkIterator<T...>( static_cast<T*>(chunk->get(Component<T>::ID(), 0))...);
+            return ChunkIterator<T...>( static_cast<T*>(chunk.get(Component<T>::ID(), 0))...);
         }
 
         ChunkIterator<T...> end() {
-            return ChunkIterator<T...>(static_cast<T*>(chunk->get(Component<T>::ID(), chunk->size))...);
+            return ChunkIterator<T...>(static_cast<T*>(chunk.get(Component<T>::ID(), chunk.size))...);
         }
     };
 
-    template<class... T>
     class RegistryIterator {
         Registry::Store::iterator archetypeIt;
         Registry::Store::iterator archetypeEnd;
         Registry::ChunkVec::iterator chunkIt;
         Archetype archetype;
     public:
-        RegistryIterator(Registry::Store::iterator archetypeIt, Registry::Store::iterator archetypeEnd, Registry::ChunkVec::iterator chunkIt) :
+
+        RegistryIterator(Registry::Store::iterator archetypeIt, Registry::Store::iterator archetypeEnd, Registry::ChunkVec::iterator chunkIt, const Archetype& archetype) :
         archetypeIt(archetypeIt),
         archetypeEnd(archetypeEnd),
         chunkIt(chunkIt),
-        archetype(Archetype::create<T...>())
+        archetype(archetype)
         {};
 
-        bool operator==(const RegistryIterator& o) const {
-            return chunkIt == o.chunkIt;
-        }
-        bool operator!=(const RegistryIterator& o) const {
-            return !(*this == o);
-        }
+        bool operator==(const RegistryIterator& o) const;
+        bool operator!=(const RegistryIterator& o) const;
 
-        ChunkView<T...> operator*() {
-            return ChunkView<T...>(chunkIt->get());
-        }
+        Chunk& operator*();
 
-        RegistryIterator<T...>& operator++() {
-            chunkIt++;
-            if (chunkIt == archetypeIt->second.end()) {
-                do {
-                    archetypeIt++;
-                } while(
-                        archetypeIt != archetypeEnd &&
-                        !archetypeIt->first.matches(archetype)
-                        );
-                if (archetypeIt != archetypeEnd) {
-                    chunkIt = archetypeIt->second.begin();
-                } else {
-                    chunkIt = Registry::ChunkVec::iterator{};
-                }
-            }
-            return *this;
-        }
+        RegistryIterator& operator++();
 
-        ChunkView<T...> operator++(int)&{
-            auto temp = *this;
-            ++*this;
-            return temp;
-        }
+        const RegistryIterator operator++(int)&;
     };
 
-    template<class... T>
+
     class RegistryView {
         Registry& registry;
+        Archetype archetype;
     public:
 
-        explicit RegistryView(Registry& registry) : registry(registry) {
-        }
+        explicit RegistryView(Registry& registry, const Archetype& archetype);
 
-        RegistryIterator<T...> begin() {
-            return {registry.archetypeChunks.begin(), registry.archetypeChunks.end(),
-                    registry.archetypeChunks.begin() != registry.archetypeChunks.end() ? registry.archetypeChunks.begin()->second.begin() : Registry::ChunkVec::iterator{}};
-        }
-        RegistryIterator<T...> end() {
-            return {registry.archetypeChunks.end(), registry.archetypeChunks.end(), Registry::ChunkVec::iterator{}};
-        }
+        RegistryIterator begin();
+        RegistryIterator end();
     };
-
 
     struct CreateCommand {
 
@@ -231,16 +199,14 @@ namespace gear::ecs {
             for(auto& [arch, chunks] : registry.archetypeChunks) {
                 if (arch.matches(archetype)) {
                     for(auto& chunk : chunks) {
-                        fun(ChunkView<T...>(chunk.get()));
+                        fun(ChunkView<T...>(*chunk.get()));
                     }
                 }
             }
         }
 
-        template<class... T>
-        RegistryView<T...> getChunks() {
-            return RegistryView<T...>(registry);
-        }
+
+        RegistryView getChunks(const Archetype& archetype);
 
         template<class... T>
         std::tuple<T&...> get(Entity entity) {

@@ -121,6 +121,10 @@ namespace gear::ecs {
         return nextEntityId++;
     }
 
+    RegistryView World::getChunks(const Archetype &archetype) {
+        return RegistryView(registry, archetype);
+    }
+
     void *Chunk::getData(ComponentId id) {
         return ptr[id];
     }
@@ -139,5 +143,53 @@ namespace gear::ecs {
     archetype(o.archetype),
     components(std::move(o.components)){
         o.components.clear();
+    }
+
+    bool RegistryIterator::operator==(const RegistryIterator &o) const {
+        return chunkIt == o.chunkIt;
+    }
+
+    bool RegistryIterator::operator!=(const RegistryIterator &o) const {
+        return !(*this == o);
+    }
+
+    Chunk &RegistryIterator::operator*() {
+        return *chunkIt->get();
+    }
+
+    RegistryIterator &RegistryIterator::operator++() {
+        chunkIt++;
+        if (chunkIt == archetypeIt->second.end()) {
+            do {
+                archetypeIt++;
+            } while(
+                    archetypeIt != archetypeEnd &&
+                    !archetypeIt->first.matches(archetype)
+                    );
+            if (archetypeIt != archetypeEnd) {
+                chunkIt = archetypeIt->second.begin();
+            } else {
+                chunkIt = Registry::ChunkVec::iterator{};
+            }
+        }
+        return *this;
+    }
+
+    const RegistryIterator RegistryIterator::operator++(int) &{
+        auto temp = *this;
+        ++*this;
+        return temp;
+    }
+
+    RegistryIterator RegistryView::begin() {
+        return RegistryIterator(registry.archetypeChunks.begin(), registry.archetypeChunks.end(),
+                                registry.archetypeChunks.begin() != registry.archetypeChunks.end() ? registry.archetypeChunks.begin()->second.begin() : Registry::ChunkVec::iterator{}, archetype);
+    }
+
+    RegistryIterator RegistryView::end() {
+        return RegistryIterator(registry.archetypeChunks.end(), registry.archetypeChunks.end(), Registry::ChunkVec::iterator{}, archetype);
+    }
+
+    RegistryView::RegistryView(Registry &registry, const Archetype &archetype) : registry(registry), archetype(archetype) {
     }
 }

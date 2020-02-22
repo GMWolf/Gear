@@ -20,6 +20,12 @@ add_library(gear
         include/gear/ECS/ECS.h
         include/gear/CoreComponents.h
         include/gear/ECS/System.h
-        src/ECS/ECS.cpp include/gear/ECS/Config.h include/gear/ECS/Component.h include/gear/ECS/Archetype.h src/ECS/Archetype.cpp src/ECS/Component.cpp)
+        src/ECS/ECS.cpp
+        include/gear/ECS/ECS.h
+        include/gear/ECS/Config.h
+        include/gear/ECS/Component.h
+        include/gear/ECS/Archetype.h
+        src/ECS/Archetype.cpp
+        src/ECS/Component.cpp)
 target_link_libraries(gear PUBLIC glfw glad stb glm nlohmann_json::nlohmann_json)
 target_include_directories(gear PUBLIC include)
