@@ -13,6 +13,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <gear/ECS/ECS.h>
 #include <gear/CoreComponents.h>
+#include <gear/Texture.h>
 
 
 #include "Collisions.h"
@@ -44,7 +45,9 @@ static void createStage(gear::TextureAtlas& atlas, gear::ecs::CommandBuffer& cmd
 
             cmd.createEntity(spr,
                              gear::Transform{{480 * i / 5, 600}},
-                             gear::CollisionShape{gear::Rectangle{{0,0}, {spr.size}}},
+                             gear::CollisionShape{gear::Rectangle{
+                                 {spr.bbox.left,spr.bbox.bottom},
+                                 {spr.bbox.right, spr.bbox.top}}},
                              Enemy{}
                     );
         }
@@ -55,11 +58,12 @@ static void createStage(gear::TextureAtlas& atlas, gear::ecs::CommandBuffer& cmd
 
         Player player;
         player.bulletSprite = atlas.getSprite("bullet_blue");
-        player.bulletShape = gear::Rectangle{{0,0}, player.bulletSprite.size};
+        player.bulletShape = gear::Rectangle{{player.bulletSprite.bbox.left,player.bulletSprite.bbox.bottom},
+                                             {player.bulletSprite.bbox.right, player.bulletSprite.bbox.top}};
 
         cmd.createEntity( spr,
                 gear::Transform{{480 / 2, 32}},
-                gear::CollisionShape{gear::Rectangle{{0,0}, {spr.size}}},
+                gear::CollisionShape{gear::Rectangle{{spr.bbox.left,spr.bbox.bottom}, {spr.bbox.right, spr.bbox.top}}},
                 player);
 
     }
@@ -168,7 +172,7 @@ static void spawnEnemy(gear::TextureAtlas& atlas, gear::ecs::CommandBuffer& cmd)
     gear::Sprite spr = atlas.getSprite("ship1");
     cmd.createEntity(spr,
                      gear::Transform{{480.0f * (rand()/(float)RAND_MAX), 720+spr.size.y}},
-                     gear::CollisionShape{gear::Rectangle{{0,0}, {spr.size}}},
+                     gear::CollisionShape{gear::Rectangle{{spr.bbox.left,spr.bbox.bottom}, {spr.bbox.right, spr.bbox.top}}},
                      Enemy{}
     );
 

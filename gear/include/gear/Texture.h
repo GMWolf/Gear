@@ -28,12 +28,20 @@ namespace gear {
         glm::vec4 crop; //left, top, right, bottom
     };
 
+    //TODO split sprite into sprite component and sprite resource
     struct Sprite {
         glm::vec2 size {};
         glm::vec2 origin {};
         std::vector<TexRegion> texRegions {}; //TODO get rid of this allocation
         std::weak_ptr<const Texture> tex;
         uint16_t imageIndex {0};
+
+        struct {
+            float left;
+            float bottom;
+            float right;
+            float top;
+        } bbox;
     };
 }
 

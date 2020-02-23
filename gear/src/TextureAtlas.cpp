@@ -5,6 +5,7 @@
 #include <gear/TextureAtlas.h>
 #include <nlohmann/json.hpp>
 #include <fstream>
+#include <gear/Texture.h>
 #include "gear/Texture.h"
 
 
@@ -41,6 +42,12 @@ gear::TextureAtlas::TextureAtlas(const std::string &name) {
 
         spr.size = glm::vec2{o["size"]["x"], o["size"]["y"]};
         spr.origin = glm::vec2(o["origin"]["x"], o["origin"]["y"]);
+        spr.bbox.left = -spr.origin.x;
+        spr.bbox.bottom = -spr.origin.y;
+        spr.bbox.right = spr.size.x - spr.origin.x;
+        spr.bbox.top = spr.size.y - spr.origin.y;
+
+
 
 
         sprites.emplace(std::make_pair(o["name"], spr));
