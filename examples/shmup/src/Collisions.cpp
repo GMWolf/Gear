@@ -17,16 +17,17 @@ CollisionPair::get(const gear::ecs::Archetype &a, const gear::ecs::Archetype &b)
 
 void checkCollisions(gear::ecs::World &world, gear::ecs::CommandBuffer &cmd) {
 
-
     auto chunks = world.getChunks(gear::ecs::Archetype::create<gear::ecs::Entity, gear::CollisionShape, gear::Transform>());
 
+    int loopCounter = 0;
     for(auto itA = chunks.begin(); itA != chunks.end(); ++itA) {
+
         auto chunkA = gear::ecs::ChunkView<gear::ecs::Entity, gear::CollisionShape, gear::Transform>(*itA);
         auto itAend = chunkA.end();
         for(auto itB = itA; itB != chunks.end(); ++itB) {
             auto chunkB = gear::ecs::ChunkView<gear::ecs::Entity, gear::CollisionShape, gear::Transform>(*itB);
             auto itBend = chunkB.end();
-
+            loopCounter+=1;
 
             for(auto ea = chunkA.begin(); ea != itAend; ea++) {
                 for(auto eb = (itA == itB) ? (ea + 1) : chunkB.begin(); eb != itBend; eb++) {

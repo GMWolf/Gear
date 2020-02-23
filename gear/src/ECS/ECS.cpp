@@ -154,7 +154,8 @@ namespace gear::ecs {
     }
 
     Chunk &RegistryIterator::operator*() {
-        return *chunkIt->get();
+        assert(archetypeIt->first.matches(archetype));
+        return **chunkIt;
     }
 
     RegistryIterator &RegistryIterator::operator++() {
@@ -163,31 +164,47 @@ namespace gear::ecs {
             do {
                 archetypeIt++;
             } while(
-                    archetypeIt != archetypeEnd &&
-                    !archetypeIt->first.matches(archetype)
+                    (archetypeIt != archetypeEnd) &&
+                    (!archetypeIt->first.matches(archetype))
                     );
             if (archetypeIt != archetypeEnd) {
                 chunkIt = archetypeIt->second.begin();
             } else {
-                chunkIt = Registry::ChunkVec::iterator{};
+                chunkIt = {};
             }
         }
+
         return *this;
     }
 
-    const RegistryIterator RegistryIterator::operator++(int) &{
+    RegistryIterator RegistryIterator::operator++(int) &{
         auto temp = *this;
         ++*this;
         return temp;
     }
 
+    RegistryIterator::RegistryIterator(Registry::Store::iterator archetypeIt, Registry::Store::iterator archetypeEnd,
+                                       Registry::ChunkVec::iterator chunkIt, const Archetype &archetype) :
+            archetypeIt(archetypeIt),
+            archetypeEnd(archetypeEnd),
+            chunkIt(chunkIt),
+            archetype(archetype)
+    {
+    }
+
     RegistryIterator RegistryView::begin() {
-        return RegistryIterator(registry.archetypeChunks.begin(), registry.archetypeChunks.end(),
-                                registry.archetypeChunks.begin() != registry.archetypeChunks.end() ? registry.archetypeChunks.begin()->second.begin() : Registry::ChunkVec::iterator{}, archetype);
+
+        auto ait = registry.archetypeChunks.begin();
+        auto aend = registry.archetypeChunks.end();
+        while(ait != aend && !ait->first.matches(archetype)) {
+            ++ait;
+        }
+
+        return RegistryIterator(ait, aend,ait != aend ? ait->second.begin() : Registry::ChunkVec::iterator{nullptr}, archetype);
     }
 
     RegistryIterator RegistryView::end() {
-        return RegistryIterator(registry.archetypeChunks.end(), registry.archetypeChunks.end(), Registry::ChunkVec::iterator{}, archetype);
+        return RegistryIterator(registry.archetypeChunks.end(), registry.archetypeChunks.end(), Registry::ChunkVec::iterator{nullptr}, archetype);
     }
 
     RegistryView::RegistryView(Registry &registry, const Archetype &archetype) : registry(registry), archetype(archetype) {

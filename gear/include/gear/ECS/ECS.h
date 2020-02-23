@@ -115,12 +115,7 @@ namespace gear::ecs {
         Archetype archetype;
     public:
 
-        RegistryIterator(Registry::Store::iterator archetypeIt, Registry::Store::iterator archetypeEnd, Registry::ChunkVec::iterator chunkIt, const Archetype& archetype) :
-        archetypeIt(archetypeIt),
-        archetypeEnd(archetypeEnd),
-        chunkIt(chunkIt),
-        archetype(archetype)
-        {};
+        RegistryIterator(Registry::Store::iterator archetypeIt, Registry::Store::iterator archetypeEnd, Registry::ChunkVec::iterator chunkIt, const Archetype& archetype);;
 
         bool operator==(const RegistryIterator& o) const;
         bool operator!=(const RegistryIterator& o) const;
@@ -129,7 +124,7 @@ namespace gear::ecs {
 
         RegistryIterator& operator++();
 
-        const RegistryIterator operator++(int)&;
+        RegistryIterator operator++(int)&;
     };
 
 
@@ -192,6 +187,7 @@ namespace gear::ecs {
         void execute(const CreateCommand& createCommand);
         void execute(const DestroyCommand& destroyCommand);
         void executeCommandBuffer(const CommandBuffer& commandBuffer);
+
 
         template<class... T, class Fun>
         void foreachChunk(Fun fun) {

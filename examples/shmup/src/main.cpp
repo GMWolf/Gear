@@ -37,6 +37,7 @@ struct DestroyOnAnimationEnd {
 
 static void createStage(gear::TextureAtlas& atlas, gear::ecs::CommandBuffer& cmd) {
 
+
     {
         gear::Sprite spr = atlas.getSprite("ship1");
         for (int i = 0; i < 5; i++) {
@@ -62,7 +63,6 @@ static void createStage(gear::TextureAtlas& atlas, gear::ecs::CommandBuffer& cmd
                 player);
 
     }
-
 }
 
 static void movePlayer(gear::Application* app, gear::ecs::World& world, gear::ecs::CommandBuffer& cmd) {
@@ -131,7 +131,7 @@ static void processCollisions(gear::ecs::World& world, gear::ecs::CommandBuffer&
 
                         if (--enemy.health <= 0) {
                             cmd.destroyEntity(entities->first);
-                            cmd.createEntity( t, gear::CollisionShape{gear::Circle{}}, atlas.getSprite("explosion"), DestroyOnAnimationEnd{});
+                            cmd.createEntity( t,  atlas.getSprite("explosion"), DestroyOnAnimationEnd{});
                         }
                         cmd.destroyEntity(entities->second);
                     }
