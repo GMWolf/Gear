@@ -2,16 +2,12 @@ add_executable(texture_pack main.cpp TexturePacker.cpp TexturePacker.h)
 target_link_libraries(texture_pack PUBLIC bfg_lyra stb nlohmann_json::nlohmann_json yaml-cpp)
 
 
-function(add_texture_pack name directory width height)
-    file(GLOB_RECURSE srcs
-            CONFIGURE_DEPENDS
-            "${directory}/*.png"
-            )
+function(add_texture_pack name input)
 
     add_custom_command(
-            COMMAND texture_pack ARGS -w ${width} -h ${height} -o ${name} ${CMAKE_CURRENT_LIST_DIR}/${directory}
+            COMMAND texture_pack ARGS -o ${name} ${CMAKE_CURRENT_LIST_DIR}/${input}
             OUTPUT ${name}.json ${name}.png
-            DEPENDS "${sprite_srcs}" texture_pack
+            DEPENDS "${input}" texture_pack
             USES_TERMINAL
     )
 

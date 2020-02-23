@@ -18,7 +18,6 @@ namespace tp = gear::texture_pack;
 
 int main(int argc, char* argv[]) {
 
-    int pageWidth = 256, pageHeight = 256;
     std::vector<std::string> inputPaths;
     std::string outFileName = "out";
     bool showHelp = false;
@@ -29,15 +28,8 @@ int main(int argc, char* argv[]) {
             | lyra::opt(outFileName, "output file name").required(1)
             ["-o"]["--output"]
             ("output file name")
-            | lyra::opt(pageWidth, "page width")
-            ["-w"]["--width"]
-            ("Width of page")
-            | lyra::opt(pageHeight, "page height")
-            ["-h"]["--height"]
-            ("Height of page")
             | lyra::opt(printInputs)
             ["-w"]["--printInputs"]
-            ("Use directory")
             | lyra::help(showHelp);
 
     auto result = cli.parse({argc, argv});
@@ -56,16 +48,21 @@ int main(int argc, char* argv[]) {
     auto outAtlasName = (outFileName + ".json");
 
 
+    int pageWidth = 256, pageHeight = 256;
     std::vector<tp::SpriteDescriptor> descriptors;
 
     for(auto& inputPath : inputPaths) {
 
         auto config = YAML::LoadFile(inputPath);
 
+        auto sprites = config["sprites"];
+        pageWidth = config["width"].as<int>();
+        pageHeight = config["height"].as<int>();
+
         auto pathRelDir = fs::path(inputPath).parent_path();
 
-        assert(config.IsSequence());
-        for(const auto& n : config) {
+        assert(sprites.IsSequence());
+        for(const auto& n : sprites) {
             assert(n.IsMap());
             tp::SpriteDescriptor desc;
             desc.name = n["name"].as<std::string>();
