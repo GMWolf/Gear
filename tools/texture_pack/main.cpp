@@ -69,7 +69,8 @@ int main(int argc, char* argv[]) {
             assert(n.IsMap());
             tp::SpriteDescriptor desc;
             desc.name = n["name"].as<std::string>();
-
+            desc.origin.x = n["origin_x"].as<float>();
+            desc.origin.y = n["origin_y"].as<float>();
             if (n["images"].IsSequence()) {
                 for(const auto& i : n["images"]) {
                     desc.images.emplace_back(pathRelDir / i.as<std::string>());
@@ -135,6 +136,8 @@ int main(int argc, char* argv[]) {
             }
             o["size"]["x"] = maxWidth;
             o["size"]["y"] = maxHeight;
+            o["origin"]["x"] = spr.origin.x * maxWidth;
+            o["origin"]["y"] = spr.origin.y * maxHeight;
             j["sprites"].push_back(o);
         }
 

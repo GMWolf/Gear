@@ -26,12 +26,18 @@ namespace gear::texture_pack {
     struct Sprite {
         std::string name;
         std::vector<SubImage> images;
+        struct {
+            float x, y;
+        } origin;
     };
 
 
     struct SpriteDescriptor {
         std::string name;
         std::vector<std::filesystem::path> images;
+        struct {
+            float x, y;
+        } origin;
     };
 
     void packSprites(std::vector<Sprite>& sprites, unsigned short width, unsigned short height);

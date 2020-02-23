@@ -40,6 +40,8 @@ gear::TextureAtlas::TextureAtlas(const std::string &name) {
 
 
         spr.size = glm::vec2{o["size"]["x"], o["size"]["y"]};
+        spr.origin = glm::vec2(o["origin"]["x"], o["origin"]["y"]);
+
 
         sprites.emplace(std::make_pair(o["name"], spr));
     }

@@ -97,6 +97,8 @@ gear::texture_pack::Sprite gear::texture_pack::loadSprite(const gear::texture_pa
 
     Sprite sprite;
     sprite.name = desc.name;
+    sprite.origin.x = desc.origin.x;
+    sprite.origin.y = desc.origin.y;
 
 
     for(auto& path : desc.images) {

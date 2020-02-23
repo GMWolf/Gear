@@ -54,7 +54,7 @@ static void createStage(gear::TextureAtlas& atlas, gear::ecs::CommandBuffer& cmd
         gear::Sprite spr = atlas.getSprite("ship2");
 
         Player player;
-        player.bulletSprite = atlas.getSprite("bullet_blue1");
+        player.bulletSprite = atlas.getSprite("bullet_blue");
         player.bulletShape = gear::Rectangle{{0,0}, player.bulletSprite.size};
 
         cmd.createEntity( spr,
