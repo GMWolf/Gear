@@ -1,5 +1,5 @@
 add_executable(texture_pack main.cpp TexturePacker.cpp TexturePacker.h)
-target_link_libraries(texture_pack PUBLIC bfg_lyra stb nlohmann_json::nlohmann_json)
+target_link_libraries(texture_pack PUBLIC bfg_lyra stb nlohmann_json::nlohmann_json yaml-cpp)
 
 
 function(add_texture_pack name directory width height)

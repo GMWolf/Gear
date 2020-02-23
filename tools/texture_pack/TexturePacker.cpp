@@ -104,12 +104,14 @@ gear::texture_pack::Sprite gear::texture_pack::loadSprite(const gear::texture_pa
         std::string pathStr = path.string();
 
         unsigned char* data = stbi_load(pathStr.c_str(), &w, &h, &c, 4);
+        if (!data) exit(1);
         SubImage img = {
                 0, 0,
                 (unsigned short)w, (unsigned short)h,
                 (Pixel*) data
         };
         sprite.images.push_back(img);
+
     }
 
 

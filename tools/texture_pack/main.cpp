@@ -11,7 +11,7 @@
 #include "TexturePacker.h"
 #include <nlohmann/json.hpp>
 #include <fstream>
-#include <regex>
+#include <yaml-cpp/yaml.h>
 
 namespace fs = std::filesystem;
 namespace tp = gear::texture_pack;
@@ -25,7 +25,7 @@ int main(int argc, char* argv[]) {
     bool printInputs = false;
     auto cli = lyra::cli_parser()
             | lyra::arg(inputPaths, "input folders")
-            ("folders to pack").cardinality(1, std::numeric_limits<size_t>::max())
+            ("input files").cardinality(1, std::numeric_limits<size_t>::max())
             | lyra::opt(outFileName, "output file name").required(1)
             ["-o"]["--output"]
             ("output file name")
@@ -58,14 +58,27 @@ int main(int argc, char* argv[]) {
 
     std::vector<tp::SpriteDescriptor> descriptors;
 
-    for(auto& d : inputPaths) {
-        if (!fs::is_directory(d)) {
-            std::cerr << d << " is not a directory.\n";
-            return 1;
-        }
+    for(auto& inputPath : inputPaths) {
 
-        for(auto& p : fs::directory_iterator(d)) {
-            descriptors.push_back(tp::getDescriptorFromPath(p));
+        auto config = YAML::LoadFile(inputPath);
+
+        auto pathRelDir = fs::path(inputPath).parent_path();
+
+        assert(config.IsSequence());
+        for(const auto& n : config) {
+            assert(n.IsMap());
+            tp::SpriteDescriptor desc;
+            desc.name = n["name"].as<std::string>();
+
+            if (n["images"].IsSequence()) {
+                for(const auto& i : n["images"]) {
+                    desc.images.emplace_back(pathRelDir / i.as<std::string>());
+                }
+            } else {
+                desc.images.emplace_back(pathRelDir / n["images"].as<std::string>());
+            }
+
+            descriptors.push_back(desc);
         }
     }
 

@@ -8,6 +8,7 @@ include(stb.cmake)
 add_subdirectory(deps/glad)
 add_subdirectory(deps/glm)
 add_subdirectory(deps/Lyra)
+add_subdirectory(deps/yaml-cpp)
 
 set(JSON_BuildTests OFF CACHE BOOL "" FORCE)
 set(JSON_Install OFF CACHE BOOL "" FORCE)
