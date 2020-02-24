@@ -14,7 +14,7 @@
 #include <gear/ECS/ECS.h>
 #include <gear/CoreComponents.h>
 #include <gear/Texture.h>
-
+#include <gear/BitmapFont.h>
 
 #include "Collisions.h"
 
@@ -35,6 +35,8 @@ struct Bullet {
 
 struct DestroyOnAnimationEnd {
 };
+
+static int score = 0;
 
 static void createStage(gear::TextureAtlas& atlas, gear::ecs::CommandBuffer& cmd) {
 
@@ -134,6 +136,7 @@ static void processCollisions(gear::ecs::World& world, gear::ecs::CommandBuffer&
                         auto [enemy, t] = world.get<Enemy, gear::Transform>(entities->first);
 
                         if (--enemy.health <= 0) {
+                            score += 100;
                             cmd.destroyEntity(entities->first);
                             cmd.createEntity( t,  atlas.getSprite("explosion"), DestroyOnAnimationEnd{});
                         }
@@ -178,7 +181,7 @@ static void spawnEnemy(gear::TextureAtlas& atlas, gear::ecs::CommandBuffer& cmd)
 
 }
 
-void render(gear::SpriteBatch& batch, gear::Shader& shd, gear::ecs::World& ecsWorld) {
+void render(gear::SpriteBatch& batch, gear::Shader& shd, gear::ecs::World& ecsWorld, gear::BitmapFont& font) {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
@@ -201,6 +204,12 @@ void render(gear::SpriteBatch& batch, gear::Shader& shd, gear::ecs::World& ecsWo
             });
 
     batch.flush();
+
+
+
+    gear::renderText("Score: " + std::to_string(score), font, glm::vec2(20,680), batch);
+
+    batch.flush();
 }
 
 static void executeCommandBuffer(gear::ecs::World& world, gear::ecs::CommandBuffer& cmd) {
@@ -217,6 +226,7 @@ public:
         di.emplace<gear::Shader>("simple_textured");
         di.emplace<gear::Application*>(app);
         di.emplace<gear::ecs::CommandBuffer>();
+        di.emplace<gear::BitmapFont>("shmup_default_font.json");
 
         di.invoke(createStage);
     }

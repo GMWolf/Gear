@@ -12,7 +12,6 @@
 
 namespace gear {
 
-    class Texture;
     class TextureAtlas {
     public:
         explicit TextureAtlas(const std::string& name);

@@ -8,6 +8,8 @@
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <memory>
+#include "BitmapFont.h"
+
 
 namespace gear {
 

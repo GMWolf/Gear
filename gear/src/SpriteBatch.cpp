@@ -15,13 +15,15 @@ void gear::SpriteBatch::flush() {
         glUnmapBuffer(GL_ARRAY_BUFFER);
         map = nullptr;
 
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, batchTex);
         //Issue draw call
         glBindVertexArray(vao);
         glDrawArrays(GL_TRIANGLES, first, count);
         glBindVertexArray(0);
 
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, batchTex);
+
 
         glBindBuffer(GL_ARRAY_BUFFER, 0);
 
@@ -76,20 +78,22 @@ gear::SpriteBatch::SpriteBatch(size_t size) : batchSize(size) {
 
 
 void gear::SpriteBatch::draw(const Texture& tex, glm::vec2 pos, glm::vec2 size, glm::vec4 uv) {
-    if (map == nullptr) {
-        if (first < batchSize) {
-            bufferUpdate();
-        } else {
-            bufferOrphan();
-        }
-    }
-
     if (batchTex == 0) {
         batchTex = tex.tex;
     } else if (batchTex != tex.tex) {
         flush();
         batchTex = tex.tex;
     }
+
+    if (map == nullptr) {
+        if (first < (6 * batchSize)) {
+            bufferUpdate();
+        } else {
+            bufferOrphan();
+        }
+    }
+
+
 
     {
         auto *vertices = static_cast<Vertex *>(map) + count;
