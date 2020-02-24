@@ -8,6 +8,13 @@ include(stb.cmake)
 add_subdirectory(deps/glad)
 add_subdirectory(deps/glm)
 add_subdirectory(deps/Lyra)
+
+set(YAML_CPP_BUILD_CONTRIB OFF CACHE BOOL "" FORCE)
+set(YAML_CPP_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
+set(YAML_BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+set(YAML_CPP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(YAML_CPP_INSTALL OFF CACHE BOOL "" FORCE)
+set(YAML_MSVC_SHARED_RT OFF CACHE BOOL "" FORCE)
 add_subdirectory(deps/yaml-cpp)
 
 set(JSON_BuildTests OFF CACHE BOOL "" FORCE)
@@ -18,10 +25,11 @@ add_subdirectory(deps/json)
 add_subdirectory(gear)
 add_subdirectory(tools/texture_pack)
 add_subdirectory(tools/shader_pack)
+add_subdirectory(tools/font_pack)
 
 
 add_subdirectory(examples/shmup)
 
-add_executable(gear_test main.cpp)
+add_executable(gear_test main.cpp tools/font_pack/main.cpp)
 target_link_libraries(gear_test PUBLIC gear)
 

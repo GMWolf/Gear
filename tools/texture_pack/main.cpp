@@ -29,7 +29,7 @@ int main(int argc, char* argv[]) {
             ["-o"]["--output"]
             ("output file name")
             | lyra::opt(printInputs)
-            ["-w"]["--printInputs"]
+            ["-p"]["--printInputs"]
             | lyra::help(showHelp);
 
     auto result = cli.parse({argc, argv});
@@ -54,7 +54,6 @@ int main(int argc, char* argv[]) {
     for(auto& inputPath : inputPaths) {
 
         auto config = YAML::LoadFile(inputPath);
-
         auto sprites = config["sprites"];
         pageWidth = config["width"].as<int>();
         pageHeight = config["height"].as<int>();
