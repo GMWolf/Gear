@@ -30,6 +30,3 @@ add_subdirectory(tools/font_pack)
 
 add_subdirectory(examples/shmup)
 
-add_executable(gear_test main.cpp tools/font_pack/main.cpp)
-target_link_libraries(gear_test PUBLIC gear)
-
