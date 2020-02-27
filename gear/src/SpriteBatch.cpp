@@ -11,10 +11,9 @@ void gear::SpriteBatch::flush() {
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
         //Flush range
-        glFlushMappedBufferRange(GL_ARRAY_BUFFER, first * sizeof(Vertex), count * sizeof(Vertex));
+        glFlushMappedBufferRange(GL_ARRAY_BUFFER, 0, count * sizeof(Vertex));
         glUnmapBuffer(GL_ARRAY_BUFFER);
         map = nullptr;
-
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, batchTex);
@@ -22,8 +21,6 @@ void gear::SpriteBatch::flush() {
         glBindVertexArray(vao);
         glDrawArrays(GL_TRIANGLES, first, count);
         glBindVertexArray(0);
-
-
 
         glBindBuffer(GL_ARRAY_BUFFER, 0);
 
