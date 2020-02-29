@@ -96,3 +96,8 @@ void gear::Shader::use() {
 }
 
 
+gear::AssetEntry gear::ShaderLoader::load(const std::string &name) {
+    return AssetEntry{
+        std::make_shared<Shader>(name)
+    };
+}

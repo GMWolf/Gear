@@ -12,6 +12,11 @@ function(add_font name input)
     )
 
     add_custom_target(${name}
+            SOURCES ${input}
             DEPENDS "${name}.json" "${name}.png")
+
+    set_target_properties(${name} PROPERTIES
+            GEAR_ASSET_PATH "${name}.json"
+            GEAR_ASSET_TYPE "font")
 
 endfunction()

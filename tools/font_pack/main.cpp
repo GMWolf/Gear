@@ -19,13 +19,6 @@
 namespace fs = std::filesystem;
 namespace nj = nlohmann;
 
-struct FontChar {
-    float advance;
-    signed char xoff, yoff;
-    unsigned char w, h;
-    unsigned char* data;
-};
-
 int main(int argc, char* argv[]) {
 
     std::string inputPath;

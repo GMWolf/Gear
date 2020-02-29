@@ -14,4 +14,9 @@ function(add_texture_pack name input)
     add_custom_target(${name}
             DEPENDS "${name}.json" "${name}.png")
 
+    set_target_properties(${name} PROPERTIES
+            GEAR_ASSET_PATH "${name}.json"
+            GEAR_ASSET_TYPE "texture")
+
+
 endfunction()

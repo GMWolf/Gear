@@ -6,6 +6,6 @@ void main(){
 
     if (a == 0) discard;
 
-    color.rgb = vec3(1);
+    color.rgb = vec3(1,0,0);
     color.a = a;
 }

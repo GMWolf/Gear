@@ -7,6 +7,7 @@
 
 #include <glad/glad.h>
 #include <string>
+#include "AssetManager.h"
 
 namespace gear {
 
@@ -23,9 +24,14 @@ namespace gear {
         }
 
 
-
     private:
         GLuint program{};
+    };
+
+
+    class ShaderLoader : public AssetLoader {
+    public:
+        AssetEntry load(const std::string &name) override;
     };
 
 }

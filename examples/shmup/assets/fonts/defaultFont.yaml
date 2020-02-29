@@ -1,6 +1,6 @@
 bitmap_width: 512
 bitmap_height: 256
-font: 6809 chargen.ttf
+font: ARCADE.TTF
 line_height: 48.0
 range_start: 32
 range_count: 95

@@ -15,6 +15,7 @@
 #include <gear/CoreComponents.h>
 #include <gear/Texture.h>
 #include <gear/BitmapFont.h>
+#include <gear/AssetManager.h>
 
 #include "Collisions.h"
 
@@ -181,7 +182,7 @@ static void spawnEnemy(gear::TextureAtlas& atlas, gear::ecs::CommandBuffer& cmd)
 
 }
 
-void render(gear::SpriteBatch& batch, gear::Shader& shd, gear::ecs::World& ecsWorld, gear::BitmapFont& font) {
+void render(gear::SpriteBatch& batch, gear::AssetManager& assets, gear::ecs::World& ecsWorld, gear::BitmapFont& font) {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
@@ -191,25 +192,38 @@ void render(gear::SpriteBatch& batch, gear::Shader& shd, gear::ecs::World& ecsWo
 
     gear::View view {{0,0}, {480, 720}};
 
-    shd.use();
-    glUniform1i(shd.uniformLocation("tex"), 0);
-    auto vm = view.matrix();
-    glUniformMatrix4fv(shd.uniformLocation("view"), 1, GL_FALSE, glm::value_ptr(vm));
 
-    ecsWorld.foreachChunk<gear::Sprite, gear::Transform>(
-            [&](auto chunk){
-                for(auto [sprite, transform] : chunk) {
-                    batch.draw(sprite, transform.pos);
-                }
-            });
+    {
+        gear::Shader &shd = *assets.get_as<gear::Shader>("simple_textured");
 
-    batch.flush();
+        shd.use();
+        glUniform1i(shd.uniformLocation("tex"), 0);
+        auto vm = view.matrix();
+        glUniformMatrix4fv(shd.uniformLocation("view"), 1, GL_FALSE, glm::value_ptr(vm));
+
+        ecsWorld.foreachChunk<gear::Sprite, gear::Transform>(
+                [&](auto chunk) {
+                    for (auto[sprite, transform] : chunk) {
+                        batch.draw(sprite, transform.pos);
+                    }
+                });
+
+        batch.flush();
+
+    }
 
 
+    {
+        gear::Shader &shd = *assets.get_as<gear::Shader>("shd_font");
+        shd.use();
+        glUniform1i(shd.uniformLocation("tex"), 0);
+        auto vm = view.matrix();
+        glUniformMatrix4fv(shd.uniformLocation("view"), 1, GL_FALSE, glm::value_ptr(vm));
 
-    gear::renderText("Score: " + std::to_string(score), font, glm::vec2(20,680), batch);
+        gear::renderText("Score: " + std::to_string(score), font, glm::vec2(20, 680), batch);
 
-    batch.flush();
+        batch.flush();
+    }
 }
 
 static void executeCommandBuffer(gear::ecs::World& world, gear::ecs::CommandBuffer& cmd) {
@@ -221,12 +235,18 @@ class Game : public gear::ApplicationAdapter {
 public:
     void init(gear::Application *app) override {
         di.emplace<gear::ecs::World>();
+        di.emplace<gear::AssetManager>();
         di.emplace<gear::TextureAtlas>("shmup_textures.json");
         di.emplace<gear::SpriteBatch>(500);
-        di.emplace<gear::Shader>("simple_textured");
         di.emplace<gear::Application*>(app);
         di.emplace<gear::ecs::CommandBuffer>();
         di.emplace<gear::BitmapFont>("shmup_default_font.json");
+        di.emplace<gear::AssetManager>();
+
+        di.get<gear::AssetManager>().setLoader<gear::Shader, gear::ShaderLoader>();
+
+        di.get<gear::AssetManager>().load<gear::Shader>("simple_textured");
+        di.get<gear::AssetManager>().load<gear::Shader>("shd_font");
 
         di.invoke(createStage);
     }
@@ -252,6 +272,8 @@ public:
 private:
     gear::DI di;
     int spawnTimer = 10;
+
+
 };
 
 int main() {

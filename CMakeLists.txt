@@ -22,6 +22,14 @@ set(JSON_Install OFF CACHE BOOL "" FORCE)
 set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
 add_subdirectory(deps/json)
 
+define_property(TARGET PROPERTY GEAR_ASSET_TYPE
+        BRIEF_DOCS "Defines the type of asset this target builds"
+        FULL_DOCS "Defines the type of asset this target builds")
+
+define_property(TARGET PROPERTY GEAR_ASSET_PATH
+        BRIEF_DOCS "Defines the asset path to be loaded by the game"
+        FULL_DOCS "Defines the asset path to be loaded by the game")
+
 add_subdirectory(gear)
 add_subdirectory(tools/texture_pack)
 add_subdirectory(tools/shader_pack)
