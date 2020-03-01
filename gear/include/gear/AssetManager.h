@@ -25,8 +25,8 @@ namespace gear {
 
     class AssetManager {
     public:
-        std::shared_ptr<void> get(const std::string& name);
-        template<class T> std::shared_ptr<T> get_as(const std::string& name);
+        std::shared_ptr<void> get(const std::string& name) const;
+        template<class T> std::shared_ptr<const T> get_as(const std::string& name) const;
 
         void load(const std::string& name, AssetLoader& assetLoader);
 
@@ -42,7 +42,7 @@ namespace gear {
 
 
     template<class T>
-    std::shared_ptr<T> AssetManager::get_as(const std::string &name) {
+    std::shared_ptr<const T> AssetManager::get_as(const std::string &name) const{
         return std::static_pointer_cast<T>(get(name));
     }
 

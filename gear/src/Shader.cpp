@@ -91,8 +91,12 @@ gear::Shader::~Shader() {
     glDeleteProgram(program);
 }
 
-void gear::Shader::use() {
+void gear::Shader::use() const{
     glUseProgram(program);
+}
+
+GLuint gear::Shader::uniformLocation(const char *name) const {
+    return glGetUniformLocation(program, name);
 }
 
 

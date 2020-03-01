@@ -39,11 +39,11 @@ struct DestroyOnAnimationEnd {
 
 static int score = 0;
 
-static void createStage(gear::TextureAtlas& atlas, gear::ecs::CommandBuffer& cmd) {
+static void createStage(gear::AssetManager& assets, gear::ecs::CommandBuffer& cmd) {
 
-
+    auto atlas = assets.get_as<gear::TextureAtlas>("shmup_textures.json");
     {
-        gear::Sprite spr = atlas.getSprite("ship1");
+        gear::Sprite spr = atlas->getSprite("ship1");
         for (int i = 0; i < 5; i++) {
 
             cmd.createEntity(spr,
@@ -57,10 +57,10 @@ static void createStage(gear::TextureAtlas& atlas, gear::ecs::CommandBuffer& cmd
     }
 
     {
-        gear::Sprite spr = atlas.getSprite("ship2");
+        gear::Sprite spr = atlas->getSprite("ship2");
 
         Player player;
-        player.bulletSprite = atlas.getSprite("bullet_blue");
+        player.bulletSprite = atlas->getSprite("bullet_blue");
         player.bulletShape = gear::Rectangle{{player.bulletSprite.bbox.left,player.bulletSprite.bbox.bottom},
                                              {player.bulletSprite.bbox.right, player.bulletSprite.bbox.top}};
 
@@ -127,9 +127,10 @@ static void movePlayer(gear::Application* app, gear::ecs::World& world, gear::ec
             });
 }
 
-static void processCollisions(gear::ecs::World& world, gear::ecs::CommandBuffer& cmd, gear::TextureAtlas& atlas) {
+static void processCollisions(gear::ecs::World& world, gear::ecs::CommandBuffer& cmd, const gear::AssetManager& assetManager) {
     const gear::ecs::Archetype enemyArch = gear::ecs::Archetype::create<Enemy>();
     const gear::ecs::Archetype bulletArch = gear::ecs::Archetype::create<Bullet>();
+    auto atlas = assetManager.get_as<gear::TextureAtlas>("shmup_textures.json");
     world.foreachChunk<gear::ecs::Entity, CollisionPair>(
             [&](auto chunk) {
                 for(auto [collisionEntity, collision] : chunk) {
@@ -139,7 +140,7 @@ static void processCollisions(gear::ecs::World& world, gear::ecs::CommandBuffer&
                         if (--enemy.health <= 0) {
                             score += 100;
                             cmd.destroyEntity(entities->first);
-                            cmd.createEntity( t,  atlas.getSprite("explosion"), DestroyOnAnimationEnd{});
+                            cmd.createEntity( t,  atlas->getSprite("explosion"), DestroyOnAnimationEnd{});
                         }
                         cmd.destroyEntity(entities->second);
                     }
@@ -172,8 +173,9 @@ static void processAnimation(gear::ecs::World& world, gear::ecs::CommandBuffer& 
             );
 }
 
-static void spawnEnemy(gear::TextureAtlas& atlas, gear::ecs::CommandBuffer& cmd) {
-    gear::Sprite spr = atlas.getSprite("ship1");
+static void spawnEnemy(gear::AssetManager& assetManager, gear::ecs::CommandBuffer& cmd) {
+    auto atlas = assetManager.get_as<gear::TextureAtlas>("shmup_textures.json");
+    gear::Sprite spr = atlas->getSprite("ship1");
     cmd.createEntity(spr,
                      gear::Transform{{480.0f * (rand()/(float)RAND_MAX), 720+spr.size.y}},
                      gear::CollisionShape{gear::Rectangle{{spr.bbox.left,spr.bbox.bottom}, {spr.bbox.right, spr.bbox.top}}},
@@ -182,7 +184,7 @@ static void spawnEnemy(gear::TextureAtlas& atlas, gear::ecs::CommandBuffer& cmd)
 
 }
 
-void render(gear::SpriteBatch& batch, gear::AssetManager& assets, gear::ecs::World& ecsWorld, gear::BitmapFont& font) {
+void render(gear::SpriteBatch& batch, gear::AssetManager& assets, gear::ecs::World& ecsWorld) {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
@@ -192,14 +194,13 @@ void render(gear::SpriteBatch& batch, gear::AssetManager& assets, gear::ecs::Wor
 
     gear::View view {{0,0}, {480, 720}};
 
-
     {
-        gear::Shader &shd = *assets.get_as<gear::Shader>("simple_textured");
+        auto shd = assets.get_as<gear::Shader>("simple_textured");
 
-        shd.use();
-        glUniform1i(shd.uniformLocation("tex"), 0);
+        shd->use();
+        glUniform1i(shd->uniformLocation("tex"), 0);
         auto vm = view.matrix();
-        glUniformMatrix4fv(shd.uniformLocation("view"), 1, GL_FALSE, glm::value_ptr(vm));
+        glUniformMatrix4fv(shd->uniformLocation("view"), 1, GL_FALSE, glm::value_ptr(vm));
 
         ecsWorld.foreachChunk<gear::Sprite, gear::Transform>(
                 [&](auto chunk) {
@@ -214,11 +215,12 @@ void render(gear::SpriteBatch& batch, gear::AssetManager& assets, gear::ecs::Wor
 
 
     {
-        gear::Shader &shd = *assets.get_as<gear::Shader>("shd_font");
-        shd.use();
-        glUniform1i(shd.uniformLocation("tex"), 0);
+        auto& font = *assets.get_as<gear::BitmapFont>("shmup_default_font.json");
+        auto shd = assets.get_as<gear::Shader>("shd_font");
+        shd->use();
+        glUniform1i(shd->uniformLocation("tex"), 0);
         auto vm = view.matrix();
-        glUniformMatrix4fv(shd.uniformLocation("view"), 1, GL_FALSE, glm::value_ptr(vm));
+        glUniformMatrix4fv(shd->uniformLocation("view"), 1, GL_FALSE, glm::value_ptr(vm));
 
         gear::renderText("Score: " + std::to_string(score), font, glm::vec2(20, 680), batch);
 
@@ -236,17 +238,19 @@ public:
     void init(gear::Application *app) override {
         di.emplace<gear::ecs::World>();
         di.emplace<gear::AssetManager>();
-        di.emplace<gear::TextureAtlas>("shmup_textures.json");
         di.emplace<gear::SpriteBatch>(500);
         di.emplace<gear::Application*>(app);
         di.emplace<gear::ecs::CommandBuffer>();
-        di.emplace<gear::BitmapFont>("shmup_default_font.json");
-        di.emplace<gear::AssetManager>();
+        auto& assetManager = di.emplace<gear::AssetManager>();
 
-        di.get<gear::AssetManager>().setLoader<gear::Shader, gear::ShaderLoader>();
+        assetManager.setLoader<gear::Shader, gear::ShaderLoader>();
+        assetManager.setLoader<gear::BitmapFont, gear::BitmapFontLoader>();
+        assetManager.setLoader<gear::TextureAtlas, gear::TextureAtlasLoader>();
 
-        di.get<gear::AssetManager>().load<gear::Shader>("simple_textured");
-        di.get<gear::AssetManager>().load<gear::Shader>("shd_font");
+        assetManager.load<gear::Shader>("simple_textured");
+        assetManager.load<gear::Shader>("shd_font");
+        assetManager.load<gear::TextureAtlas>("shmup_textures.json");
+        assetManager.load<gear::BitmapFont>("shmup_default_font.json");
 
         di.invoke(createStage);
     }

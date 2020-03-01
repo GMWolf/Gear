@@ -10,6 +10,7 @@
 #include "Texture.h"
 #include <glm/vec4.hpp>
 #include <vector>
+#include "AssetManager.h"
 
 namespace gear {
 
@@ -34,6 +35,10 @@ namespace gear {
         std::vector<Glyph> glyphs;
     };
 
+    class BitmapFontLoader : public AssetLoader {
+    public:
+        AssetEntry load(const std::string &name) override;
+    };
 
     class SpriteBatch;
     void renderText(const std::string& text, const BitmapFont& font, glm::vec2 pos, SpriteBatch& batch);

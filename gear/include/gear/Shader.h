@@ -17,11 +17,9 @@ namespace gear {
         explicit Shader(const std::string& path);
         Shader(const std::string& vs, const std::string& fs);
         ~Shader();
-        void use();
+        void use() const;
 
-        GLuint uniformLocation(const char* name) {
-            return glGetUniformLocation(program, name);
-        }
+        GLuint uniformLocation(const char* name) const;
 
 
     private:

@@ -39,7 +39,6 @@ gear::TextureAtlas::TextureAtlas(const std::string &name) {
             spr.texRegions.push_back(texRegion);
         }
 
-
         spr.size = glm::vec2{o["size"]["x"], o["size"]["y"]};
         spr.origin = glm::vec2(o["origin"]["x"], o["origin"]["y"]);
         spr.bbox.left = -spr.origin.x;
@@ -47,13 +46,14 @@ gear::TextureAtlas::TextureAtlas(const std::string &name) {
         spr.bbox.right = spr.size.x - spr.origin.x;
         spr.bbox.top = spr.size.y - spr.origin.y;
 
-
-
-
         sprites.emplace(std::make_pair(o["name"], spr));
     }
 }
 
 gear::Sprite gear::TextureAtlas::getSprite(const std::string &name) const {
     return sprites.at(name);
+}
+
+gear::AssetEntry gear::TextureAtlasLoader::load(const std::string &name) {
+    return {std::make_shared<TextureAtlas>(name)};
 }

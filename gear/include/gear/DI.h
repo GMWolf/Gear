@@ -17,7 +17,7 @@ namespace gear {
     public:
 
         template<class T, class... Args>
-        void emplace(Args&&... args);
+        T& emplace(Args&&... args);
 
         template<class T>
         T& get();
@@ -50,11 +50,12 @@ namespace gear {
     };
 
     template<class T, class... Args>
-    void DI::emplace(Args &&... args) {
-        store.emplace(std::make_pair(
+    T& DI::emplace(Args &&... args) {
+        auto ptr = store.emplace(std::make_pair(
                 std::type_index(typeid(T)),
                 std::make_shared<T>(args...))
-        );
+        ).first;
+        return *static_cast<T*>(ptr->second.get());
     }
 
     template<class T>

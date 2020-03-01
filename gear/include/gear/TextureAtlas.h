@@ -9,6 +9,7 @@
 #include <memory>
 #include <unordered_map>
 #include "Texture.h"
+#include "AssetManager.h"
 
 namespace gear {
 
@@ -21,6 +22,11 @@ namespace gear {
     private:
         std::shared_ptr<Texture> texture;
         std::unordered_map<std::string, Sprite> sprites;
+    };
+
+    class TextureAtlasLoader : public AssetLoader {
+    public:
+        AssetEntry load(const std::string &name) override;
     };
 }
 

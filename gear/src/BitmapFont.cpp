@@ -59,3 +59,7 @@ void gear::renderText(const std::string &text, const BitmapFont &font, glm::vec2
         pos.x += glyph.advance;
     }
 }
+
+gear::AssetEntry gear::BitmapFontLoader::load(const std::string &name) {
+    return {std::make_shared<BitmapFont>(name)};
+}

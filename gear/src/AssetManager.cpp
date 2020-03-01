@@ -4,7 +4,7 @@
 
 #include <gear/AssetManager.h>
 
-std::shared_ptr<void> gear::AssetManager::get(const std::string &name) {
+std::shared_ptr<void> gear::AssetManager::get(const std::string &name) const{
     auto it = assets.find(name);
     if (it != assets.end()){
         return it->second.object;
