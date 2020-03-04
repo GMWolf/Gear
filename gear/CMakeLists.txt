@@ -28,6 +28,8 @@ add_library(gear
         src/ECS/Archetype.cpp
         src/ECS/Component.cpp
         include/gear/BitmapFont.h
-        src/BitmapFont.cpp include/gear/AssetManager.h src/AssetManager.cpp)
+        src/BitmapFont.cpp
+        include/gear/AssetManager.h
+        src/AssetManager.cpp)
 target_link_libraries(gear PUBLIC glfw glad stb glm nlohmann_json::nlohmann_json)
 target_include_directories(gear PUBLIC include)

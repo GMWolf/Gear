@@ -6,7 +6,6 @@
 #include <gear/DI.h>
 #include <gear/TextureAtlas.h>
 #include <gear/SpriteBatch.h>
-#include <gear/CollisionDetection.h>
 #include <gear/CollisionShape.h>
 #include <gear/Shader.h>
 #include <gear/View.h>
@@ -16,6 +15,7 @@
 #include <gear/Texture.h>
 #include <gear/BitmapFont.h>
 #include <gear/AssetManager.h>
+#include <iostream>
 
 #include "Collisions.h"
 
@@ -35,6 +35,15 @@ struct Bullet {
 };
 
 struct DestroyOnAnimationEnd {
+};
+
+struct Text {
+    std::string text;
+    std::shared_ptr<const gear::BitmapFont> font;
+};
+
+struct Lifetime {
+    float time;
 };
 
 static int score = 0;
@@ -141,10 +150,25 @@ static void processCollisions(gear::ecs::World& world, gear::ecs::CommandBuffer&
                             score += 100;
                             cmd.destroyEntity(entities->first);
                             cmd.createEntity( t,  atlas->getSprite("explosion"), DestroyOnAnimationEnd{});
+                            cmd.createEntity( gear::Transform{t.pos - glm::vec2(25, 0)},
+                                    Text{"100", assetManager.get_as<gear::BitmapFont>("shmup_default_font.json")},
+                                    Lifetime{1});
                         }
                         cmd.destroyEntity(entities->second);
                     }
                     cmd.destroyEntity(collisionEntity);
+                }
+            });
+}
+
+static void processLifetime(gear::ecs::World& world, gear::ecs::CommandBuffer& cmd) {
+    world.foreachChunk<gear::ecs::Entity, Lifetime>(
+            [&](auto chunk) {
+                for(auto [entity, lifetime] : chunk) {
+                    lifetime.time -= 1/60.f;
+                    if (lifetime.time <= 0) {
+                        cmd.destroyEntity(entity);
+                    }
                 }
             });
 }
@@ -222,6 +246,14 @@ void render(gear::SpriteBatch& batch, gear::AssetManager& assets, gear::ecs::Wor
         auto vm = view.matrix();
         glUniformMatrix4fv(shd->uniformLocation("view"), 1, GL_FALSE, glm::value_ptr(vm));
 
+        ecsWorld.foreachChunk<gear::Transform, Text>(
+                [&](auto chunk) {
+                    for(auto [transform, text] : chunk) {
+                        gear::renderText(text.text, *text.font, transform.pos, batch);
+                    }
+                });
+
+
         gear::renderText("Score: " + std::to_string(score), font, glm::vec2(20, 680), batch);
 
         batch.flush();
@@ -262,6 +294,7 @@ public:
         di.invoke(processCollisions);
         di.invoke(render);
         di.invoke(processAnimation);
+        di.invoke(processLifetime);
         di.invoke(executeCommandBuffer);
         if (--spawnTimer <= 0) {
             di.invoke(spawnEnemy);
