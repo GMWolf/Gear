@@ -2,8 +2,12 @@
 // Created by felix on 04/03/2020.
 //
 
-#include <glad/glad.h>
+
 #include "gear/DebugUI.h"
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
+#include <algorithm>
 
 bool gear::ui::demoWindowOpen = true;
 
@@ -24,8 +28,6 @@ void gear::ui::begin() {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
-
-    ImGui::ShowDemoWindow(&demoWindowOpen);
 }
 
 void gear::ui::cleanup() {
@@ -37,4 +39,19 @@ void gear::ui::cleanup() {
 void gear::ui::end() {
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
+
+void gear::ui::perfWindow(gear::ui::PerfData &data) {
+
+    if (data.plot.size() < data.maxCount) {
+        data.plot.push_back(data.frameTime);
+    } else {
+        data.plot.erase(data.plot.begin());
+        data.plot.push_back(data.frameTime);
+    }
+
+    ImGui::Begin("FPS");
+    ImGui::Text("%03.1f", 1./data.frameTime);
+    ImGui::PlotHistogram("frame time", data.plot.data(), data.plot.size());
+    ImGui::End();
 }

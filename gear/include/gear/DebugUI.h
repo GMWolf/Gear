@@ -5,11 +5,9 @@
 #ifndef GEAR_DEBUGUI_H
 #define GEAR_DEBUGUI_H
 
-#include <GLFW/glfw3.h>
-#include <imgui.h>
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_opengl3.h>
+#include <vector>
 
+struct GLFWwindow;
 namespace gear::ui {
     extern bool demoWindowOpen;
 
@@ -20,6 +18,14 @@ namespace gear::ui {
     void end();
 
     void cleanup();
+
+    struct PerfData {
+        std::vector<float> plot;
+        int maxCount = 60;
+        double frameTime;
+    };
+
+    void perfWindow(PerfData& data);
 
 }
 

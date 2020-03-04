@@ -210,9 +210,6 @@ static void spawnEnemy(gear::AssetManager& assetManager, gear::ecs::CommandBuffe
 }
 
 void render(gear::SpriteBatch& batch, gear::AssetManager& assets, gear::ecs::World& ecsWorld) {
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
-
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glDisable(GL_CULL_FACE);
@@ -268,7 +265,8 @@ static void executeCommandBuffer(gear::ecs::World& world, gear::ecs::CommandBuff
 
 class Game : public gear::ApplicationAdapter {
 public:
-    void init(gear::Application *app) override {
+    void init(gear::Application *_app) override {
+        app = _app;
         di.emplace<gear::ecs::World>();
         di.emplace<gear::AssetManager>();
         di.emplace<gear::SpriteBatch>(500);
@@ -291,6 +289,7 @@ public:
     }
 
     void update() override {
+
         di.invoke(movePlayer);
         di.invoke(checkCollisions);
         di.invoke(executeCommandBuffer);
@@ -304,8 +303,10 @@ public:
             spawnTimer = 60;
         }
 
-        gear::ui::begin();
 
+        gear::ui::begin();
+        perf.frameTime = app->frameTime;
+        gear::ui::perfWindow(perf);
         gear::ui::end();
     }
 
@@ -317,6 +318,8 @@ public:
 private:
     gear::DI di;
     int spawnTimer = 10;
+    gear::ui::PerfData perf {};
+    gear::Application* app {};
 
 
 };

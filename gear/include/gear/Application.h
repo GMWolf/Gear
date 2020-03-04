@@ -33,6 +33,8 @@ namespace gear {
         int width, height;
         bool initialized = false;
         GLFWwindow *window{};
+
+        double frameTime = 0;
     };
 
     void run(const AppConfig &config, ApplicationAdapter &app);
