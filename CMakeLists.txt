@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 include(glfw.cmake)
 include(stb.cmake)
+include(imgui.cmake)
 add_subdirectory(deps/glad)
 add_subdirectory(deps/glm)
 add_subdirectory(deps/Lyra)

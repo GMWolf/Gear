@@ -16,6 +16,7 @@
 #include <gear/BitmapFont.h>
 #include <gear/AssetManager.h>
 #include <iostream>
+#include <gear/DebugUI.h>
 
 #include "Collisions.h"
 
@@ -285,6 +286,8 @@ public:
         assetManager.load<gear::BitmapFont>("shmup_default_font.json");
 
         di.invoke(createStage);
+
+        gear::ui::initialize(app->window);
     }
 
     void update() override {
@@ -300,10 +303,15 @@ public:
             di.invoke(spawnEnemy);
             spawnTimer = 60;
         }
+
+        gear::ui::begin();
+
+        gear::ui::end();
     }
 
     void end() override {
         di.reset();
+        gear::ui::cleanup();
     }
 
 private:
