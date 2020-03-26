@@ -57,7 +57,8 @@ namespace gear::ecs {
 
     void World::execute(const CreateCommand &createCommand) {
         auto [chunk, eid] = registry.emplaceEntity(createCommand.archetype);
-        for(auto& [componentId, componentPointer] : createCommand.components) {
+        for(int i = 0; i < createCommand.componentCount; i++) {
+            auto& [componentId, componentPointer] = createCommand.components[i];
             ComponentInfo::component[componentId].functions.emplace(chunk->get(componentId, eid), componentPointer);
         }
         Entity entity;
@@ -134,15 +135,18 @@ namespace gear::ecs {
     }
 
     CreateCommand::~CreateCommand() {
-        for(auto [id, ptr] : components) {
+        for(int i = 0; i < componentCount; i++) {
+            auto [id, ptr] = components[i];
             ComponentInfo::component[id].functions.destroy(ptr);
         }
     }
 
     CreateCommand::CreateCommand(CreateCommand && o) noexcept :
     archetype(o.archetype),
-    components(std::move(o.components)){
-        o.components.clear();
+    components(o.components),
+    componentCount(o.componentCount){
+        o.componentCount = 0;
+        o.components = nullptr;
     }
 
     bool RegistryIterator::operator==(const RegistryIterator &o) const {

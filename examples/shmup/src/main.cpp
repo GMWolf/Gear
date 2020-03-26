@@ -261,6 +261,7 @@ void render(gear::SpriteBatch& batch, gear::AssetManager& assets, gear::ecs::Wor
 static void executeCommandBuffer(gear::ecs::World& world, gear::ecs::CommandBuffer& cmd) {
     world.executeCommandBuffer(cmd);
     cmd.commands.clear();
+    cmd.heap.deallocateAll();
 }
 
 class Game : public gear::ApplicationAdapter {

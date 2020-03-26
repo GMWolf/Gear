@@ -24,6 +24,7 @@
 #include "Component.h"
 #include "Archetype.h"
 #include <cassert>
+#include <gear/Allocators.h>
 
 namespace gear::ecs {
 
@@ -147,7 +148,9 @@ namespace gear::ecs {
         CreateCommand& operator=(const CreateCommand&) = delete;
 
         Archetype archetype{};
-        std::vector<std::pair<ComponentId, void*>> components{};
+        std::pair<ComponentId, void*>* components{};
+        size_t componentCount = 0;
+
         ~CreateCommand();
     };
 
@@ -156,6 +159,11 @@ namespace gear::ecs {
     };
 
     struct CommandBuffer {
+
+        CommandBuffer() : heap(Block{(std::byte*)malloc(1024*1024), 1024*1024}){
+        }
+
+        StackAllocator heap;
         std::vector<std::variant<CreateCommand, DestroyCommand>> commands;
         template<class... T>
         void createEntity(T&&... t);
@@ -167,13 +175,11 @@ namespace gear::ecs {
     void CommandBuffer::createEntity(T&&... t) {
         commands.emplace_back();
         commands.back().emplace<CreateCommand>();
-        assert(std::holds_alternative<CreateCommand>(commands.back()));
         auto& createCommand = std::get<CreateCommand>(commands.back());
-        assert(createCommand.components.empty());
         createCommand.archetype = Archetype::create<std::remove_reference_t<T>...>();
-
-        (createCommand.components.push_back(std::make_pair(Component<std::remove_reference_t<T>>::ID(), static_cast<void*>(new std::remove_reference_t<T>(t)))), ...);
-        assert(createCommand.components.size() == sizeof...(T));
+        createCommand.components = reinterpret_cast<std::pair<ComponentId, void *> *>(heap.allocate(sizeof(std::pair<ComponentId, void *>) * sizeof...(T)).ptr);
+        ((createCommand.components[createCommand.componentCount++] = (std::make_pair(Component<std::remove_reference_t<T>>::ID(),
+                static_cast<void*>(new (heap.allocate(Component<std::remove_reference_t<T>>::info().size).ptr) std::remove_reference_t<T>(t))))), ...);
     }
 
 
