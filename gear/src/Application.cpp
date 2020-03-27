@@ -90,14 +90,14 @@ void gear::Application::run(gear::ApplicationAdapter& adapter) {
         adapter.init(this);
 
         while(!glfwWindowShouldClose(window)) {
+            double time = glfwGetTime();
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
-            double time = glfwGetTime();
             adapter.update();
-            frameTime = glfwGetTime() - time;
+
             glfwSwapBuffers(window);
             glfwPollEvents();
-
+            frameTime = glfwGetTime() - time;
         }
 
         adapter.end();
