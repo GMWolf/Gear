@@ -29,7 +29,7 @@ namespace gear::ecs {
         struct Hash {
             std::size_t operator()(const gear::ecs::Archetype& a) const noexcept;
         };
-    private:
+
         std::bitset<MaxComponents> bits{};
     };
 
@@ -44,6 +44,32 @@ namespace gear::ecs {
         EntityId id = 0;
         Archetype archetype{};
     };
+
+    struct Query {
+        std::bitset<MaxComponents> allBits {};
+        std::bitset<MaxComponents> noneBits {};
+        std::bitset<MaxComponents> oneBits {};
+
+        template<class... T>
+        Query& all() {
+            (allBits.set(Component<T>::ID()), ...);
+            return *this;
+        }
+
+        template<class... T>
+        Query& none() {
+            (noneBits.set(Component<T>::ID()), ...);
+            return *this;
+        }
+
+        template<class... T>
+        Query& one() {
+            (noneBits.set(Component<T>::ID()), ...);
+            return *this;
+        }
+    };
+
+    bool testQuery(const Query& q, const Archetype& a);
 
 }
 

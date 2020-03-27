@@ -29,4 +29,10 @@ namespace gear::ecs {
         return std::hash<decltype(a.bits)>{}(a.bits);
     }
 
+
+    bool testQuery(const gear::ecs::Query &q, const gear::ecs::Archetype &a) {
+        return ((a.bits & q.allBits) == q.allBits)
+               && ((a.bits & q.noneBits).none())
+               && (q.oneBits.none() || (a.bits & q.oneBits).any());
+    }
 }

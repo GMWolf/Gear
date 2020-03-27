@@ -30,6 +30,10 @@ add_library(gear
         include/gear/BitmapFont.h
         src/BitmapFont.cpp
         include/gear/AssetManager.h
-        src/AssetManager.cpp include/gear/DebugUI.h src/DebugUI.cpp include/gear/Allocators.h src/Allocators.cpp)
+        src/AssetManager.cpp
+        include/gear/DebugUI.h
+        src/DebugUI.cpp
+        include/gear/Allocators.h
+        src/Allocators.cpp)
 target_link_libraries(gear PUBLIC glfw glad stb glm nlohmann_json::nlohmann_json imgui_gear)
 target_include_directories(gear PUBLIC include)

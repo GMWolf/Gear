@@ -5,7 +5,8 @@
 #ifndef GEAR_CORECOMPONENTS_H
 #define GEAR_CORECOMPONENTS_H
 
-#include<glm/vec2.hpp>
+#include <glm/vec2.hpp>
+#include "ECS/ECS.h"
 
 namespace gear {
 
@@ -13,10 +14,17 @@ namespace gear {
         glm::vec2 pos;
     };
 
+    struct WorldTransform {
+        glm::vec2 pos;
+    };
 
+    struct Parent {
+        ecs::EntityId entity;
+    };
 
-
-
+    struct ParentInternal {
+        int depth;
+    };
 
 }
 

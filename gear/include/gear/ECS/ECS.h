@@ -107,37 +107,11 @@ namespace gear::ecs {
         ChunkIterator<T...> end() {
             return ChunkIterator<T...>(static_cast<T*>(chunk.get(Component<T>::ID(), chunk.size))...);
         }
-    };
 
-    class RegistryIterator {
-        Registry::Store::iterator archetypeIt;
-        Registry::Store::iterator archetypeEnd;
-        Registry::ChunkVec::iterator chunkIt;
-        Archetype archetype;
-    public:
-
-        RegistryIterator(Registry::Store::iterator archetypeIt, Registry::Store::iterator archetypeEnd, Registry::ChunkVec::iterator chunkIt, const Archetype& archetype);;
-
-        bool operator==(const RegistryIterator& o) const;
-        bool operator!=(const RegistryIterator& o) const;
-
-        Chunk& operator*();
-
-        RegistryIterator& operator++();
-
-        RegistryIterator operator++(int)&;
-    };
-
-
-    class RegistryView {
-        Registry& registry;
-        Archetype archetype;
-    public:
-
-        explicit RegistryView(Registry& registry, const Archetype& archetype);
-
-        RegistryIterator begin();
-        RegistryIterator end();
+        template<class... E>
+        bool operator==(const ChunkView<E...>& o) const {
+            return &chunk == &o.chunk;
+        }
     };
 
     struct CreateCommand {
@@ -208,13 +182,14 @@ namespace gear::ecs {
         }
 
 
-        RegistryView getChunks(const Archetype& archetype);
-
         template<class... T>
         std::tuple<T&...> get(Entity entity) {
             auto [chunk, index] = entities[entity.id];
             return std::forward_as_tuple(*static_cast<T*>(chunk->get(Component<T>::ID(), index)) ...);
         }
+
+
+        size_t queryChunks(const Query& query, Chunk** outChunks, size_t outArraySize);
 
     };
 

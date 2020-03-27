@@ -16,22 +16,17 @@ CollisionPair::get(const gear::ecs::Archetype &a, const gear::ecs::Archetype &b)
 }
 
 void checkCollisions(gear::ecs::World &world, gear::ecs::CommandBuffer &cmd) {
+    gear::ecs::Chunk* chunks[1024];
+    auto chunkCount = world.queryChunks(gear::ecs::Query().all<gear::CollisionShape, gear::Transform>(), chunks, 1024);
 
-    auto chunks = world.getChunks(gear::ecs::Archetype::create<gear::ecs::Entity, gear::CollisionShape, gear::Transform>());
+    for(int i = 0; i < chunkCount; i++) {
+        auto chunkA = gear::ecs::ChunkView<gear::ecs::Entity, gear::CollisionShape, gear::Transform>(*chunks[i]);
 
-    int loopCounter = 0;
-    for(auto itA = chunks.begin(); itA != chunks.end(); ++itA) {
+        for(int j = i; j < chunkCount; j++) {
+            auto chunkB = gear::ecs::ChunkView<gear::ecs::Entity, gear::CollisionShape, gear::Transform>( *chunks[j]);
 
-        auto chunkA = gear::ecs::ChunkView<gear::ecs::Entity, gear::CollisionShape, gear::Transform>(*itA);
-        auto itAend = chunkA.end();
-        for(auto itB = itA; itB != chunks.end(); ++itB) {
-            auto chunkB = gear::ecs::ChunkView<gear::ecs::Entity, gear::CollisionShape, gear::Transform>(*itB);
-            auto itBend = chunkB.end();
-            loopCounter+=1;
-
-            for(auto ea = chunkA.begin(); ea != itAend; ea++) {
-                for(auto eb = (itA == itB) ? (ea + 1) : chunkB.begin(); eb != itBend; eb++) {
-
+            for(auto ea = chunkA.begin(); ea != chunkA.end(); ++ea) {
+                for(auto eb = (chunkA == chunkB) ? (ea + 1) : chunkB.begin(); eb != chunkB.end(); ++eb) {
                     auto [entityA, shapeA, transformA] = *ea;
                     auto [entityB, shapeB, transformB] = *eb;
 
@@ -40,6 +35,7 @@ void checkCollisions(gear::ecs::World &world, gear::ecs::CommandBuffer &cmd) {
                     }
                 }
             }
+
         }
     }
 }
