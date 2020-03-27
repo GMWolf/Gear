@@ -19,6 +19,11 @@ struct CollisionPair {
     std::optional<std::pair<gear::ecs::Entity, gear::ecs::Entity>> get(const gear::ecs::Archetype& a, const gear::ecs::Archetype& b);
 };
 
+struct CollisionFilter {
+    gear::ecs::Query entityA;
+    gear::ecs::Query entityB;
+};
+
 void checkCollisions(gear::ecs::World& world, gear::ecs::CommandBuffer& cmd);
 
 #endif //GEAR_COLLISIONS_H

@@ -80,6 +80,14 @@ static void createStage(gear::AssetManager& assets, gear::ecs::CommandBuffer& cm
                 player);
 
     }
+
+    //collision filters
+    {
+        cmd.createEntity(CollisionFilter{
+            gear::ecs::Query().all<Enemy>(),
+            gear::ecs::Query().all<Bullet>()
+        });
+    }
 }
 
 static void movePlayer(gear::Application* app, gear::ecs::World& world, gear::ecs::CommandBuffer& cmd) {
@@ -115,43 +123,11 @@ static void movePlayer(gear::Application* app, gear::ecs::World& world, gear::ec
                                   Bullet{{0, 10}}
                 );
 
-                player.shootTimer = 12;
+                player.shootTimer = 1;
             }
         }
 
     }
-
-
-    /*world.foreachChunk<Player, gear::Transform>(
-            [&](auto chunk){
-                for(auto [player, transform] : chunk) {
-                    if (app->keyPressed(gear::KEYS::RIGHT)) {
-                        transform.pos.x += player.moveSpeed;
-                    }
-                    if (app->keyPressed(gear::KEYS::LEFT)) {
-                        transform.pos.x -= player.moveSpeed;
-                    }
-                    if (app->keyPressed(gear::KEYS::UP)) {
-                        transform.pos.y += player.moveSpeed;
-                    }
-                    if (app->keyPressed(gear::KEYS::DOWN)) {
-                        transform.pos.y -= player.moveSpeed;
-                    }
-
-                    if (player.shootTimer > 0) player.shootTimer--;
-
-                    if (app->keyPressed(gear::KEYS::SPACE) && player.shootTimer <= 0) {
-
-                        cmd.createEntity( player.bulletSprite,
-                                player.bulletShape,
-                                gear::Transform{transform.pos + glm::vec2(0, 24)},
-                                Bullet{{0, 10}}
-                                );
-
-                        player.shootTimer = 12;
-                    }
-                }
-            });*/
 
     world.foreachChunk<gear::ecs::Entity, gear::Transform, Bullet>(
             [&](auto chunk){
@@ -339,14 +315,14 @@ public:
         di.invoke(executeCommandBuffer);
         if (--spawnTimer <= 0) {
             di.invoke(spawnEnemy);
-            spawnTimer = 60;
+            spawnTimer = 1;
         }
 
 
-        gear::ui::begin();
-        perf.frameTime = app->frameTime;
-        gear::ui::perfWindow(perf);
-        gear::ui::end();
+        //gear::ui::begin();
+        //perf.frameTime = app->frameTime;
+        //gear::ui::perfWindow(perf);
+        //gear::ui::end();
     }
 
     void end() override {

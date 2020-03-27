@@ -61,19 +61,20 @@ namespace gear::ecs {
     template<class... T>
     class ChunkIterator {
         std::tuple<T*...> ptr;
+        int idx;
     public:
-        explicit ChunkIterator(T*... ptrs) : ptr(ptrs...) {}
+        explicit ChunkIterator(T*... ptrs, int idx) : ptr(ptrs...), idx(idx) {}
 
         std::tuple<T&...> operator*() noexcept {
-            return std::forward_as_tuple(*std::get<T*>(ptr)...);
+            return std::forward_as_tuple(std::get<T*>(ptr)[idx]...);
         }
 
         ChunkIterator operator+(size_t i) const noexcept {
-            return ChunkIterator(std::get<T*>(ptr) + i ...);
+            return ChunkIterator(std::get<T*>(ptr) ..., idx + i);
         }
 
         ChunkIterator& operator++() noexcept {
-            (++std::get<T*>(ptr),...);
+            idx++;
             return *this;
         }
 
@@ -84,7 +85,7 @@ namespace gear::ecs {
         }
 
         bool operator==(const ChunkIterator& o) {
-            return (std::get<0>(ptr) == std::get<0>(o.ptr));
+            return (std::get<0>(ptr)+idx == std::get<0>(o.ptr)+o.idx);
         }
 
         bool operator!=(const ChunkIterator& o) {
@@ -101,11 +102,11 @@ namespace gear::ecs {
         }
 
         ChunkIterator<T...> begin() {
-            return ChunkIterator<T...>( static_cast<T*>(chunk.get(Component<T>::ID(), 0))...);
+            return ChunkIterator<T...>( static_cast<T*>(chunk.getData(Component<T>::ID()))..., 0);
         }
 
         ChunkIterator<T...> end() {
-            return ChunkIterator<T...>(static_cast<T*>(chunk.get(Component<T>::ID(), chunk.size))...);
+            return ChunkIterator<T...>(static_cast<T*>(chunk.getData(Component<T>::ID()))..., chunk.size);
         }
 
         template<class... E>
