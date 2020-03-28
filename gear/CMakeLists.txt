@@ -17,11 +17,11 @@ add_library(gear
         src/View.cpp
         include/gear/KeyboardKeys.h
         include/gear/DI.h
-        include/gear/ECS/ECS.h
+        include/gear/ECS/Core.h
         include/gear/CoreComponents.h
         include/gear/ECS/System.h
-        src/ECS/ECS.cpp
-        include/gear/ECS/ECS.h
+        src/ECS/Core.cpp
+        include/gear/ECS/Core.h
         include/gear/ECS/Config.h
         include/gear/ECS/Component.h
         include/gear/ECS/Archetype.h
@@ -34,6 +34,6 @@ add_library(gear
         include/gear/DebugUI.h
         src/DebugUI.cpp
         include/gear/Allocators.h
-        src/Allocators.cpp)
+        src/Allocators.cpp include/gear/Util.h include/gear/ECS/ChunkView.h include/gear/ECS/ECS.h)
 target_link_libraries(gear PUBLIC glfw glad stb glm nlohmann_json::nlohmann_json imgui_gear)
 target_include_directories(gear PUBLIC include)

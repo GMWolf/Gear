@@ -5,7 +5,7 @@
 #ifndef GEAR_SYSTEM_H
 #define GEAR_SYSTEM_H
 
-#include "ECS.h"
+#include "Core.h"
 
 namespace gear::ecs {
 

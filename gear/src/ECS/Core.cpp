@@ -2,7 +2,7 @@
 // Created by felix on 08/02/2020.
 //
 
-#include <gear/ECS/ECS.h>
+#include <gear/ECS/Core.h>
 #include <gear/ECS/Component.h>
 #include <iostream>
 #include <cassert>
@@ -121,9 +121,10 @@ namespace gear::ecs {
         }
         return nextEntityId++;
     }
-    size_t World::queryChunks(const Query &query, Chunk **outChunks, size_t outArraySize) {
+
+    ArrayRange<Chunk*> World::queryChunks(const Query &query, Chunk **outChunks, size_t outArraySize) {
         if (outArraySize == 0) {
-            return 0;
+            return {};
         }
         size_t count = 0;
         for(auto& [arch, chunks] : registry.archetypeChunks) {
@@ -131,12 +132,12 @@ namespace gear::ecs {
                 for(auto& chunkPtr : chunks) {
                     outChunks[count++] = chunkPtr.get();
                     if (count == outArraySize) {
-                        return count;
+                        return {outChunks, outChunks+count};
                     }
                 }
             }
         }
-        return count;
+        return {outChunks, outChunks+count};
     }
 
     void *Chunk::getData(ComponentId id) {

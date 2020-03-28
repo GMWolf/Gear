@@ -6,7 +6,7 @@
 #define GEAR_CORECOMPONENTS_H
 
 #include <glm/vec2.hpp>
-#include "ECS/ECS.h"
+#include "gear/ECS/Core.h"
 
 namespace gear {
 
