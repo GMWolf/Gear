@@ -15,7 +15,6 @@
 #include <gear/Texture.h>
 #include <gear/BitmapFont.h>
 #include <gear/AssetManager.h>
-#include <iostream>
 #include <gear/DebugUI.h>
 
 #include "Collisions.h"
@@ -51,14 +50,14 @@ struct Lifetime {
 
 static int score = 0;
 
-static void createStage(gear::AssetManager& assets, gear::ecs::CommandBuffer& cmd) {
+static void createStage(gear::AssetManager& assets, gear::ecs::CommandEncoder& cmd) {
 
     auto atlas = assets.get_as<gear::TextureAtlas>("shmup_textures.json");
     {
         gear::Sprite spr = atlas->getSprite("ship1");
         for (int i = 0; i < 5; i++) {
 
-            cmd.createEntity(spr,
+            cmd.createEntity(gear::Sprite(spr),
                              gear::Transform{{480 * i / 5, 600}},
                              gear::CollisionShape{gear::Rectangle{
                                  {spr.bbox.left,spr.bbox.bottom},
@@ -92,7 +91,7 @@ static void createStage(gear::AssetManager& assets, gear::ecs::CommandBuffer& cm
     }
 }
 
-static void movePlayer(gear::Application* app, gear::ecs::World& world, gear::ecs::CommandBuffer& cmd) {
+static void movePlayer(gear::Application* app, gear::ecs::World& world, gear::ecs::CommandEncoder& cmd) {
 
     const size_t chunkArraySize = 256;
     gear::ecs::Chunk* chunkArray[chunkArraySize];
@@ -119,7 +118,7 @@ static void movePlayer(gear::Application* app, gear::ecs::World& world, gear::ec
 
             if (app->keyPressed(gear::KEYS::SPACE) && player.shootTimer <= 0) {
 
-                cmd.createEntity( player.bulletSprite,
+                cmd.createEntity( gear::Sprite(player.bulletSprite),
                                   player.bulletShape,
                                   gear::Transform{transform.pos + glm::vec2(0, 24)},
                                   Bullet{{0, 10}}
@@ -155,7 +154,7 @@ static void movePlayer(gear::Application* app, gear::ecs::World& world, gear::ec
     }
 }
 
-static void processCollisions(gear::ecs::World& world, gear::ecs::CommandBuffer& cmd, const gear::AssetManager& assetManager) {
+static void processCollisions(gear::ecs::World& world, gear::ecs::CommandEncoder& cmd, const gear::AssetManager& assetManager) {
     const gear::ecs::Archetype enemyArch = gear::ecs::Archetype::create<Enemy>();
     const gear::ecs::Archetype bulletArch = gear::ecs::Archetype::create<Bullet>();
     auto atlas = assetManager.get_as<gear::TextureAtlas>("shmup_textures.json");
@@ -183,7 +182,7 @@ static void processCollisions(gear::ecs::World& world, gear::ecs::CommandBuffer&
     };
 }
 
-static void processLifetime(gear::ecs::World& world, gear::ecs::CommandBuffer& cmd) {
+static void processLifetime(gear::ecs::World& world, gear::ecs::CommandEncoder& cmd) {
     gecs::Chunk* chunkArray[256];
     auto chunks = world.queryChunks(gecs::Query().all<Lifetime>(), chunkArray, 256);
     for(auto c : chunks) {
@@ -198,7 +197,7 @@ static void processLifetime(gear::ecs::World& world, gear::ecs::CommandBuffer& c
 }
 
 
-static void processAnimation(gear::ecs::World& world, gear::ecs::CommandBuffer& cmd) {
+static void processAnimation(gear::ecs::World& world, gear::ecs::CommandEncoder& cmd) {
     gecs::Chunk* chunkArray[1024];
     auto chunks = world.queryChunks(gecs::Query().all<gear::Sprite>(), chunkArray, 1024);
 
@@ -223,7 +222,7 @@ static void processAnimation(gear::ecs::World& world, gear::ecs::CommandBuffer& 
     }
 }
 
-static void spawnEnemy(gear::AssetManager& assetManager, gear::ecs::CommandBuffer& cmd) {
+static void spawnEnemy(gear::AssetManager& assetManager, gear::ecs::CommandEncoder& cmd) {
     auto atlas = assetManager.get_as<gear::TextureAtlas>("shmup_textures.json");
     gear::Sprite spr = atlas->getSprite("ship1");
     cmd.createEntity(spr,
@@ -289,10 +288,10 @@ void render(gear::SpriteBatch& batch, gear::AssetManager& assets, gear::ecs::Wor
     }
 }
 
-static void executeCommandBuffer(gear::ecs::World& world, gear::ecs::CommandBuffer& cmd) {
-    world.executeCommandBuffer(cmd);
-    cmd.commands.clear();
-    cmd.heap.deallocateAll();
+void submitCommandBuffer(gecs::CommandBuffer& cmd, gecs::CommandEncoder& encoder, gecs::World& world) {
+    gecs::executeCommandBuffer(cmd, world);
+    gecs::resetCommandBuffer(cmd);
+    encoder.reset();
 }
 
 class Game : public gear::ApplicationAdapter {
@@ -303,7 +302,8 @@ public:
         di.emplace<gear::AssetManager>();
         di.emplace<gear::SpriteBatch>(500);
         di.emplace<gear::Application*>(app);
-        di.emplace<gear::ecs::CommandBuffer>();
+        auto& cmdbuff = di.emplace<gear::ecs::CommandBuffer>(256'000'000);
+        di.emplace<gear::ecs::CommandEncoder>(cmdbuff);
         auto& assetManager = di.emplace<gear::AssetManager>();
 
         assetManager.setLoader<gear::Shader, gear::ShaderLoader>();
@@ -324,12 +324,12 @@ public:
 
         di.invoke(movePlayer);
         di.invoke(checkCollisions);
-        di.invoke(executeCommandBuffer);
+        di.invoke(submitCommandBuffer);
         di.invoke(processCollisions);
         di.invoke(render);
         di.invoke(processAnimation);
         di.invoke(processLifetime);
-        di.invoke(executeCommandBuffer);
+        di.invoke(submitCommandBuffer);
         if (--spawnTimer <= 0) {
             di.invoke(spawnEnemy);
             spawnTimer = 1;

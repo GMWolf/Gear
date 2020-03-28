@@ -11,6 +11,7 @@
 #include <gear/CoreComponents.h>
 #include <gear/CollisionDetection.h>
 #include <optional>
+#include <gear/ECS/CommandBuffer.h>
 
 struct CollisionPair {
     gear::ecs::Entity entity[2];
@@ -24,6 +25,6 @@ struct CollisionFilter {
     gear::ecs::Query entityB;
 };
 
-void checkCollisions(gear::ecs::World& world, gear::ecs::CommandBuffer& cmd);
+void checkCollisions(gear::ecs::World& world, gear::ecs::CommandEncoder& cmd);
 
 #endif //GEAR_COLLISIONS_H

@@ -34,6 +34,11 @@ add_library(gear
         include/gear/DebugUI.h
         src/DebugUI.cpp
         include/gear/Allocators.h
-        src/Allocators.cpp include/gear/Util.h include/gear/ECS/ChunkView.h include/gear/ECS/ECS.h)
+        src/Allocators.cpp
+        include/gear/Util.h
+        include/gear/ECS/ChunkView.h
+        include/gear/ECS/ECS.h
+        include/gear/ECS/CommandBuffer.h
+        src/ECS/CommandBuffer.cpp)
 target_link_libraries(gear PUBLIC glfw glad stb glm nlohmann_json::nlohmann_json imgui_gear)
 target_include_directories(gear PUBLIC include)

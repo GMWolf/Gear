@@ -7,5 +7,6 @@
 
 #include "Core.h"
 #include "ChunkView.h"
+#include "CommandBuffer.h"
 
 #endif //GEAR_ECS_H
