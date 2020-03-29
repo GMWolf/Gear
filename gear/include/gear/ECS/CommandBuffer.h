@@ -72,9 +72,9 @@ namespace gear::ecs {
         cmd.commandCount++;
     }
 
-    class World;
+    class Registry;
 
-    void executeCommandBuffer(CommandBuffer& cmd, World& world);
+    void executeCommandBuffer(CommandBuffer& cmd, Registry& world);
 
     void resetCommandBuffer(CommandBuffer& buffer);
 

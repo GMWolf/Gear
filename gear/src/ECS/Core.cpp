@@ -39,7 +39,7 @@ namespace gear::ecs {
         return chunk;
     }
 
-    std::pair<Chunk *, uint16_t> Registry::emplaceEntity(const Archetype &archetype) {
+    Entity* Registry::emplaceEntity(const Archetype &archetype) {
         Archetype realArchetype = archetype | Component<EntityRef>::ID();
         auto chunk = getFreeChunk(realArchetype);
         if (!chunk) {
@@ -48,15 +48,15 @@ namespace gear::ecs {
 
         uint16_t eid = chunk->size;
 
-        auto* e = getFreeEntity();
-        e->chunk = chunk;
-        e->index = eid;
+        auto* entity = getFreeEntity();
+        entity->chunk = chunk;
+        entity->index = eid;
 
-        static_cast<EntityRef*>(chunk->get(Component<EntityRef>::ID(), eid))->entity = e;
-        static_cast<EntityRef*>(chunk->get(Component<EntityRef>::ID(), eid))->version = e->version;
+        static_cast<EntityRef*>(chunk->get(Component<EntityRef>::ID(), eid))->entity = entity;
+        static_cast<EntityRef*>(chunk->get(Component<EntityRef>::ID(), eid))->version = entity->version;
 
         chunk->size++;
-        return std::make_pair(chunk, eid);
+        return entity;
     }
 
     Entity *Registry::getFreeEntity() {
@@ -75,13 +75,48 @@ namespace gear::ecs {
         return ret;
     }
 
+    void Registry::emplaceComponent(Entity *entity, ComponentId componentId, void * componentPtr) {
+        ComponentInfo::component[componentId].functions.emplace(entity->chunk->get(componentId, entity->index), componentPtr);
+    }
 
-    ArrayRange<Chunk*> World::queryChunks(const Query &query, Chunk **outChunks, size_t outArraySize) {
+    void Registry::destroyEntity(Entity *entity) {
+        Chunk* chunk = entity->chunk;
+        uint16_t index = entity->index;
+
+        uint16_t idFrom = chunk->size - 1;
+        Entity *entityFrom = static_cast<EntityRef *>(chunk->get(Component<EntityRef>::ID(), idFrom))->entity;
+        Entity *entityTo = static_cast<EntityRef *>(chunk->get(Component<EntityRef>::ID(), index))->entity;
+
+        for (int i = 0; i < MaxComponents; i++) {
+            if (chunk->archetype[i]) {
+                void *from = chunk->get(i, idFrom);
+                if (idFrom != index) {
+                    void *to = chunk->get(i, index);
+                    ComponentInfo::component[i].functions.move(from, to);
+                }
+                ComponentInfo::component[i].functions.destroy(from);
+            }
+        }
+        chunk->size--;
+
+        //make destroyed entity available
+        freeEntities.push_back(entityTo);
+        entityTo->chunk = nullptr;
+        entityTo->version++;
+
+        if (idFrom != index) {
+            //patch moved entity pointer
+            entityFrom->chunk = chunk;
+            entityFrom->index = index;
+        }
+    }
+
+    ArrayRange<Chunk *> Registry::queryChunks(const Query &query, Chunk **outChunks, size_t outArraySize) {
         if (outArraySize == 0) {
             return {};
         }
         size_t count = 0;
-        for(auto& [arch, chunks] : registry.archetypeChunks) {
+        for(auto& [arch, chunks] : archetypeChunks) {
             if (testQuery(query, arch)) {
                 for(auto& chunkPtr : chunks) {
                     if (count == outArraySize) {

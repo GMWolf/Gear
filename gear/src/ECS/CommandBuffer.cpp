@@ -80,74 +80,43 @@ namespace gear::ecs {
         return std::make_pair(id, ptr);
     }
 
-    void executeCreate(CommandDecoder& cmd, World& world) {
+    void executeCreate(CommandDecoder& cmd, Registry& registry) {
         auto archetype = *cmd.read<Archetype>();
 
         //Create entity and move components
-        auto [chunk, eid] = world.registry.emplaceEntity(archetype);
+        auto* entity = registry.emplaceEntity(archetype);
         size_t componentCount = archetype.bits.count();
         for(int i = 0; i < componentCount; i++) {
             auto [componentId, componentPtr] = cmd.readComponent();
-            ComponentInfo::component[componentId].functions.emplace(chunk->get(componentId, eid), componentPtr);
+            registry.emplaceComponent(entity, componentId, componentPtr);
         }
     }
 
 
-    void executeDestroy_common(Chunk* chunk, uint16_t index, World& world) {
-
-        uint16_t idFrom = chunk->size - 1;
-        Entity *entityFrom = static_cast<EntityRef *>(chunk->get(Component<EntityRef>::ID(), idFrom))->entity;
-        Entity *entityTo = static_cast<EntityRef *>(chunk->get(Component<EntityRef>::ID(), index))->entity;
-
-        for (int i = 0; i < MaxComponents; i++) {
-            if (chunk->archetype[i]) {
-                void *from = chunk->get(i, idFrom);
-                if (idFrom != index) {
-                    void *to = chunk->get(i, index);
-                    ComponentInfo::component[i].functions.move(from, to);
-                }
-                ComponentInfo::component[i].functions.destroy(from);
-            }
-        }
-        chunk->size--;
-
-        //make destroyed entity available
-        world.registry.freeEntities.push_back(entityTo);
-        entityTo->chunk = nullptr;
-        entityTo->version++;
-
-        if (idFrom != index) {
-            //patch moved entity pointer
-            entityFrom->chunk = chunk;
-            entityFrom->index = index;
-        }
-    }
-
-    void executeDestroy(CommandDecoder& cmd, World& world) {
+    void executeDestroy(CommandDecoder& cmd, Registry& registry) {
         auto entityRef = cmd.read<EntityRef>();
 
         if (entityRef->alive()) {
-            executeDestroy_common(entityRef->entity->chunk, entityRef->entity->index, world);
+            registry.destroyEntity(entityRef->entity);
         }
     }
 
-    void executeCommandBuffer(CommandBuffer &buffer, World& world) {
+    void executeCommandBuffer(CommandBuffer &buffer, Registry& registry) {
         CommandDecoder cmd(buffer);
         for(int i = 0; i < buffer.commandCount; i++) {
             if (auto* c = cmd.read<CommandType>()) {
                 CommandType command = *c;
                 switch(command) {
                     case CommandType::CreateEntity:
-                        executeCreate(cmd, world);
+                        executeCreate(cmd, registry);
                         break;
                     case CommandType::DestroyEntity:
-                        executeDestroy(cmd, world);
+                        executeDestroy(cmd, registry);
                         break;
                     default:
                         break;
                 }
             }
-
         }
     }
 

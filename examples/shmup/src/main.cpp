@@ -91,11 +91,11 @@ static void createStage(gear::AssetManager& assets, gear::ecs::CommandEncoder& c
     }
 }
 
-static void movePlayer(gear::Application* app, gear::ecs::World& world, gear::ecs::CommandEncoder& cmd) {
+static void movePlayer(gear::Application* app, gear::ecs::Registry& ecs, gear::ecs::CommandEncoder& cmd) {
 
     const size_t chunkArraySize = 256;
     gear::ecs::Chunk* chunkArray[chunkArraySize];
-    auto chunks = world.queryChunks(gear::ecs::Query().all<Player, gear::Transform>(), chunkArray, chunkArraySize);
+    auto chunks = ecs.queryChunks(gear::ecs::Query().all<Player, gear::Transform>(), chunkArray, chunkArraySize);
 
     for(auto c : chunks) {
         auto chunk = gear::ecs::ChunkView<Player, gear::Transform>(*c);
@@ -130,7 +130,7 @@ static void movePlayer(gear::Application* app, gear::ecs::World& world, gear::ec
 
     }
 
-    chunks = world.queryChunks(gear::ecs::Query().all<gear::Transform, Bullet>(), chunkArray, chunkArraySize);
+    chunks = ecs.queryChunks(gear::ecs::Query().all<gear::Transform, Bullet>(), chunkArray, chunkArraySize);
     for(auto c : chunks) {
         auto chunk = gear::ecs::ChunkView<gear::ecs::EntityRef, gear::Transform, Bullet>(*c);
         for (auto[entity, transform, bullet] : chunk) {
@@ -141,7 +141,7 @@ static void movePlayer(gear::Application* app, gear::ecs::World& world, gear::ec
         }
     }
 
-    chunks = world.queryChunks(gear::ecs::Query().all<Enemy, gear::Transform>(), chunkArray, chunkArraySize);
+    chunks = ecs.queryChunks(gear::ecs::Query().all<Enemy, gear::Transform>(), chunkArray, chunkArraySize);
     for(auto c: chunks) {
         auto chunk = gear::ecs::ChunkView<gear::ecs::EntityRef, Enemy, gear::Transform>(*c);
         for (auto [entity, enemy, transform] : chunk) {
@@ -154,24 +154,24 @@ static void movePlayer(gear::Application* app, gear::ecs::World& world, gear::ec
     }
 }
 
-static void processCollisions(gear::ecs::World& world, gear::ecs::CommandEncoder& cmd, const gear::AssetManager& assetManager) {
+static void processCollisions(gear::ecs::Registry& ecs, gear::ecs::CommandEncoder& cmd, const gear::AssetManager& assetManager) {
     const gear::ecs::Archetype enemyArch = gear::ecs::Archetype::create<Enemy>();
     const gear::ecs::Archetype bulletArch = gear::ecs::Archetype::create<Bullet>();
     auto atlas = assetManager.get_as<gear::TextureAtlas>("shmup_textures.json");
 
     gecs::Chunk* chunkArray[256];
-    auto chunks = world.queryChunks(gecs::Query().all<CollisionPair>(), chunkArray, 256);
+    auto chunks = ecs.queryChunks(gecs::Query().all<CollisionPair>(), chunkArray, 256);
     for(auto c : chunks) {
         auto chunk = gecs::ChunkView<gecs::EntityRef, CollisionPair>(*c);
         for (auto[collisionEntity, collision] : chunk) {
             if (auto entities = collision.get(enemyArch, bulletArch)) {
-                auto[enemy, t] = world.get<Enemy, gear::Transform>(entities->first);
+                auto[enemy, t] = entities->first.get<Enemy, gear::Transform>();
 
                 if (--enemy.health <= 0) {
                     score += 100;
                     cmd.destroyEntity(entities->first);
                     cmd.createEntity(t, atlas->getSprite("explosion"), DestroyOnAnimationEnd{});
-                    cmd.createEntity(gear::Transform{t.pos - glm::vec2(25, 0)},
+                    cmd.createEntity(gear::Transform{t.pos + glm::vec2(-25, 25)},
                                      Text{"100", assetManager.get_as<gear::BitmapFont>("shmup_default_font.json")},
                                      Lifetime{1});
                 }
@@ -183,9 +183,9 @@ static void processCollisions(gear::ecs::World& world, gear::ecs::CommandEncoder
     };
 }
 
-static void processLifetime(gear::ecs::World& world, gear::ecs::CommandEncoder& cmd) {
+static void processLifetime(gear::ecs::Registry& ecs, gear::ecs::CommandEncoder& cmd) {
     gecs::Chunk* chunkArray[256];
-    auto chunks = world.queryChunks(gecs::Query().all<Lifetime>(), chunkArray, 256);
+    auto chunks = ecs.queryChunks(gecs::Query().all<Lifetime>(), chunkArray, 256);
     for(auto c : chunks) {
         auto chunk = gecs::ChunkView<gecs::EntityRef, Lifetime>(*c);
         for (auto[entity, lifetime] : chunk) {
@@ -198,9 +198,9 @@ static void processLifetime(gear::ecs::World& world, gear::ecs::CommandEncoder& 
 }
 
 
-static void processAnimation(gear::ecs::World& world, gear::ecs::CommandEncoder& cmd) {
+static void processAnimation(gear::ecs::Registry& ecs, gear::ecs::CommandEncoder& cmd) {
     gecs::Chunk* chunkArray[1024];
-    auto chunks = world.queryChunks(gecs::Query().all<gear::Sprite>(), chunkArray, 1024);
+    auto chunks = ecs.queryChunks(gecs::Query().all<gear::Sprite>(), chunkArray, 1024);
 
     for(auto c : chunks) {
         auto chunk = gecs::ChunkView<gear::Sprite>(*c);
@@ -212,7 +212,7 @@ static void processAnimation(gear::ecs::World& world, gear::ecs::CommandEncoder&
         }
     }
 
-    chunks = world.queryChunks(gecs::Query().all<gear::Sprite, DestroyOnAnimationEnd>(), chunkArray, 1024);
+    chunks = ecs.queryChunks(gecs::Query().all<gear::Sprite, DestroyOnAnimationEnd>(), chunkArray, 1024);
     for(auto c: chunks) {
         auto chunk = gecs::ChunkView<gecs::EntityRef, gear::Sprite>(*c);
         for (auto[entity, sprite] : chunk) {
@@ -234,7 +234,7 @@ static void spawnEnemy(gear::AssetManager& assetManager, gear::ecs::CommandEncod
 
 }
 
-void render(gear::SpriteBatch& batch, gear::AssetManager& assets, gear::ecs::World& ecsWorld) {
+void render(gear::SpriteBatch& batch, gear::AssetManager& assets, gear::ecs::Registry& ecs) {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glDisable(GL_CULL_FACE);
@@ -252,7 +252,7 @@ void render(gear::SpriteBatch& batch, gear::AssetManager& assets, gear::ecs::Wor
         auto vm = view.matrix();
         glUniformMatrix4fv(shd->uniformLocation("view"), 1, GL_FALSE, glm::value_ptr(vm));
 
-        auto chunks = ecsWorld.queryChunks(gecs::Query().all<gear::Sprite, gear::Transform>(), chunkArray, chunkArraySize);
+        auto chunks = ecs.queryChunks(gecs::Query().all<gear::Sprite, gear::Transform>(), chunkArray, chunkArraySize);
 
         for(auto c : chunks) {
             auto chunk = gecs::ChunkView<gear::Sprite, gear::Transform>(*c);
@@ -274,7 +274,7 @@ void render(gear::SpriteBatch& batch, gear::AssetManager& assets, gear::ecs::Wor
         auto vm = view.matrix();
         glUniformMatrix4fv(shd->uniformLocation("view"), 1, GL_FALSE, glm::value_ptr(vm));
 
-        auto chunks = ecsWorld.queryChunks(gecs::Query().all<Text, gear::Transform>(), chunkArray, chunkArraySize);
+        auto chunks = ecs.queryChunks(gecs::Query().all<Text, gear::Transform>(), chunkArray, chunkArraySize);
         for(auto c : chunks){
             auto chunk = gecs::ChunkView<gear::Transform, Text>(*c);
             for (auto[transform, text] : chunk) {
@@ -289,8 +289,8 @@ void render(gear::SpriteBatch& batch, gear::AssetManager& assets, gear::ecs::Wor
     }
 }
 
-void submitCommandBuffer(gecs::CommandBuffer& cmd, gecs::CommandEncoder& encoder, gecs::World& world) {
-    gecs::executeCommandBuffer(cmd, world);
+void submitCommandBuffer(gecs::CommandBuffer& cmd, gecs::CommandEncoder& encoder, gecs::Registry& ecs) {
+    gecs::executeCommandBuffer(cmd, ecs);
     gecs::resetCommandBuffer(cmd);
     encoder.reset();
 }
@@ -299,7 +299,7 @@ class Game : public gear::ApplicationAdapter {
 public:
     void init(gear::Application *_app) override {
         app = _app;
-        di.emplace<gear::ecs::World>();
+        di.emplace<gear::ecs::Registry>();
         di.emplace<gear::AssetManager>();
         di.emplace<gear::SpriteBatch>(500);
         di.emplace<gear::Application*>(app);

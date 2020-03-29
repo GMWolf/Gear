@@ -16,12 +16,12 @@ CollisionPair::get(const gear::ecs::Archetype &a, const gear::ecs::Archetype &b)
 }
 
 
-static void checkCollisions(gear::ecs::World& world, gear::ecs::CommandEncoder& cmd, CollisionFilter filter) {
+static void checkCollisions(gear::ecs::Registry& ecs, gear::ecs::CommandEncoder& cmd, CollisionFilter filter) {
 
     gear::ecs::Chunk* chunksAArray[1024];
-    auto chunksA = world.queryChunks(filter.entityA.all<gear::CollisionShape, gear::Transform>(), chunksAArray, 1024);
+    auto chunksA = ecs.queryChunks(filter.entityA.all<gear::CollisionShape, gear::Transform>(), chunksAArray, 1024);
     gear::ecs::Chunk* chunksBArray[1024];
-    auto chunksB = world.queryChunks(filter.entityB.all<gear::CollisionShape, gear::Transform>(), chunksBArray, 1024);
+    auto chunksB = ecs.queryChunks(filter.entityB.all<gear::CollisionShape, gear::Transform>(), chunksBArray, 1024);
 
     for(auto ca : chunksA) {
         auto chunkA = gear::ecs::ChunkView<gear::ecs::EntityRef, gear::CollisionShape, gear::Transform>(*ca);
@@ -47,16 +47,16 @@ static void checkCollisions(gear::ecs::World& world, gear::ecs::CommandEncoder& 
 
 }
 
-void checkCollisions(gear::ecs::World &world, gear::ecs::CommandEncoder &cmd) {
+void checkCollisions(gear::ecs::Registry &ecs, gear::ecs::CommandEncoder &cmd) {
 
     //Get all filters
     gear::ecs::Chunk* filterChunksArray[1];
-    auto filterChunks = world.queryChunks(gear::ecs::Query().all<CollisionFilter>(), filterChunksArray, 1);
+    auto filterChunks = ecs.queryChunks(gear::ecs::Query().all<CollisionFilter>(), filterChunksArray, 1);
     for(auto c : filterChunks) {
         auto chunk = gear::ecs::ChunkView<CollisionFilter>(*c);
 
         for(auto [filter] : chunk) {
-            checkCollisions(world, cmd, filter);
+            checkCollisions(ecs, cmd, filter);
         }
     }
 

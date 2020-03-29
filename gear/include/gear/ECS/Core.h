@@ -46,12 +46,28 @@ namespace gear::ecs {
         Entity* entity;
         uint32_t version;
         bool alive();
+
+        template<class... T>
+        std::tuple<T&...> get() {
+            return std::forward_as_tuple(*static_cast<T*>(entity->chunk->get(Component<T>::ID(), entity->index)) ...);
+        }
     };
 
 
 
     class Registry {
     public:
+        Registry() = default;
+        Registry(const Registry&) = delete;
+        Registry& operator=(const Registry&) = delete;
+
+        Entity* emplaceEntity(const Archetype& archetype);
+        void emplaceComponent(Entity* entity, ComponentId componentId, void* componentPtr);
+        void destroyEntity(Entity* entity);
+
+        ArrayRange<Chunk*> queryChunks(const Query& query, Chunk** outChunks, size_t outArraySize);
+
+    private:
         using ChunkVec = std::vector<std::unique_ptr<Chunk>>;
         using Store = std::unordered_map<Archetype, ChunkVec, Archetype::Hash>;
         Store archetypeChunks;
@@ -61,31 +77,11 @@ namespace gear::ecs {
         std::vector<std::unique_ptr<EntitySlab>> entitySlabVec;
         std::vector<Entity*> freeEntities;
 
-        Registry() = default;
-        Registry(const Registry&) = delete;
-        Registry& operator=(const Registry&) = delete;
-
         Chunk* createChunk(const Archetype& a);
         Chunk* getFreeChunk(const Archetype& a);
 
-        std::pair<Chunk*, uint16_t> emplaceEntity(const Archetype& archetype);
         Entity* getFreeEntity();
     };
-
-    class World {
-
-    public:
-        Registry registry;
-
-        template<class... T>
-        std::tuple<T&...> get(EntityRef entity) {
-            return std::forward_as_tuple(*static_cast<T*>(entity.entity->chunk->get(Component<T>::ID(), entity.entity->index)) ...);
-        }
-
-        ArrayRange<Chunk*> queryChunks(const Query& query, Chunk** outChunks, size_t outArraySize);
-    };
-
-
 
 
 }
