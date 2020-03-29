@@ -14,10 +14,13 @@
 #include <gear/ECS/CommandBuffer.h>
 
 struct CollisionPair {
-    gear::ecs::Entity entity[2];
+    gear::ecs::EntityRef entity[2];
 
     bool matchesPair(const gear::ecs::Archetype& a, const gear::ecs::Archetype& b);
-    std::optional<std::pair<gear::ecs::Entity, gear::ecs::Entity>> get(const gear::ecs::Archetype& a, const gear::ecs::Archetype& b);
+    bool alive() {
+        return entity[0].alive() && entity[1].alive();
+    }
+    std::optional<std::pair<gear::ecs::EntityRef&, gear::ecs::EntityRef&>> get(const gear::ecs::Archetype& a, const gear::ecs::Archetype& b);
 };
 
 struct CollisionFilter {

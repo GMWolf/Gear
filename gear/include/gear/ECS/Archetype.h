@@ -14,6 +14,7 @@
 namespace gear::ecs {
 
     class Archetype {
+        Archetype(const std::bitset<MaxComponents>& bits);;
     public:
         Archetype(std::initializer_list<ComponentId> t);
         Archetype() = default;
@@ -25,6 +26,8 @@ namespace gear::ecs {
         bool operator==(const Archetype& o) const;
 
         bool operator[](ComponentId id) const;
+
+        Archetype operator|(ComponentId id) const;
 
         struct Hash {
             std::size_t operator()(const gear::ecs::Archetype& a) const noexcept;
@@ -38,12 +41,6 @@ namespace gear::ecs {
     Archetype Archetype::create() {
         return Archetype({Component<A>::ID()...});
     }
-
-    //Entity Component
-    struct Entity {
-        EntityId id = 0;
-        Archetype archetype{};
-    };
 
     struct Query {
         std::bitset<MaxComponents> allBits {};

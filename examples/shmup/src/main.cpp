@@ -124,7 +124,7 @@ static void movePlayer(gear::Application* app, gear::ecs::World& world, gear::ec
                                   Bullet{{0, 10}}
                 );
 
-                player.shootTimer = 1;
+                player.shootTimer = 6;
             }
         }
 
@@ -132,7 +132,7 @@ static void movePlayer(gear::Application* app, gear::ecs::World& world, gear::ec
 
     chunks = world.queryChunks(gear::ecs::Query().all<gear::Transform, Bullet>(), chunkArray, chunkArraySize);
     for(auto c : chunks) {
-        auto chunk = gear::ecs::ChunkView<gear::ecs::Entity, gear::Transform, Bullet>(*c);
+        auto chunk = gear::ecs::ChunkView<gear::ecs::EntityRef, gear::Transform, Bullet>(*c);
         for (auto[entity, transform, bullet] : chunk) {
             transform.pos += bullet.vel;
             if (transform.pos.y > 720) {
@@ -143,7 +143,7 @@ static void movePlayer(gear::Application* app, gear::ecs::World& world, gear::ec
 
     chunks = world.queryChunks(gear::ecs::Query().all<Enemy, gear::Transform>(), chunkArray, chunkArraySize);
     for(auto c: chunks) {
-        auto chunk = gear::ecs::ChunkView<gear::ecs::Entity, Enemy, gear::Transform>(*c);
+        auto chunk = gear::ecs::ChunkView<gear::ecs::EntityRef, Enemy, gear::Transform>(*c);
         for (auto [entity, enemy, transform] : chunk) {
             if (transform.pos.y > 32) {
                 transform.pos.y -= 2;
@@ -162,7 +162,7 @@ static void processCollisions(gear::ecs::World& world, gear::ecs::CommandEncoder
     gecs::Chunk* chunkArray[256];
     auto chunks = world.queryChunks(gecs::Query().all<CollisionPair>(), chunkArray, 256);
     for(auto c : chunks) {
-        auto chunk = gecs::ChunkView<gecs::Entity, CollisionPair>(*c);
+        auto chunk = gecs::ChunkView<gecs::EntityRef, CollisionPair>(*c);
         for (auto[collisionEntity, collision] : chunk) {
             if (auto entities = collision.get(enemyArch, bulletArch)) {
                 auto[enemy, t] = world.get<Enemy, gear::Transform>(entities->first);
@@ -176,6 +176,7 @@ static void processCollisions(gear::ecs::World& world, gear::ecs::CommandEncoder
                                      Lifetime{1});
                 }
                 cmd.destroyEntity(entities->second);
+
             }
             cmd.destroyEntity(collisionEntity);
         }
@@ -186,7 +187,7 @@ static void processLifetime(gear::ecs::World& world, gear::ecs::CommandEncoder& 
     gecs::Chunk* chunkArray[256];
     auto chunks = world.queryChunks(gecs::Query().all<Lifetime>(), chunkArray, 256);
     for(auto c : chunks) {
-        auto chunk = gecs::ChunkView<gecs::Entity, Lifetime>(*c);
+        auto chunk = gecs::ChunkView<gecs::EntityRef, Lifetime>(*c);
         for (auto[entity, lifetime] : chunk) {
             lifetime.time -= 1 / 60.f;
             if (lifetime.time <= 0) {
@@ -213,7 +214,7 @@ static void processAnimation(gear::ecs::World& world, gear::ecs::CommandEncoder&
 
     chunks = world.queryChunks(gecs::Query().all<gear::Sprite, DestroyOnAnimationEnd>(), chunkArray, 1024);
     for(auto c: chunks) {
-        auto chunk = gecs::ChunkView<gecs::Entity, gear::Sprite>(*c);
+        auto chunk = gecs::ChunkView<gecs::EntityRef, gear::Sprite>(*c);
         for (auto[entity, sprite] : chunk) {
             if (sprite.imageIndex == 0) {
                 cmd.destroyEntity(entity);
@@ -332,7 +333,7 @@ public:
         di.invoke(submitCommandBuffer);
         if (--spawnTimer <= 0) {
             di.invoke(spawnEnemy);
-            spawnTimer = 1;
+            spawnTimer = 20;
         }
 
 

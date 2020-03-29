@@ -8,7 +8,6 @@
 #include <cstdint>
 
 namespace gear::ecs {
-    using EntityId = uint32_t;
     using ChunkId = uint32_t;
     using ComponentId = uint32_t;
 

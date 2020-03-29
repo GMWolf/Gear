@@ -9,6 +9,7 @@
 #include <utility>
 #include "Config.h"
 #include <typeinfo>
+#include <cassert>
 
 namespace gear::ecs {
     extern ComponentId nextComponentId;
@@ -49,6 +50,7 @@ namespace gear::ecs {
         i.size = sizeof(T);
         i.align = alignof(T);
         i.id = nextComponentId++;
+        assert(i.id < MaxComponents);
         i.debugName = typeid(T).name();
         i.functions.emplace = &Functions::emplace;
         i.functions.destroy = &Functions::destroy;

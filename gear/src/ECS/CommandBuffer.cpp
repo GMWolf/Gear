@@ -4,8 +4,8 @@
 
 #include <gear/ECS/CommandBuffer.h>
 #include <gear/ECS/Component.h>
-#include <optional>
 #include <gear/ECS/Core.h>
+#include <memory>
 
 namespace gear::ecs {
 
@@ -32,9 +32,9 @@ namespace gear::ecs {
         return false;
     }
 
-    void CommandEncoder::destroyEntity(Entity entity) {
+    void CommandEncoder::destroyEntity(const EntityRef& entity) {
         write(CommandType::DestroyEntity);
-        write(entity.id);
+        write(entity);
         cmd.commandCount++;
     }
 
@@ -90,43 +90,44 @@ namespace gear::ecs {
             auto [componentId, componentPtr] = cmd.readComponent();
             ComponentInfo::component[componentId].functions.emplace(chunk->get(componentId, eid), componentPtr);
         }
-
-        //Update Entity table
-        Entity entity;
-        entity.id = world.getFreeEntityId();
-        entity.archetype = archetype;
-        if (world.entities.size() <= entity.id)
-            world.entities.resize(entity.id + 1);
-
-        world.entities[entity.id] = std::make_pair(chunk, eid);
-        Component<Entity>::Functions::emplace(chunk->get(Component<Entity>::ID(), eid), &entity);
     }
 
 
-    void executeDestroy(CommandDecoder& cmd, World& world) {
-        auto entityId = *cmd.read<EntityId>();
+    void executeDestroy_common(Chunk* chunk, uint16_t index, World& world) {
 
-        auto [chunk, index] = world.entities[entityId];
+        uint16_t idFrom = chunk->size - 1;
+        Entity *entityFrom = static_cast<EntityRef *>(chunk->get(Component<EntityRef>::ID(), idFrom))->entity;
+        Entity *entityTo = static_cast<EntityRef *>(chunk->get(Component<EntityRef>::ID(), index))->entity;
 
-        if (chunk && (chunk->size > 0)) {
-            uint16_t idFrom = chunk->size - 1;
-            EntityId entityIdFrom = static_cast<Entity*>(chunk->get(Component<Entity>::ID(), idFrom))->id;
-
-            for(int i = 0; i < MaxComponents; i++) {
-                if (chunk->archetype[i]) {
-                    void* from = chunk->get(i, idFrom);
-                    void* to = chunk->get(i, index);
-                    if (from != to) {
-                        ComponentInfo::component[i].functions.move(from, to);
-                    }
-                    ComponentInfo::component[i].functions.destroy(from);
+        for (int i = 0; i < MaxComponents; i++) {
+            if (chunk->archetype[i]) {
+                void *from = chunk->get(i, idFrom);
+                if (idFrom != index) {
+                    void *to = chunk->get(i, index);
+                    ComponentInfo::component[i].functions.move(from, to);
                 }
+                ComponentInfo::component[i].functions.destroy(from);
             }
-            chunk->size--;
+        }
+        chunk->size--;
 
-            static_cast<Entity*>(chunk->get(Component<Entity>::ID(), index))->id = entityIdFrom;
-            world.entities[entityIdFrom].second = index;
-            world.entities[entityId].first = nullptr;
+        //make destroyed entity available
+        world.registry.freeEntities.push_back(entityTo);
+        entityTo->chunk = nullptr;
+        entityTo->version++;
+
+        if (idFrom != index) {
+            //patch moved entity pointer
+            entityFrom->chunk = chunk;
+            entityFrom->index = index;
+        }
+    }
+
+    void executeDestroy(CommandDecoder& cmd, World& world) {
+        auto entityRef = cmd.read<EntityRef>();
+
+        if (entityRef->alive()) {
+            executeDestroy_common(entityRef->entity->chunk, entityRef->entity->index, world);
         }
     }
 
@@ -161,7 +162,7 @@ namespace gear::ecs {
     }
 
     void resetDestroy(CommandDecoder& cmd) {
-        auto id = cmd.read<EntityId>();
+        auto id = cmd.read<EntityRef>();
     }
 
 

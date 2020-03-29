@@ -19,7 +19,7 @@ namespace gear {
     };
 
     struct Parent {
-        ecs::EntityId entity;
+        ecs::Entity* entity;
     };
 
     struct ParentInternal {

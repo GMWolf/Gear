@@ -18,9 +18,9 @@
 #include "Config.h"
 #include "Component.h"
 #include "Archetype.h"
-#include <cassert>
 #include <gear/Allocators.h>
 #include <gear/Util.h>
+#include <array>
 
 namespace gear::ecs {
 
@@ -36,11 +36,30 @@ namespace gear::ecs {
         void* get(ComponentId componentId, uint16_t index);
     };
 
+    struct Entity {
+        Chunk* chunk;
+        uint32_t version;
+        uint16_t index;
+    };
+
+    struct EntityRef {
+        Entity* entity;
+        uint32_t version;
+        bool alive();
+    };
+
+
+
     class Registry {
     public:
         using ChunkVec = std::vector<std::unique_ptr<Chunk>>;
         using Store = std::unordered_map<Archetype, ChunkVec, Archetype::Hash>;
         Store archetypeChunks;
+
+        static const size_t entitySlabSize = 512;
+        using EntitySlab = std::array<Entity, entitySlabSize>;
+        std::vector<std::unique_ptr<EntitySlab>> entitySlabVec;
+        std::vector<Entity*> freeEntities;
 
         Registry() = default;
         Registry(const Registry&) = delete;
@@ -50,21 +69,17 @@ namespace gear::ecs {
         Chunk* getFreeChunk(const Archetype& a);
 
         std::pair<Chunk*, uint16_t> emplaceEntity(const Archetype& archetype);
+        Entity* getFreeEntity();
     };
 
     class World {
 
     public:
         Registry registry;
-        EntityId nextEntityId = 0;
-        std::vector<std::pair<Chunk*, uint16_t>> entities;
-        EntityId getFreeEntityId();
-
 
         template<class... T>
-        std::tuple<T&...> get(Entity entity) {
-            auto [chunk, index] = entities[entity.id];
-            return std::forward_as_tuple(*static_cast<T*>(chunk->get(Component<T>::ID(), index)) ...);
+        std::tuple<T&...> get(EntityRef entity) {
+            return std::forward_as_tuple(*static_cast<T*>(entity.entity->chunk->get(Component<T>::ID(), entity.entity->index)) ...);
         }
 
         ArrayRange<Chunk*> queryChunks(const Query& query, Chunk** outChunks, size_t outArraySize);

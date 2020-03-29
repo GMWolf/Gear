@@ -31,7 +31,7 @@ namespace gear::ecs {
         Chunk* chunk = chunks.emplace_back(std::make_unique<Chunk>(a)).get();
 
         for (ComponentId i = 0; i < MaxComponents; i++) {
-            if (a[i] || i == Component<Entity>::ID()) {
+            if (a[i]) {
                 chunk->ptr[i] = malloc(ComponentInfo::component[i].size * ChunkSize);
             }
         }
@@ -40,24 +40,41 @@ namespace gear::ecs {
     }
 
     std::pair<Chunk *, uint16_t> Registry::emplaceEntity(const Archetype &archetype) {
-        auto chunk = getFreeChunk(archetype);
+        Archetype realArchetype = archetype | Component<EntityRef>::ID();
+        auto chunk = getFreeChunk(realArchetype);
         if (!chunk) {
-            chunk = createChunk(archetype);
+            chunk = createChunk(realArchetype);
         }
+
+        uint16_t eid = chunk->size;
+
+        auto* e = getFreeEntity();
+        e->chunk = chunk;
+        e->index = eid;
+
+        static_cast<EntityRef*>(chunk->get(Component<EntityRef>::ID(), eid))->entity = e;
+        static_cast<EntityRef*>(chunk->get(Component<EntityRef>::ID(), eid))->version = e->version;
 
         chunk->size++;
-
-        return std::make_pair(chunk, chunk->size - 1);
+        return std::make_pair(chunk, eid);
     }
 
-    EntityId World::getFreeEntityId() {
-        for(int i = 0; i < entities.size(); i++) {
-            if (entities[i].first == nullptr) {
-                return i;
+    Entity *Registry::getFreeEntity() {
+        if (freeEntities.empty()) {
+            auto& slab = entitySlabVec.emplace_back(std::make_unique<EntitySlab>());
+            for(auto& e : *slab) {
+                e.version = 1;
+                e.chunk = nullptr;
+                e.index = 0;
+                freeEntities.push_back(&e);
             }
         }
-        return nextEntityId++;
+
+        auto ret = freeEntities.back();
+        freeEntities.pop_back();
+        return ret;
     }
+
 
     ArrayRange<Chunk*> World::queryChunks(const Query &query, Chunk **outChunks, size_t outArraySize) {
         if (outArraySize == 0) {
@@ -67,10 +84,11 @@ namespace gear::ecs {
         for(auto& [arch, chunks] : registry.archetypeChunks) {
             if (testQuery(query, arch)) {
                 for(auto& chunkPtr : chunks) {
-                    outChunks[count++] = chunkPtr.get();
                     if (count == outArraySize) {
+                        std::cerr << "Ran out of chunk buffer space" << std::endl;
                         return {outChunks, outChunks+count};
                     }
+                    outChunks[count++] = chunkPtr.get();
                 }
             }
         }
@@ -83,5 +101,9 @@ namespace gear::ecs {
 
     void *Chunk::get(ComponentId componentId, uint16_t index) {
         return (char*)getData(componentId) + (index * ComponentInfo::component[componentId].size);
+    }
+
+    bool EntityRef::alive() {
+        return version == entity->version;
     }
 }

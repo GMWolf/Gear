@@ -24,6 +24,14 @@ namespace gear::ecs {
         return bits[id];
     }
 
+    Archetype::Archetype(const std::bitset<MaxComponents> &bits) : bits(bits) {}
+
+    Archetype Archetype::operator|(ComponentId id) const {
+        std::bitset<MaxComponents> bs{bits};
+        bs.set(id);
+        return Archetype(bs);
+    }
+
     std::size_t Archetype::Hash::operator()(const gear::ecs::Archetype &a) const noexcept {
         return std::hash<decltype(a.bits)>{}(a.bits);
     }

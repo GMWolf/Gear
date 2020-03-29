@@ -7,11 +7,12 @@
 
 
 #include "Archetype.h"
-#include <memory>
+#include "Core.h"
+#include <cstddef>
 
 namespace gear::ecs {
 
-    enum class CommandType {
+    enum class CommandType : uint8_t {
         CreateEntity,
         DestroyEntity,
     };
@@ -44,8 +45,7 @@ namespace gear::ecs {
 
         template<class... T>
         void createEntity(T&&... t);
-        void destroyEntity(Entity entity);
-
+        void destroyEntity(const EntityRef& entity);
         void reset();
     };
 
