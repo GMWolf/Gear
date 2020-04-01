@@ -36,6 +36,10 @@ add_subdirectory(tools/texture_pack)
 add_subdirectory(tools/shader_pack)
 add_subdirectory(tools/font_pack)
 
+OPTION(GEAR_BUILD_EXAMPLES "Build the examples" OFF)
+
+if(GEAR_BUILD_EXAMPLES)
 
 add_subdirectory(examples/shmup)
 
+endif()
