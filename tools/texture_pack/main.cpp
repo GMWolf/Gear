@@ -65,8 +65,8 @@ int main(int argc, char* argv[]) {
             assert(n.IsMap());
             tp::SpriteDescriptor desc;
             desc.name = n["name"].as<std::string>();
-            desc.origin.x = n["origin_x"].as<float>();
-            desc.origin.y = n["origin_y"].as<float>();
+            desc.origin.x = n["origin_x"] ? n["origin_x"].as<float>() : 0.0f;
+            desc.origin.y = n["origin_y"] ? n["origin_y"].as<float>() : 0.0f;
             if (n["images"].IsSequence()) {
                 for(const auto& i : n["images"]) {
                     desc.images.emplace_back(pathRelDir / i.as<std::string>());

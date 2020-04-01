@@ -36,7 +36,8 @@ namespace gear::texture_pack {
         std::string name;
         std::vector<std::filesystem::path> images;
         struct {
-            float x, y;
+            float x = 0;
+            float y = 0;
         } origin;
     };
 
