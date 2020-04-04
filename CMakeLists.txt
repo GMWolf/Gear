@@ -9,6 +9,7 @@ include(imgui.cmake)
 add_subdirectory(deps/glad)
 add_subdirectory(deps/glm)
 add_subdirectory(deps/Lyra)
+set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
 add_subdirectory(deps/tinyxml2)
 
 set(YAML_CPP_BUILD_CONTRIB OFF CACHE BOOL "" FORCE)
