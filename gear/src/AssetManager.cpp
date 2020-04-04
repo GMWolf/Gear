@@ -13,7 +13,9 @@ std::shared_ptr<void> gear::AssetManager::get(const std::string &name) const{
 }
 
 
-void gear::AssetManager::load(const std::string &name, AssetLoader &assetLoader) {
+void gear::AssetManager::load(const std::string &name, const std::string& alias, AssetLoader &assetLoader) {
     assets[name] = assetLoader.load(name);
+    assets[alias] = assets[name];
 }
+
 

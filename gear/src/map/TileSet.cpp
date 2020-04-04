@@ -4,10 +4,14 @@
 
 #include <gear/map/TileSet.h>
 #include <tinyxml2.h>
+#include <filesystem>
 
 gear::AssetEntry gear::TileSetLoader::load(const std::string &fileName) {
 
     using namespace tinyxml2;
+    namespace fs = std::filesystem;
+
+    auto relPath = fs::path(fileName).parent_path();
 
     XMLDocument doc;
     doc.LoadFile(fileName.c_str());
@@ -16,9 +20,12 @@ gear::AssetEntry gear::TileSetLoader::load(const std::string &fileName) {
     XMLElement* xTileOffset = xTileset->FirstChildElement("tileoffset");
     XMLElement* xImage = xTileset->FirstChildElement("image");
 
+    auto imageSource = xImage->Attribute("source");
+    auto imagePath = relPath / imageSource;
+
     return {std::make_shared<TileSet>(TileSet{
-        xImage->Attribute("name"),
-        Texture(xImage->Attribute("source")),
+        xTileset->Attribute("name"),
+        Texture(imagePath.string()),
 
         xImage->IntAttribute("width"),
         xImage->IntAttribute("height"),

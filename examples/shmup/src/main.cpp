@@ -16,6 +16,7 @@
 #include <gear/BitmapFont.h>
 #include <gear/AssetManager.h>
 #include <gear/DebugUI.h>
+#include <gear/map/TileMap.h>
 
 #include "Collisions.h"
 
@@ -244,6 +245,48 @@ void render(gear::SpriteBatch& batch, gear::AssetManager& assets, gear::ecs::Reg
 
     gear::View view {{0,0}, {480, 720}};
 
+
+
+    //ad hock tile rendering
+    {
+        static float ymappos = 0;
+        ymappos -= 1;
+        auto shd = assets.get_as<gear::Shader>("simple_textured");
+
+        shd->use();
+        glUniform1i(shd->uniformLocation("tex"), 0);
+        auto vm = view.matrix();
+        glUniformMatrix4fv(shd->uniformLocation("view"), 1, GL_FALSE, glm::value_ptr(vm));
+
+        auto map = assets.get_as<gear::TileMap>("map1");
+
+        for(auto& layer : map->layers) {
+            auto tileset = layer.tileset.lock();
+
+            for(int x = 0; x < layer.width; x++)
+                for(int y = 0; y < layer.height; y++) {
+                    auto tile = layer.tileData[x + y * layer.width];
+                    auto tileX = (tile.id - 1)% tileset->columnCount;
+                    auto tileY = (tile.id - 1) / tileset->columnCount;
+                    gear::TexRegion tileRegion {
+                            {tileX * tileset->tileWidth / (float)tileset->imageWidth,
+                             tileY * tileset->tileHeight/ (float)tileset->imageHeight,
+                                    (tileX + 1) * tileset->tileWidth / (float)tileset->imageWidth,
+                                    (tileY + 1) * tileset->tileHeight/ (float)tileset->imageHeight},
+                            {0,0,0,0}
+                    };
+                    batch.draw(tileset->texture, tileRegion, {x * map->tileWidth, y * map->tileHeight + ymappos}, {map->tileWidth, map->tileHeight});
+
+                }
+
+        }
+
+    }
+
+    batch.flush();
+
+
+
     {
         auto shd = assets.get_as<gear::Shader>("simple_textured");
 
@@ -287,6 +330,7 @@ void render(gear::SpriteBatch& batch, gear::AssetManager& assets, gear::ecs::Reg
 
         batch.flush();
     }
+
 }
 
 void submitCommandBuffer(gecs::CommandBuffer& cmd, gecs::CommandEncoder& encoder, gecs::Registry& ecs) {
@@ -307,14 +351,17 @@ public:
         di.emplace<gear::ecs::CommandEncoder>(cmdbuff);
         auto& assetManager = di.emplace<gear::AssetManager>();
 
-        assetManager.setLoader<gear::Shader, gear::ShaderLoader>();
-        assetManager.setLoader<gear::BitmapFont, gear::BitmapFontLoader>();
-        assetManager.setLoader<gear::TextureAtlas, gear::TextureAtlasLoader>();
+        assetManager.setLoader<gear::Shader>(gear::ShaderLoader());
+        assetManager.setLoader<gear::BitmapFont>(gear::BitmapFontLoader());
+        assetManager.setLoader<gear::TextureAtlas>(gear::TextureAtlasLoader());
+        assetManager.setLoader<gear::TileSet>(gear::TileSetLoader());
+        assetManager.setLoader<gear::TileMap>(gear::TileMapLoader(assetManager));
 
         assetManager.load<gear::Shader>("simple_textured");
         assetManager.load<gear::Shader>("shd_font");
         assetManager.load<gear::TextureAtlas>("shmup_textures.json");
         assetManager.load<gear::BitmapFont>("shmup_default_font.json");
+        assetManager.load<gear::TileMap>("../../../../examples/shmup/assets/maps/map1.tmx", "map1");
 
         di.invoke(createStage);
 

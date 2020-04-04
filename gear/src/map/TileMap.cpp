@@ -7,6 +7,7 @@
 #include <tuple>
 #include <algorithm>
 #include <base64.h>
+#include <filesystem>
 
 const unsigned FLIPPED_HORIZONTALLY_FLAG = 0x80000000;
 const unsigned FLIPPED_VERTICALLY_FLAG   = 0x40000000;
@@ -19,6 +20,9 @@ gear::TileMapLoader::TileMapLoader(gear::AssetManager &assetManager) : assets(as
 gear::AssetEntry gear::TileMapLoader::load(const std::string &fileName) {
 
     using namespace tinyxml2;
+    namespace fs = std::filesystem;
+
+    auto relPath = fs::path(fileName).parent_path();
 
     XMLDocument doc;
     doc.LoadFile(fileName.c_str());
@@ -27,21 +31,23 @@ gear::AssetEntry gear::TileMapLoader::load(const std::string &fileName) {
     XMLElement* xMap = doc.FirstChildElement("map");
 
     std::vector<std::pair<int, std::weak_ptr<const TileSet>>> tilesets;
+
     for(XMLElement* xTileSet = xMap->FirstChildElement("tileset"); xTileSet;
     xTileSet = xTileSet->NextSiblingElement("tileset")) {
         auto source = xTileSet->Attribute("source");
-        assets.load<TileSet>(source);
+        auto path = relPath / source;
+        assets.load<TileSet>(path.string());
         tilesets.emplace_back(
                 xTileSet->IntAttribute("firstgid"),
-                assets.get_as<TileSet>(source));
+                assets.get_as<TileSet>(path.string()));
     }
 
     TileMap map = TileMap {
             {},
             xMap->IntAttribute("width"),
             xMap->IntAttribute("height"),
-            xMap->IntAttribute("tileWidth"),
-            xMap->IntAttribute("tileHeight")
+            xMap->IntAttribute("tilewidth"),
+            xMap->IntAttribute("tileheight")
     };
 
 
@@ -53,13 +59,15 @@ gear::AssetEntry gear::TileMapLoader::load(const std::string &fileName) {
         layer.height = xLayer->IntAttribute("height");
         layer.tileset = std::find_if(tilesets.begin(), tilesets.end(), [](auto& e) {return e.first == 1;})->second;
         layer.tileData = std::make_unique<TileLayer::Tile[]>(layer.width * layer.height);
-        auto data = base64_decode(xLayer->FirstChildElement("data")->GetText());
-        for(int i = 0; i < data.size(); i++) {
+        std::string database64 = std::string(xLayer->FirstChildElement("data")->GetText());
+        database64.erase(database64.begin(), std::find_if(database64.begin(), database64.end(), [](char c) {return !std::isspace(c);}));
+        auto data = base64_decode(database64);
+        for(int i = 0; i < (layer.width * layer.height); i++) {
             uint32_t tile = 0;
-            tile = data[i*4+0] << 0u;
-            tile = data[i*4+1] << 8u;
-            tile = data[i*4+2] << 16u;
-            tile = data[i*4+3] << 24u;
+            tile |= data[i*4+0] << 0u;
+            tile |= data[i*4+1] << 8u;
+            tile |= data[i*4+2] << 16u;
+            tile |= data[i*4+3] << 24u;
 
             layer.tileData[i].id = tile & ~(FLIPPED_DIAGONALLY_FLAG |
                                             FLIPPED_VERTICALLY_FLAG |
@@ -68,8 +76,12 @@ gear::AssetEntry gear::TileMapLoader::load(const std::string &fileName) {
             layer.tileData[i].vflip = tile & FLIPPED_VERTICALLY_FLAG;
             layer.tileData[i].dflip = tile & FLIPPED_DIAGONALLY_FLAG;
         }
+
+        map.layers.emplace_back(std::move(layer));
     }
 
+
+    return {std::make_shared<TileMap>(std::move(map))};
 
 }
 
