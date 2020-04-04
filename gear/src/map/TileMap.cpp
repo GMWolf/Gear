@@ -6,6 +6,11 @@
 #include <tinyxml2.h>
 #include <tuple>
 #include <algorithm>
+#include <base64.h>
+
+const unsigned FLIPPED_HORIZONTALLY_FLAG = 0x80000000;
+const unsigned FLIPPED_VERTICALLY_FLAG   = 0x40000000;
+const unsigned FLIPPED_DIAGONALLY_FLAG   = 0x20000000;
 
 gear::TileMapLoader::TileMapLoader(gear::AssetManager &assetManager) : assets(assetManager){
 }
@@ -47,8 +52,22 @@ gear::AssetEntry gear::TileMapLoader::load(const std::string &fileName) {
         layer.width = xLayer->IntAttribute("width");
         layer.height = xLayer->IntAttribute("height");
         layer.tileset = std::find_if(tilesets.begin(), tilesets.end(), [](auto& e) {return e.first == 1;})->second;
-        layer.tileData = std::make_unique<uint16_t[]>(layer.width * layer.height);
+        layer.tileData = std::make_unique<TileLayer::Tile[]>(layer.width * layer.height);
+        auto data = base64_decode(xLayer->FirstChildElement("data")->GetText());
+        for(int i = 0; i < data.size(); i++) {
+            uint32_t tile = 0;
+            tile = data[i*4+0] << 0u;
+            tile = data[i*4+1] << 8u;
+            tile = data[i*4+2] << 16u;
+            tile = data[i*4+3] << 24u;
 
+            layer.tileData[i].id = tile & ~(FLIPPED_DIAGONALLY_FLAG |
+                                            FLIPPED_VERTICALLY_FLAG |
+                                            FLIPPED_HORIZONTALLY_FLAG);
+            layer.tileData[i].hflip = tile & FLIPPED_HORIZONTALLY_FLAG;
+            layer.tileData[i].vflip = tile & FLIPPED_VERTICALLY_FLAG;
+            layer.tileData[i].dflip = tile & FLIPPED_DIAGONALLY_FLAG;
+        }
     }
 
 

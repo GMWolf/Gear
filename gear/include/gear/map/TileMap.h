@@ -13,9 +13,17 @@
 namespace gear {
 
     struct TileLayer {
+
+        struct Tile {
+            uint32_t id : 13;
+            bool hflip : 1;
+            bool vflip : 1;
+            bool dflip : 1;
+        };
+
         std::string name;
         std::weak_ptr<const TileSet> tileset;
-        std::unique_ptr<uint16_t[]> tileData;
+        std::unique_ptr<Tile[]> tileData;
         int width;
         int height;
     };

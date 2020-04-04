@@ -44,5 +44,5 @@ add_library(gear
         src/RenderSystem.cpp
         include/gear/map/TileSet.h
         src/map/TileSet.cpp include/gear/map/TileMap.h src/map/TileMap.cpp)
-target_link_libraries(gear PUBLIC glfw glad stb glm nlohmann_json::nlohmann_json imgui_gear tinyxml2)
+target_link_libraries(gear PUBLIC glfw glad stb glm nlohmann_json::nlohmann_json imgui_gear tinyxml2 cpp-base64)
 target_include_directories(gear PUBLIC include)

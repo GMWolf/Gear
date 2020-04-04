@@ -12,6 +12,9 @@ add_subdirectory(deps/Lyra)
 set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
 add_subdirectory(deps/tinyxml2)
 
+add_library(cpp-base64 deps/cpp-base64/base64.h deps/cpp-base64/base64.cpp)
+target_include_directories(cpp-base64 PUBLIC deps/cpp-base64)
+
 set(YAML_CPP_BUILD_CONTRIB OFF CACHE BOOL "" FORCE)
 set(YAML_CPP_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
 set(YAML_BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
