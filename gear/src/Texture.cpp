@@ -23,6 +23,23 @@ gear::Texture::Texture(const std::string &name) {
     size = {x, y};
 }
 
+gear::Texture::Texture(gear::Texture && o) noexcept : size(o.size), tex(o.tex) {
+    o.size = {0,0};
+    o.tex = 0;
+}
+
+gear::Texture &gear::Texture::operator=(Texture&& o) noexcept {
+    glDeleteTextures(1, &tex);
+    tex = o.tex;
+    size = o.size;
+
+    o.tex = 0;
+    o.size = {0,0};
+
+    return *this;
+}
+
+
 gear::Texture::~Texture() {
     glDeleteTextures(1, &tex);
 }

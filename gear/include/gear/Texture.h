@@ -18,6 +18,13 @@ namespace gear {
     public:
         explicit Texture(const std::string& name);
         explicit Texture(glm::vec4 color);
+
+        Texture(const Texture&) = delete;
+        Texture&operator=(const Texture&) = delete;
+
+        Texture(Texture&&) noexcept;
+        Texture&operator=(Texture&&) noexcept ;
+
         ~Texture();
         GLuint tex {0};
         glm::ivec2 size {0,0};
