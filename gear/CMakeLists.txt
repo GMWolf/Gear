@@ -41,6 +41,6 @@ add_library(gear
         include/gear/ECS/CommandBuffer.h
         src/ECS/CommandBuffer.cpp
         include/gear/RenderSystem.h
-        src/RenderSystem.cpp include/gear/TileMap.h src/TileMap.cpp)
+        src/RenderSystem.cpp)
 target_link_libraries(gear PUBLIC glfw glad stb glm nlohmann_json::nlohmann_json imgui_gear)
 target_include_directories(gear PUBLIC include)
