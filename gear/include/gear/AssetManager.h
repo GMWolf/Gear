@@ -10,28 +10,64 @@
 #include <string>
 #include <typeindex>
 #include <future>
+#include <optional>
+#include <variant>
+#include <any>
 
 namespace gear {
 
+
+    template<class T>
     struct AssetEntry {
-        std::shared_ptr<void> object;
+        std::optional<const T> store {};
+
+        bool pending() {
+            return !store.has_value();
+        };
+
+        T& get() {
+            return *store; //TODO: deal with pending cast
+        }
+
     };
 
+
+    template<class T>
+    struct AssetReference {
+        std::shared_ptr<AssetEntry<T>> ptr;
+
+        bool pending() {
+            return ptr ? ptr->pending() : false;
+        }
+
+        const T& get() const{
+            return ptr->store.value(); //TODO: deal with pending case
+        }
+
+        const T* operator->() const {
+            return &ptr->store.value();
+        }
+        const T& operator*() const {
+            return ptr->store.value();
+        }
+
+    };
+
+    class AssetRegistry;
+
+    template<class T>
     class AssetLoader {
     public:
-        virtual AssetEntry load(const std::string& name) = 0;
+        virtual T load(const std::string& name, AssetRegistry& registry) = 0;
         virtual ~AssetLoader() = default;
     };
 
-    class AssetManager {
+    class AssetRegistry {
     public:
-        std::shared_ptr<void> get(const std::string& name) const;
-        template<class T> std::shared_ptr<const T> get_as(const std::string& name) const;
-
-        void load(const std::string& name, const std::string& alias, AssetLoader& assetLoader);
+        template<class T> AssetReference<T> get(const std::string& name) ;
 
         template<class T>
-        void load(const std::string& name, const std::string& alias);
+        void load(const std::string& name, AssetLoader<T>& assetLoader);
 
         template<class T>
         void load(const std::string& name);
@@ -39,31 +75,35 @@ namespace gear {
         template<class T, class L>
         void setLoader(L&& loader);
     private:
-        std::unordered_map<std::string, AssetEntry> assets;
-        std::unordered_map<std::type_index, std::unique_ptr<AssetLoader>> loaders;
+        std::unordered_map<std::string, std::shared_ptr<void>> assets;
+        std::unordered_map<std::type_index, std::shared_ptr<void>> loaders;
     };
 
 
     template<class T>
-    std::shared_ptr<const T> AssetManager::get_as(const std::string &name) const{
-        return std::static_pointer_cast<T>(get(name));
+    AssetReference<T> AssetRegistry::get(const std::string &name) {
+        auto it = assets.find(name);
+        if (it == assets.end()) {
+            std::shared_ptr<void> d = std::make_shared<AssetEntry<T>>();
+            it = assets.insert({name, d}).first;
+        }
+        return {std::static_pointer_cast<AssetEntry<T>>(it->second)};
     }
 
     template<class T>
-    void AssetManager::load(const std::string &name, const std::string& alias) {
-        load(name, alias,*loaders[typeid(T)]);
+    void gear::AssetRegistry::load(const std::string &name, AssetLoader<T> &assetLoader) {
+        get<T>(name).ptr->store.emplace(assetLoader.load(name, *this));
     }
 
-
+    template<class T>
+    void AssetRegistry::load(const std::string &name) {
+        AssetLoader<T>& loader = *static_cast<AssetLoader<T>*>(loaders[typeid(T)].get());
+        load(name, loader);
+    }
 
     template<class T, class L>
-    void AssetManager::setLoader(L&& loader) {
-        loaders[typeid(T)] = std::make_unique<L>(std::forward<L>(loader));
-    }
-
-    template<class T>
-    void AssetManager::load(const std::string &name) {
-        load<T>(name, name);
+    void AssetRegistry::setLoader(L&& loader) {
+        loaders[typeid(T)] = std::make_shared<L>(std::forward<L>(loader));
     }
 
 

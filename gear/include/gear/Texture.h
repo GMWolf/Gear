@@ -11,13 +11,14 @@
 #include <glm/vec4.hpp>
 #include <memory>
 #include <vector>
+#include "AssetManager.h"
 
 namespace gear {
 
     class Texture {
     public:
-        explicit Texture(const std::string& name);
         explicit Texture(glm::vec4 color);
+        Texture(GLuint tex, glm::ivec2 size);
 
         Texture(const Texture&) = delete;
         Texture&operator=(const Texture&) = delete;
@@ -40,7 +41,7 @@ namespace gear {
         glm::vec2 size {};
         glm::vec2 origin {};
         std::vector<TexRegion> texRegions {}; //TODO get rid of this allocation
-        std::weak_ptr<const Texture> tex;
+        AssetReference<Texture> tex;
         uint16_t imageIndex {0};
 
         struct {
@@ -49,6 +50,11 @@ namespace gear {
             float right;
             float top;
         } bbox;
+    };
+
+    class TextureLoader : public AssetLoader<Texture> {
+    public:
+        Texture load(const std::string& name, AssetRegistry& registry) override;
     };
 }
 

@@ -121,8 +121,8 @@ void gear::SpriteBatch::draw(const Texture& tex, const TexRegion& texRegion, glm
 
 
 void gear::SpriteBatch::draw(const gear::Sprite &sprite, glm::vec2 pos, glm::vec2 size) {
-    auto tex = sprite.tex.lock();
-    draw(tex ? *tex : *nulltex, sprite.texRegions[sprite.imageIndex], pos - sprite.origin, size);
+
+    draw(sprite.tex.get(), sprite.texRegions[sprite.imageIndex], pos - sprite.origin, size);
 }
 
 void gear::SpriteBatch::draw(const gear::Sprite &sprite, glm::vec2 pos) {

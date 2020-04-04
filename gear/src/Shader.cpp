@@ -99,9 +99,18 @@ GLuint gear::Shader::uniformLocation(const char *name) const {
     return glGetUniformLocation(program, name);
 }
 
+gear::Shader::Shader(gear::Shader &&o) noexcept : program(o.program){
+    o.program = 0;
+}
 
-gear::AssetEntry gear::ShaderLoader::load(const std::string &name) {
-    return AssetEntry{
-        std::make_shared<Shader>(name)
-    };
+gear::Shader &gear::Shader::operator=(gear::Shader &&o) noexcept {
+    glDeleteProgram(program);
+    program = o.program;
+    o.program = 0;
+    return *this;
+}
+
+
+gear::Shader gear::ShaderLoader::load(const std::string &name, AssetRegistry& registry) {
+    return Shader(name);
 }

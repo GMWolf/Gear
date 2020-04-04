@@ -23,21 +23,19 @@ namespace gear {
             glm::vec2 offset;
         };
 
-        explicit BitmapFont(const std::string& name);
-
         Glyph operator[](char c) const;
 
-
-        std::unique_ptr<Texture> texture;
+        AssetReference<Texture> texture;
     private:
         int rangeStart {0};
         int rangeCount {0};
         std::vector<Glyph> glyphs;
+        friend class BitmapFontLoader;
     };
 
-    class BitmapFontLoader : public AssetLoader {
+    class BitmapFontLoader : public AssetLoader<BitmapFont> {
     public:
-        AssetEntry load(const std::string &name) override;
+        BitmapFont load(const std::string &name, AssetRegistry& registry) override;
     };
 
     class SpriteBatch;

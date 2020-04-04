@@ -15,18 +15,16 @@ namespace gear {
 
     class TextureAtlas {
     public:
-        explicit TextureAtlas(const std::string& name);
-
         Sprite getSprite(const std::string& name) const;
 
     private:
-        std::shared_ptr<Texture> texture;
+        AssetReference<Texture> texture;
         std::unordered_map<std::string, Sprite> sprites;
+        friend class TextureAtlasLoader;
     };
 
-    class TextureAtlasLoader : public AssetLoader {
-    public:
-        AssetEntry load(const std::string &name) override;
+    class TextureAtlasLoader : public AssetLoader<TextureAtlas> {
+        TextureAtlas load(const std::string &name, AssetRegistry& registry) override;
     };
 }
 

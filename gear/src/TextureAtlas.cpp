@@ -8,19 +8,24 @@
 #include <gear/Texture.h>
 #include "gear/Texture.h"
 
+gear::Sprite gear::TextureAtlas::getSprite(const std::string &name) const {
+    return sprites.at(name);
+}
 
-gear::TextureAtlas::TextureAtlas(const std::string &name) {
+gear::TextureAtlas gear::TextureAtlasLoader::load(const std::string &name, AssetRegistry& registry) {
     std::ifstream in(name);
     nlohmann::json j;
     in >> j;
 
-    auto texFile = j["texture"];
-    texture = std::make_shared<Texture>(texFile);
+    TextureAtlas atlas;
 
+    auto texFile = j["texture"];
+    registry.load<Texture>(texFile);
+    atlas.texture = registry.get<Texture>(texFile);
 
     for(auto& o : j["sprites"]) {
         Sprite spr;
-        spr.tex = texture;
+        spr.tex = atlas.texture;
         spr.size = {};
 
         auto& subimages = o["subimages"];
@@ -33,7 +38,7 @@ gear::TextureAtlas::TextureAtlas(const std::string &name) {
             int h = subimage["h"];
 
             TexRegion texRegion {};
-            texRegion.uvs = glm::vec4{ x, y+h, x+w, y} / glm::vec4(texture->size, texture->size);
+            texRegion.uvs = glm::vec4{ x, y+h, x+w, y} / glm::vec4(atlas.texture->size, atlas.texture->size);
             texRegion.crop = {0,0,0,0};
 
             spr.texRegions.push_back(texRegion);
@@ -46,14 +51,9 @@ gear::TextureAtlas::TextureAtlas(const std::string &name) {
         spr.bbox.right = spr.size.x - spr.origin.x;
         spr.bbox.top = spr.size.y - spr.origin.y;
 
-        sprites.emplace(std::make_pair(o["name"], spr));
+        atlas.sprites.emplace(std::make_pair(o["name"], spr));
     }
+
+    return atlas;
 }
 
-gear::Sprite gear::TextureAtlas::getSprite(const std::string &name) const {
-    return sprites.at(name);
-}
-
-gear::AssetEntry gear::TextureAtlasLoader::load(const std::string &name) {
-    return {std::make_shared<TextureAtlas>(name)};
-}

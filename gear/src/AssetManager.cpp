@@ -4,18 +4,7 @@
 
 #include <gear/AssetManager.h>
 
-std::shared_ptr<void> gear::AssetManager::get(const std::string &name) const{
-    auto it = assets.find(name);
-    if (it != assets.end()){
-        return it->second.object;
-    }
-    return {};
-}
 
 
-void gear::AssetManager::load(const std::string &name, const std::string& alias, AssetLoader &assetLoader) {
-    assets[name] = assetLoader.load(name);
-    assets[alias] = assets[name];
-}
 
 

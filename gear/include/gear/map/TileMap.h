@@ -22,7 +22,7 @@ namespace gear {
         };
 
         std::string name;
-        std::weak_ptr<const TileSet> tileset;
+        AssetReference <TileSet> tileset;
         std::unique_ptr<Tile[]> tileData;
         int width;
         int height;
@@ -37,10 +37,8 @@ namespace gear {
     };
 
 
-    struct TileMapLoader : public AssetLoader {
-        AssetManager& assets;
-        explicit TileMapLoader(AssetManager& assetManager);
-        AssetEntry load(const std::string& name) override;
+    struct TileMapLoader : public AssetLoader<TileMap> {
+        TileMap load(const std::string& name, AssetRegistry& registry) override;
     };
 
 }

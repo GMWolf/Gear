@@ -14,7 +14,10 @@ namespace gear {
 
     struct TileSet {
         std::string name;
-        Texture texture;
+        AssetReference<Texture> texture;
+
+        TileSet(TileSet&&) = default;
+        TileSet& operator=(TileSet&&) = default;
 
         int imageWidth {};
         int imageHeight {};
@@ -31,8 +34,8 @@ namespace gear {
     };
 
 
-    struct TileSetLoader : public AssetLoader {
-        AssetEntry load(const std::string& name) override;
+    struct TileSetLoader : public AssetLoader<TileSet> {
+        TileSet load(const std::string& name, AssetRegistry& registry) override;
     };
 
 

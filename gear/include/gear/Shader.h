@@ -15,6 +15,13 @@ namespace gear {
         void init(const char** vs, int vsCount, const char** fs, int fsCount);
     public:
         explicit Shader(const std::string& path);
+
+        Shader(const Shader&) = delete;
+        Shader& operator=(const Shader&) = delete;
+        Shader(Shader&& o) noexcept;
+        Shader& operator=(Shader&& o) noexcept;
+
+
         Shader(const std::string& vs, const std::string& fs);
         ~Shader();
         void use() const;
@@ -27,9 +34,9 @@ namespace gear {
     };
 
 
-    class ShaderLoader : public AssetLoader {
+    class ShaderLoader : public AssetLoader<Shader> {
     public:
-        AssetEntry load(const std::string &name) override;
+        Shader load(const std::string &name, AssetRegistry& registry) override;
     };
 
 }

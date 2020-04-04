@@ -13,11 +13,7 @@ const unsigned FLIPPED_HORIZONTALLY_FLAG = 0x80000000;
 const unsigned FLIPPED_VERTICALLY_FLAG   = 0x40000000;
 const unsigned FLIPPED_DIAGONALLY_FLAG   = 0x20000000;
 
-gear::TileMapLoader::TileMapLoader(gear::AssetManager &assetManager) : assets(assetManager){
-}
-
-
-gear::AssetEntry gear::TileMapLoader::load(const std::string &fileName) {
+gear::TileMap gear::TileMapLoader::load(const std::string &fileName, AssetRegistry& registry) {
 
     using namespace tinyxml2;
     namespace fs = std::filesystem;
@@ -30,16 +26,16 @@ gear::AssetEntry gear::TileMapLoader::load(const std::string &fileName) {
 
     XMLElement* xMap = doc.FirstChildElement("map");
 
-    std::vector<std::pair<int, std::weak_ptr<const TileSet>>> tilesets;
+    std::vector<std::pair<int, AssetReference <TileSet>>> tilesets;
 
     for(XMLElement* xTileSet = xMap->FirstChildElement("tileset"); xTileSet;
     xTileSet = xTileSet->NextSiblingElement("tileset")) {
         auto source = xTileSet->Attribute("source");
         auto path = relPath / source;
-        assets.load<TileSet>(path.string());
+        registry.load<TileSet>(path.string());
         tilesets.emplace_back(
                 xTileSet->IntAttribute("firstgid"),
-                assets.get_as<TileSet>(path.string()));
+                registry.get<TileSet>(path.string()));
     }
 
     TileMap map = TileMap {
@@ -81,7 +77,6 @@ gear::AssetEntry gear::TileMapLoader::load(const std::string &fileName) {
     }
 
 
-    return {std::make_shared<TileMap>(std::move(map))};
-
+    return map;
 }
 

@@ -6,7 +6,7 @@
 #include <tinyxml2.h>
 #include <filesystem>
 
-gear::AssetEntry gear::TileSetLoader::load(const std::string &fileName) {
+gear::TileSet gear::TileSetLoader::load(const std::string &fileName, AssetRegistry& registry) {
 
     using namespace tinyxml2;
     namespace fs = std::filesystem;
@@ -23,9 +23,12 @@ gear::AssetEntry gear::TileSetLoader::load(const std::string &fileName) {
     auto imageSource = xImage->Attribute("source");
     auto imagePath = relPath / imageSource;
 
-    return {std::make_shared<TileSet>(TileSet{
+    registry.load<Texture>(imagePath.string());
+    AssetReference texture = registry.get<Texture>(imagePath.string());
+
+    TileSet ts{
         xTileset->Attribute("name"),
-        Texture(imagePath.string()),
+        texture,
 
         xImage->IntAttribute("width"),
         xImage->IntAttribute("height"),
@@ -38,7 +41,9 @@ gear::AssetEntry gear::TileSetLoader::load(const std::string &fileName) {
         xTileset->IntAttribute("margin", 0),
         xTileOffset ? xTileOffset->IntAttribute("x", 0) : 0,
         xTileOffset ? xTileOffset->IntAttribute("y", 0) : 0
-    })};
+    };
+
+    return ts;
 }
 
 
