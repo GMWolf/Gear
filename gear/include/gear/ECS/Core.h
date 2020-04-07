@@ -62,6 +62,7 @@ namespace gear::ecs {
         Registry& operator=(const Registry&) = delete;
 
         Entity* emplaceEntity(const Archetype& archetype);
+        void mutateEntity(Entity* entity, const Archetype& archetype);
         void emplaceComponent(Entity* entity, ComponentId componentId, void* componentPtr);
         void destroyEntity(Entity* entity);
 

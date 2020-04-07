@@ -32,6 +32,24 @@ namespace gear::ecs {
         return Archetype(bs);
     }
 
+    Archetype Archetype::operator|(Archetype o) const {
+        return Archetype(bits | o.bits);
+    }
+
+    Archetype Archetype::operator/(ComponentId id) const {
+        auto bs = bits;
+        bs.reset(id);
+        return Archetype(bs);
+    }
+
+    Archetype Archetype::operator&(Archetype o) const {
+        return Archetype(bits & o.bits);
+    }
+
+    bool Archetype::operator!=(const Archetype& o) const {
+        return !(*this == o);
+    }
+
     std::size_t Archetype::Hash::operator()(const gear::ecs::Archetype &a) const noexcept {
         return std::hash<decltype(a.bits)>{}(a.bits);
     }

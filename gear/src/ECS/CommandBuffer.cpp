@@ -101,6 +101,24 @@ namespace gear::ecs {
         }
     }
 
+    void executeCreateComponent(CommandDecoder& cmd, Registry& registry) {
+        auto entityRef = cmd.read<EntityRef>();
+        auto[componentId, componentPtr] = cmd.readComponent();
+        if (entityRef->alive() && !entityRef->entity->chunk->archetype[componentId]) {
+            registry.mutateEntity(entityRef->entity, entityRef->entity->chunk->archetype | componentId);
+            registry.emplaceComponent(entityRef->entity, componentId, componentPtr);
+        }
+    }
+
+    void executeDestroyComponent(CommandDecoder& cmd, Registry& registry) {
+        auto entityRef = cmd.read<EntityRef>();
+        auto componentId = cmd.read<ComponentId>();
+        if (entityRef->alive()) {
+            auto a = entityRef->entity->chunk->archetype / *componentId;
+            registry.mutateEntity(entityRef->entity, a);
+        }
+    }
+
     void executeCommandBuffer(CommandBuffer &buffer, Registry& registry) {
         CommandDecoder cmd(buffer);
         for(int i = 0; i < buffer.commandCount; i++) {
@@ -112,6 +130,12 @@ namespace gear::ecs {
                         break;
                     case CommandType::DestroyEntity:
                         executeDestroy(cmd, registry);
+                        break;
+                    case CommandType::CreateComponent:
+                        executeCreateComponent(cmd, registry);
+                        break;
+                    case CommandType::DestroyComponent:
+                        executeDestroyComponent(cmd, registry);
                         break;
                     default:
                         break;
@@ -134,6 +158,15 @@ namespace gear::ecs {
         auto id = cmd.read<EntityRef>();
     }
 
+    void resetCreateComponent(CommandDecoder& cmd) {
+        cmd.read<EntityRef>();
+        cmd.readComponent();
+    }
+
+    void resetDestroyComponent(CommandDecoder& cmd) {
+        cmd.read<EntityRef>();
+        cmd.read<ComponentId>();
+    }
 
     void resetCommandBuffer(CommandBuffer& buffer) {
         CommandDecoder cmd(buffer);
@@ -147,6 +180,12 @@ namespace gear::ecs {
                         break;
                     case CommandType::DestroyEntity:
                         resetDestroy(cmd);
+                        break;
+                    case CommandType::CreateComponent:
+                        resetCreateComponent(cmd);
+                        break;
+                    case CommandType::DestroyComponent:
+                        resetDestroyComponent(cmd);
                         break;
                     default:
                         break;

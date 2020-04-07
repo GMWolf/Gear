@@ -6,6 +6,8 @@
 #define GEAR_TILEMAP_H
 
 #include "TileSet.h"
+#include "TilemapSystem.h"
+
 #include <memory>
 #include <gear/AssetManager.h>
 #include <string>

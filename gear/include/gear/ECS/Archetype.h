@@ -24,10 +24,15 @@ namespace gear::ecs {
         [[nodiscard]] bool matches(const Archetype &o) const;
 
         bool operator==(const Archetype& o) const;
+        bool operator!=(const Archetype& o) const;
 
         bool operator[](ComponentId id) const;
 
         Archetype operator|(ComponentId id) const;
+        Archetype operator|(Archetype o) const;
+        Archetype operator&(Archetype o) const;
+
+        Archetype operator/(ComponentId id) const;
 
         struct Hash {
             std::size_t operator()(const gear::ecs::Archetype& a) const noexcept;

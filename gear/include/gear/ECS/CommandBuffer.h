@@ -15,6 +15,8 @@ namespace gear::ecs {
     enum class CommandType : uint8_t {
         CreateEntity,
         DestroyEntity,
+        CreateComponent,
+        DestroyComponent,
     };
 
     struct CommandBuffer {
@@ -46,7 +48,11 @@ namespace gear::ecs {
         template<class... T>
         void createEntity(T&&... t);
         void destroyEntity(const EntityRef& entity);
+        template<class T>
+        void createComponent(const EntityRef& entity, T&& t);
         void reset();
+        template<class T>
+        void destroyComponent(const EntityRef& entity);
     };
 
     template<class T>
@@ -69,6 +75,22 @@ namespace gear::ecs {
         write(CommandType::CreateEntity);
         write(Archetype::create<std::remove_reference_t<T>...>());
         (writeComponent(Component<std::remove_reference_t<T>>::ID(), &t), ...);
+        cmd.commandCount++;
+    }
+
+    template<class T>
+    void CommandEncoder::createComponent(const EntityRef &entity, T&& t) {
+        write(CommandType::CreateComponent);
+        write(entity);
+        writeComponent(Component<std::remove_reference_t<T>>::ID(), &t);
+        cmd.commandCount++;
+    }
+
+    template<class T>
+    void CommandEncoder::destroyComponent(const EntityRef &entity) {
+        write(CommandType::DestroyComponent);
+        write(entity);
+        write(Component<T>::ID());
         cmd.commandCount++;
     }
 

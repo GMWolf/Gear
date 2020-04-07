@@ -49,6 +49,10 @@ struct Lifetime {
     float time;
 };
 
+struct Invisible {
+    float time = 4;
+};
+
 static int score = 0;
 
 static void createStage(gear::AssetRegistry& assets, gear::ecs::CommandEncoder& cmd) {
@@ -99,9 +103,9 @@ static void movePlayer(gear::Application* app, gear::ecs::Registry& ecs, gear::e
     auto chunks = ecs.queryChunks(gear::ecs::Query().all<Player, gear::Transform>(), chunkArray, chunkArraySize);
 
     for(auto c : chunks) {
-        auto chunk = gear::ecs::ChunkView<Player, gear::Transform>(*c);
+        auto chunk = gear::ecs::ChunkView<gecs::EntityRef, Player, gear::Transform>(*c);
 
-        for(auto [player, transform] : chunk) {
+        for(auto [entity, player, transform] : chunk) {
             if (app->keyPressed(gear::KEYS::RIGHT)) {
                 transform.pos.x += player.moveSpeed;
             }
@@ -113,6 +117,10 @@ static void movePlayer(gear::Application* app, gear::ecs::Registry& ecs, gear::e
             }
             if (app->keyPressed(gear::KEYS::DOWN)) {
                 transform.pos.y -= player.moveSpeed;
+            }
+
+            if (app->keyPressed(gear::KEYS::Q)) {
+                cmd.createComponent(entity, Invisible{40});
             }
 
             if (player.shootTimer > 0) player.shootTimer--;
@@ -129,6 +137,17 @@ static void movePlayer(gear::Application* app, gear::ecs::Registry& ecs, gear::e
             }
         }
 
+    }
+
+    chunks = ecs.queryChunks(gear::ecs::Query().all<Invisible>(), chunkArray, chunkArraySize);
+    for(auto c : chunks) {
+        auto chunk = gear::ecs::ChunkView<gecs::EntityRef, Invisible>(*c);
+        for(auto [entity, invisible] : chunk) {
+            invisible.time -= 0.16;
+            if (invisible.time <= 0) {
+                cmd.destroyComponent<Invisible>(entity);
+            }
+        }
     }
 
     chunks = ecs.queryChunks(gear::ecs::Query().all<gear::Transform, Bullet>(), chunkArray, chunkArraySize);
@@ -296,7 +315,7 @@ void render(gear::SpriteBatch& batch, gear::AssetRegistry& assets, gear::ecs::Re
         auto vm = view.matrix();
         glUniformMatrix4fv(shd->uniformLocation("view"), 1, GL_FALSE, glm::value_ptr(vm));
 
-        auto chunks = ecs.queryChunks(gecs::Query().all<gear::Sprite, gear::Transform>(), chunkArray, chunkArraySize);
+        auto chunks = ecs.queryChunks(gecs::Query().all<gear::Sprite, gear::Transform>().none<Invisible>(), chunkArray, chunkArraySize);
 
         for(auto c : chunks) {
             auto chunk = gecs::ChunkView<gear::Sprite, gear::Transform>(*c);

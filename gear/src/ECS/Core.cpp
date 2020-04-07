@@ -39,6 +39,8 @@ namespace gear::ecs {
         return chunk;
     }
 
+
+
     Entity* Registry::emplaceEntity(const Archetype &archetype) {
         Archetype realArchetype = archetype | Component<EntityRef>::ID();
         auto chunk = getFreeChunk(realArchetype);
@@ -79,37 +81,78 @@ namespace gear::ecs {
         ComponentInfo::component[componentId].functions.emplace(entity->chunk->get(componentId, entity->index), componentPtr);
     }
 
-    void Registry::destroyEntity(Entity *entity) {
-        Chunk* chunk = entity->chunk;
-        uint16_t index = entity->index;
 
-        uint16_t idFrom = chunk->size - 1;
-        Entity *entityFrom = static_cast<EntityRef *>(chunk->get(Component<EntityRef>::ID(), idFrom))->entity;
-        Entity *entityTo = static_cast<EntityRef *>(chunk->get(Component<EntityRef>::ID(), index))->entity;
+    static void destroyEntityFromChunk(Chunk* chunk, uint16_t index) {
+        //move last index into entity being destoroyed.
+        //Then destroy last index
 
-        for (int i = 0; i < MaxComponents; i++) {
+        uint16_t fromIndex = chunk->size - 1;
+        Entity* entityFrom = static_cast<EntityRef *>(chunk->get(Component<EntityRef>::ID(), fromIndex))->entity;
+
+        for(int i = 0; i < MaxComponents; i++) {
             if (chunk->archetype[i]) {
-                void *from = chunk->get(i, idFrom);
-                if (idFrom != index) {
-                    void *to = chunk->get(i, index);
+                void* from = chunk->get(i, fromIndex);
+                if(fromIndex != index) {
+                    void* to = chunk->get(i, index);
                     ComponentInfo::component[i].functions.move(from, to);
                 }
                 ComponentInfo::component[i].functions.destroy(from);
             }
         }
-        chunk->size--;
 
-        //make destroyed entity available
-        freeEntities.push_back(entityTo);
-        entityTo->chunk = nullptr;
-        entityTo->version++;
-
-        if (idFrom != index) {
-            //patch moved entity pointer
-            entityFrom->chunk = chunk;
+        //fixup moved-from entity index
+        if (fromIndex != index) {
             entityFrom->index = index;
         }
+
+        chunk->size--;
     }
+
+
+    void Registry::destroyEntity(Entity *entity) {
+        Chunk* chunk = entity->chunk;
+        uint16_t index = entity->index;
+        destroyEntityFromChunk(chunk, index);
+
+        //make destroyed entity available
+        freeEntities.push_back(entity);
+        entity->chunk = nullptr;
+        entity->version++;
+    }
+
+    void Registry::mutateEntity(Entity* entity, const Archetype& archetype) {
+        if (entity->chunk->archetype != archetype) {
+
+            auto chunkFrom = entity->chunk;
+            auto indexFrom = entity->index;
+            //create a new entity for it
+            auto newChunk = getFreeChunk(archetype);
+            if (!newChunk) {
+                newChunk = createChunk(archetype);
+            }
+            uint16_t eid = newChunk->size;
+            newChunk->size++;
+
+            //move components components
+            auto sharedArchetype = archetype & entity->chunk->archetype;
+
+            for (int i = 0; i < sharedArchetype.bits.size(); i++) {
+                if (sharedArchetype[i]) {
+                    void *from = chunkFrom->get(i, indexFrom);
+                    void *to = newChunk->get(i, eid);
+                    ComponentInfo::component[i].functions.emplace(to, from);
+                }
+            }
+
+            //Destroy old entity
+            destroyEntityFromChunk(chunkFrom, indexFrom);
+
+            //fixup moved entity
+            entity->chunk = newChunk;
+            entity->index = eid;
+        }
+    }
+
 
     ArrayRange<Chunk *> Registry::queryChunks(const Query &query, Chunk **outChunks, size_t outArraySize) {
         if (outArraySize == 0) {
