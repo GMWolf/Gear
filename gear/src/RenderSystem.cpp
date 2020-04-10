@@ -5,7 +5,7 @@
 #include <gear/RenderSystem.h>
 #include <glm/gtc/type_ptr.hpp>
 
-void gear::render(gear::ecs::Registry &ecs, gear::SpriteBatch &batch, const gear::Shader &shader) {
+void gear::renderSprites(gear::ecs::Registry &ecs, gear::SpriteBatch &batch, const gear::Shader &shader) {
 
     using namespace gear;
     static const ecs::Query viewQuery = ecs::Query().all<View>();

@@ -13,7 +13,7 @@
 
 namespace gear {
 
-    void render(gear::ecs::Registry &ecs, gear::SpriteBatch &batch, const gear::Shader &shader);
+    void renderSprites(gear::ecs::Registry &ecs, gear::SpriteBatch &batch, const gear::Shader &shader);
 
 }
 #endif //TBTG_RENDERSYSTEM_H

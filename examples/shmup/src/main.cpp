@@ -18,6 +18,7 @@
 #include <gear/DebugUI.h>
 #include <gear/map/TileMap.h>
 #include <gear/map/TilemapSystem.h>
+#include <gear/RenderSystem.h>
 
 #include "Collisions.h"
 
@@ -54,6 +55,10 @@ struct Invisible {
     float time = 4;
 };
 
+struct Velocity {
+    glm::vec2 v;
+};
+
 static int score = 0;
 
 static void createStage(gear::AssetRegistry& assets, gear::ecs::CommandEncoder& cmd) {
@@ -68,7 +73,8 @@ static void createStage(gear::AssetRegistry& assets, gear::ecs::CommandEncoder& 
                              gear::CollisionShape{gear::Rectangle{
                                  {spr.bbox.left,spr.bbox.bottom},
                                  {spr.bbox.right, spr.bbox.top}}},
-                             Enemy{}
+                             Enemy{},
+                             Velocity{{0, -1.5}}
                     );
         }
     }
@@ -91,7 +97,11 @@ static void createStage(gear::AssetRegistry& assets, gear::ecs::CommandEncoder& 
     //tilemap
     {
         auto map = assets.get<gear::TileMap>("../../../../examples/shmup/assets/maps/map1.tmx");
-        cmd.createEntity(gear::TilemapComponent{map});
+        cmd.createEntity(
+                gear::TilemapComponent{map},
+                gear::Transform{{0,0}},
+                Velocity{{0, -1}}
+                );
     }
 
     //collision filters
@@ -100,6 +110,11 @@ static void createStage(gear::AssetRegistry& assets, gear::ecs::CommandEncoder& 
             gear::ecs::Query().all<Enemy>(),
             gear::ecs::Query().all<Bullet>()
         });
+    }
+
+    //view
+    {
+        cmd.createEntity(gear::View{{0,0}, {480, 720}});
     }
 }
 
@@ -168,13 +183,20 @@ static void movePlayer(gear::Application* app, gear::ecs::Registry& ecs, gear::e
         }
     }
 
+
+    chunks = ecs.queryChunks(gear::ecs::Query().all<Velocity, gear::Transform>(), chunkArray, chunkArraySize);
+    for(auto c: chunks) {
+        auto chunk = gear::ecs::ChunkView<Velocity, gear::Transform>(*c);
+        for (auto [velocity, transform] : chunk) {
+            transform.pos += velocity.v;
+        }
+    }
+
     chunks = ecs.queryChunks(gear::ecs::Query().all<Enemy, gear::Transform>(), chunkArray, chunkArraySize);
     for(auto c: chunks) {
-        auto chunk = gear::ecs::ChunkView<gear::ecs::EntityRef, Enemy, gear::Transform>(*c);
-        for (auto [entity, enemy, transform] : chunk) {
-            if (transform.pos.y > 32) {
-                transform.pos.y -= 2;
-            } else {
+        auto chunk = gear::ecs::ChunkView<gear::ecs::EntityRef, gear::Transform>(*c);
+        for (auto [entity, transform] : chunk) {
+            if (transform.pos.y < 32) {
                 cmd.destroyEntity(entity);
             }
         }
@@ -256,7 +278,8 @@ static void spawnEnemy(gear::AssetRegistry& assets, gear::ecs::CommandEncoder& c
     cmd.createEntity(spr,
                      gear::Transform{{480.0f * (rand()/(float)RAND_MAX), 720+spr.size.y}},
                      gear::CollisionShape{gear::Rectangle{{spr.bbox.left,spr.bbox.bottom}, {spr.bbox.right, spr.bbox.top}}},
-                     Enemy{}
+                     Enemy{},
+                 Velocity{{0, -1 - (rand() / (float)RAND_MAX)}}
     );
 
 }
@@ -271,46 +294,17 @@ void render(gear::SpriteBatch& batch, gear::AssetRegistry& assets, gear::ecs::Re
 
     gear::View view {{0,0}, {480, 720}};
 
-
-
     //tiles
     {
-        static float ymappos = 0;
-        ymappos -= 1;
         auto shd = assets.get<gear::Shader>("simple_textured");
-
-        shd->use();
-        glUniform1i(shd->uniformLocation("tex"), 0);
-        auto tileView = view;
-        tileView.pos.y -= ymappos;
-        auto vm = tileView.matrix();
-        glUniformMatrix4fv(shd->uniformLocation("view"), 1, GL_FALSE, glm::value_ptr(vm));
-
-        gear::tilemapSystemRender(ecs);
+        gear::tilemapSystemRender(ecs, shd.get());
     }
 
 
     {
         auto shd = assets.get<gear::Shader>("simple_textured");
-
-        shd->use();
-        glUniform1i(shd->uniformLocation("tex"), 0);
-        auto vm = view.matrix();
-        glUniformMatrix4fv(shd->uniformLocation("view"), 1, GL_FALSE, glm::value_ptr(vm));
-
-        auto chunks = ecs.queryChunks(gecs::Query().all<gear::Sprite, gear::Transform>().none<Invisible>(), chunkArray, chunkArraySize);
-
-        for(auto c : chunks) {
-            auto chunk = gecs::ChunkView<gear::Sprite, gear::Transform>(*c);
-            for (auto[sprite, transform] : chunk) {
-                batch.draw(sprite, transform.pos);
-            }
-        };
-
-        batch.flush();
-
+        gear::renderSprites(ecs, batch, shd.get());
     }
-
 
     {
         auto font = assets.get<gear::BitmapFont>("shmup_default_font.json");
@@ -389,10 +383,10 @@ public:
         }
 
 
-        //gear::ui::begin();
-        //perf.frameTime = app->frameTime;
-        //gear::ui::perfWindow(perf);
-        //gear::ui::end();
+        gear::ui::begin();
+        perf.frameTime = app->frameTime;
+        gear::ui::perfWindow(perf);
+        gear::ui::end();
     }
 
     void end() override {

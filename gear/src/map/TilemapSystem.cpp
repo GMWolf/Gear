@@ -7,6 +7,10 @@
 #include <gear/ECS/ECS.h>
 #include <glad/glad.h>
 #include <glm/vec2.hpp>
+#include <gear/CoreComponents.h>
+#include <gear/View.h>
+#include <gear/Shader.h>
+#include <glm/gtc/type_ptr.hpp>
 
 namespace gecs = gear::ecs;
 
@@ -98,21 +102,35 @@ void gear::tilemapSystemCreateSystemComponent(ecs::Registry &ecs, gecs::CommandB
     }
 }
 
-void gear::tilemapSystemRender(ecs::Registry &ecs) {
+void gear::tilemapSystemRender(ecs::Registry &ecs, const gear::Shader &shader) {
 
     gecs::Chunk* chunkArray[512];
-    auto chunks = ecs.queryChunks(gecs::Query().all<TilemapComponent, TilemapSystemComponent>(), chunkArray, 512);
+    auto chunks = ecs.queryChunks(gecs::Query().all<Transform, TilemapComponent, TilemapSystemComponent>(), chunkArray, 512);
 
-    for(auto c : chunks) {
-        auto chunk = gecs::ChunkView<TilemapComponent, TilemapSystemComponent>(*c);
 
-        for(auto [tc, tsc] : chunk) {
-            for(int i = 0; i < tc.tilemap->layers.size(); i++) {
-                glActiveTexture(GL_TEXTURE0);
-                glBindTexture(GL_TEXTURE_2D, tc.tilemap->layers[i].tileset->texture->tex);
-                glBindVertexArray(tsc.vertexArray);
-                size_t offset = i * tc.tilemap->width * tc.tilemap->height * 6;
-                glDrawElements(GL_TRIANGLES, tsc.count, GL_UNSIGNED_SHORT, (void*)(offset * sizeof(GLushort)));
+    ecs::Chunk* viewChunkArray[1];
+    auto viewChunks = ecs.queryChunks(ecs::Query().all<View>(), viewChunkArray, 1);
+
+    shader.use();
+
+    for(auto viewChunk : viewChunks) {
+        for(auto [view] : gecs::ChunkView<View>(*viewChunk)) {
+            for (auto chunk : chunks) {
+                for (auto[transform, tc, tsc] : gecs::ChunkView<Transform, TilemapComponent, TilemapSystemComponent>(*chunk)) {
+                    auto tview = view;
+                    tview.pos -= transform.pos;
+                    auto vm = tview.matrix();
+                    glUniformMatrix4fv(shader.uniformLocation("view"), 1, GL_FALSE, glm::value_ptr(vm));
+
+                    for (int i = 0; i < tc.tilemap->layers.size(); i++) {
+                        glActiveTexture(GL_TEXTURE0);
+                        glBindTexture(GL_TEXTURE_2D, tc.tilemap->layers[i].tileset->texture->tex);
+                        glBindVertexArray(tsc.vertexArray);
+                        size_t offset = i * tc.tilemap->width * tc.tilemap->height * 6;
+                        glDrawElements(GL_TRIANGLES, tsc.count, GL_UNSIGNED_SHORT,
+                                       (void *) (offset * sizeof(GLushort)));
+                    }
+                }
             }
         }
     }

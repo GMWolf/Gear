@@ -40,8 +40,6 @@ namespace gear {
     };
 
 
-
-
     struct TileMapLoader : public AssetLoader<TileMap> {
         TileMap load(const std::string& name, AssetRegistry& registry) override;
     };

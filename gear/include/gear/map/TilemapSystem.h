@@ -36,7 +36,8 @@ namespace gear {
     void tilemapSystemCreateSystemComponent(ecs::Registry& ecs, ecs::CommandBuffer& cmdbuffer);
 
 
-    void tilemapSystemRender(ecs::Registry& ecs);
+    class Shader;
+    void tilemapSystemRender(ecs::Registry& ecs, const Shader &shader);
 }
 
 
