@@ -286,34 +286,8 @@ void render(gear::SpriteBatch& batch, gear::AssetRegistry& assets, gear::ecs::Re
         auto vm = tileView.matrix();
         glUniformMatrix4fv(shd->uniformLocation("view"), 1, GL_FALSE, glm::value_ptr(vm));
 
-        /*auto map = assets.get<gear::TileMap>("../../../../examples/shmup/assets/maps/map1.tmx");
-
-        for(auto& layer : map->layers) {
-            auto tileset = layer.tileset;
-
-            for(int x = 0; x < layer.width; x++)
-                for(int y = 0; y < layer.height; y++) {
-                    auto tile = layer.tileData[x + y * layer.width];
-                    auto tileX = (tile.id - 1)% tileset->columnCount;
-                    auto tileY = (tile.id - 1) / tileset->columnCount;
-                    gear::TexRegion tileRegion {
-                            {tileX * tileset->tileWidth / (float)tileset->imageWidth,
-                             tileY * tileset->tileHeight/ (float)tileset->imageHeight,
-                                    (tileX + 1) * tileset->tileWidth / (float)tileset->imageWidth,
-                                    (tileY + 1) * tileset->tileHeight/ (float)tileset->imageHeight},
-                            {0,0,0,0}
-                    };
-                    batch.draw(tileset->texture.get(), tileRegion, {x * map->tileWidth, y * map->tileHeight + ymappos}, {map->tileWidth, map->tileHeight});
-
-                }
-
-        }*/
-
-
         gear::tilemapSystemRender(ecs);
     }
-
-
 
 
     {

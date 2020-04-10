@@ -52,6 +52,7 @@ namespace gear {
         /// Map the entire buffer orphaning the previous data
         void bufferOrphan();
 
+        void fillElementBuffer();
 
         void* map = nullptr;
         size_t count = 0;
@@ -59,7 +60,13 @@ namespace gear {
 
         GLuint batchTex = 0;
 
-        GLuint vbo{};
+        union {
+            struct {
+                GLuint vbo{};
+                GLuint ebo{};
+            };
+            GLuint buffers[2];
+        };
         GLuint vao{};
 
         std::unique_ptr<Texture> nulltex;
