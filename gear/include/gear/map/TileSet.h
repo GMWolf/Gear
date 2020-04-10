@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <gear/Texture.h>
 #include <gear/AssetManager.h>
+#include <glm/vec4.hpp>
 
 namespace gear {
 
@@ -31,6 +32,8 @@ namespace gear {
 
         int tileOffsetX {};
         int tileOffsetY {};
+
+        glm::vec4 getTileUVs(int tileIndex, bool hflip, bool vflip, bool dflip) const;
     };
 
 

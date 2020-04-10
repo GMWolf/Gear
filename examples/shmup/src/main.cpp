@@ -17,6 +17,7 @@
 #include <gear/AssetManager.h>
 #include <gear/DebugUI.h>
 #include <gear/map/TileMap.h>
+#include <gear/map/TilemapSystem.h>
 
 #include "Collisions.h"
 
@@ -85,6 +86,12 @@ static void createStage(gear::AssetRegistry& assets, gear::ecs::CommandEncoder& 
                 gear::CollisionShape{gear::Rectangle{{spr.bbox.left,spr.bbox.bottom}, {spr.bbox.right, spr.bbox.top}}},
                 player);
 
+    }
+
+    //tilemap
+    {
+        auto map = assets.get<gear::TileMap>("../../../../examples/shmup/assets/maps/map1.tmx");
+        cmd.createEntity(gear::TilemapComponent{map});
     }
 
     //collision filters
@@ -266,7 +273,7 @@ void render(gear::SpriteBatch& batch, gear::AssetRegistry& assets, gear::ecs::Re
 
 
 
-    //ad hock tile rendering
+    //tiles
     {
         static float ymappos = 0;
         ymappos -= 1;
@@ -274,10 +281,12 @@ void render(gear::SpriteBatch& batch, gear::AssetRegistry& assets, gear::ecs::Re
 
         shd->use();
         glUniform1i(shd->uniformLocation("tex"), 0);
-        auto vm = view.matrix();
+        auto tileView = view;
+        tileView.pos.y -= ymappos;
+        auto vm = tileView.matrix();
         glUniformMatrix4fv(shd->uniformLocation("view"), 1, GL_FALSE, glm::value_ptr(vm));
 
-        auto map = assets.get<gear::TileMap>("../../../../examples/shmup/assets/maps/map1.tmx");
+        /*auto map = assets.get<gear::TileMap>("../../../../examples/shmup/assets/maps/map1.tmx");
 
         for(auto& layer : map->layers) {
             auto tileset = layer.tileset;
@@ -298,10 +307,10 @@ void render(gear::SpriteBatch& batch, gear::AssetRegistry& assets, gear::ecs::Re
 
                 }
 
-        }
+        }*/
 
 
-        batch.flush();
+        gear::tilemapSystemRender(ecs);
     }
 
 
@@ -395,6 +404,7 @@ public:
         di.invoke(checkCollisions);
         di.invoke(submitCommandBuffer);
         di.invoke(processCollisions);
+        di.invoke(gear::tilemapSystemCreateSystemComponent);
         di.invoke(render);
         di.invoke(processAnimation);
         di.invoke(processLifetime);

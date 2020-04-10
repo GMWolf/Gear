@@ -1,0 +1,6 @@
+Sprite rendering:
+    Build fixed index buffer, does not need updating.
+        Should reduce vertex upload from 6 vertex/sprite to 4 vertex per sprite.
+        Reduces vertex shader invocations from 6 / sprite to 4 per sprite.
+        fixed index buffer does not need re-uploading
+

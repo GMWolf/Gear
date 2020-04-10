@@ -47,3 +47,27 @@ gear::TileSet gear::TileSetLoader::load(const std::string &fileName, AssetRegist
 }
 
 
+glm::vec4 gear::TileSet::getTileUVs(int tileIndex, bool hflip, bool vflip, bool dflip) const{
+    auto tileX = (tileIndex - 1) % columnCount;
+    auto tileY = (tileIndex - 1) / columnCount;
+    glm::vec4 uvs {
+            (float)tileX * (float)tileWidth / (float)imageWidth,
+            (float)tileY * (float)tileHeight / (float)imageHeight,
+            (float)(tileX + 1) * (float)tileWidth / (float)imageWidth,
+            (float)(tileY + 1) * (float)tileHeight / (float)imageHeight
+    };
+
+
+    if (dflip) {
+        std::swap(uvs.x, uvs.y);
+        std::swap(uvs.z, uvs.w);
+    }
+    if (hflip) {
+        std::swap(uvs.x, uvs.z);
+    }
+    if (vflip) {
+        std::swap(uvs.y, uvs.w);
+    }
+
+    return uvs;
+}

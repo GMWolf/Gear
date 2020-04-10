@@ -14,13 +14,18 @@ namespace gear {
     class TileMap;
     struct TilemapComponent {
         AssetReference<TileMap> tilemap;
-        uint16_t chunkWidth;
-        uint16_t chunkHeight;
     };
 
     struct TilemapSystemComponent {
-        GLuint vertexBuffer;
-        GLuint elementBuffer;
+        size_t count;
+        GLuint vertexArray;
+        union {
+            struct {
+                GLuint vertexBuffer;
+                GLuint elementBuffer;
+            };
+            GLuint buffers[2];
+        };
     };
 
     namespace ecs {
@@ -28,9 +33,10 @@ namespace gear {
         class CommandBuffer;
     }
 
-    void TilemapSystemCreateSystemComponent(ecs::Registry& ecs, ecs::CommandBuffer& cmdbuffer);
+    void tilemapSystemCreateSystemComponent(ecs::Registry& ecs, ecs::CommandBuffer& cmdbuffer);
 
 
+    void tilemapSystemRender(ecs::Registry& ecs);
 }
 
 

@@ -5,10 +5,18 @@
 #include <gear/map/TilemapSystem.h>
 #include <gear/map/TileMap.h>
 #include <gear/ECS/ECS.h>
+#include <glad/glad.h>
+#include <glm/vec2.hpp>
 
 namespace gecs = gear::ecs;
 
-void gear::TilemapSystemCreateSystemComponent(ecs::Registry &ecs, gecs::CommandBuffer& cmdbuffer) {
+
+struct TilemapVertex {
+    glm::vec2 pos;
+    glm::vec2 uv;
+};
+
+void gear::tilemapSystemCreateSystemComponent(ecs::Registry &ecs, gecs::CommandBuffer& cmdbuffer) {
 
     gecs::CommandEncoder cmd(cmdbuffer);
 
@@ -17,12 +25,98 @@ void gear::TilemapSystemCreateSystemComponent(ecs::Registry &ecs, gecs::CommandB
 
 
     for(auto c : chunks) {
-        auto chunk = gecs::ChunkView<gecs::EntityRef>(*c);
+        auto chunk = gecs::ChunkView<gecs::EntityRef, TilemapComponent>(*c);
 
-        for(auto [entity] : chunk)  {
+        for(auto [entity, tilemapComponent] : chunk)  {
+            auto& tilemap = tilemapComponent.tilemap.get();
+            size_t vertexCount = tilemap.layers.size() * (tilemap.width * tilemap.height) * 4;
+            size_t elementCount = tilemap.layers.size() * (tilemap.width * tilemap.height) * 6;
 
+            TilemapSystemComponent tsc{0,0};
+            //create VAO
+            glGenVertexArrays(1, &tsc.vertexArray);
+            glBindVertexArray(tsc.vertexArray);
+            //create buffers
+            glGenBuffers(2, tsc.buffers);
+            glBindBuffer(GL_ARRAY_BUFFER, tsc.vertexBuffer);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, tsc.elementBuffer);
+            glBufferData(GL_ARRAY_BUFFER, vertexCount * sizeof(TilemapVertex), nullptr, GL_STATIC_DRAW);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, elementCount * sizeof(GLushort), nullptr, GL_STATIC_DRAW);
+            auto* vertices = static_cast<TilemapVertex*>(glMapBufferRange(GL_ARRAY_BUFFER, 0, vertexCount * sizeof(TilemapVertex),
+                    GL_MAP_WRITE_BIT));
+            auto* elements = static_cast<GLushort*>(glMapBufferRange(GL_ELEMENT_ARRAY_BUFFER, 0, elementCount * sizeof(GLushort),
+                    GL_MAP_WRITE_BIT));
+            for(int l = 0; l < tilemap.layers.size(); l++) {
+                auto& layer = tilemap.layers[l];
+                auto layerVertexOffset = l * (tilemap.width * tilemap.height) * 4;
+                auto layerElementOffset = l * (tilemap.width * tilemap.height) * 6;
+                for (int y = 0; y < tilemap.height; y++) {
+                    for (int x = 0; x < tilemap.width; x++) {
+                        size_t tileIndex = x + y * tilemap.width;
+                        auto tile = layer.tileData[tileIndex];
+                        auto tileVertexOffset = layerVertexOffset + (x + y * tilemap.width) * 4;
+                        auto tileElementOffset = layerElementOffset + (x + y * tilemap.width) * 6;
+                        auto uvs = layer.tileset->getTileUVs(tile.id, tile.hflip, tile.vflip, tile.dflip);
+                        //Write vertices
+                        auto* tileVertices = vertices + tileVertexOffset;
+                        tileVertices[0].pos = {x * tilemap.tileWidth, y * tilemap.tileHeight};
+                        tileVertices[0].uv = {uvs.x, uvs.y};
+                        tileVertices[1].pos = { x * tilemap.tileWidth, (y + 1) * tilemap.tileHeight};
+                        tileVertices[1].uv = {uvs.x, uvs.w};
+                        tileVertices[2].pos = {(x + 1) * tilemap.tileWidth, y * tilemap.tileHeight};
+                        tileVertices[2].uv = {uvs.z, uvs.y};
+                        tileVertices[3].pos = {(x + 1) * tilemap.tileWidth, (y + 1) * tilemap.tileHeight};
+                        tileVertices[3].uv = {uvs.z, uvs.w};
+                        //Write elements;
+                        auto* tileElements = elements + tileElementOffset;
+                        tileElements[0] = tileVertexOffset;
+                        tileElements[1] = tileVertexOffset + 1;
+                        tileElements[2] = tileVertexOffset + 2;
+                        tileElements[3] = tileVertexOffset + 1;
+                        tileElements[4] = tileVertexOffset + 2;
+                        tileElements[5] = tileVertexOffset + 3;
+                    }
+                }
+            }
+
+            glUnmapBuffer(GL_ARRAY_BUFFER);
+            glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
+
+            //vao vertices
+            glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(TilemapVertex), (void*)offsetof(TilemapVertex, pos));
+            glEnableVertexAttribArray(0);
+            glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(TilemapVertex), (void*)offsetof(TilemapVertex, uv));
+            glEnableVertexAttribArray(1);
+
+            glBindVertexArray(0);
+
+            tsc.count = tilemap.layers.size() * tilemap.width * tilemap.height * 6;
+
+            cmd.createComponent(entity, tsc);
         }
 
     }
+}
+
+void gear::tilemapSystemRender(ecs::Registry &ecs) {
+
+    gecs::Chunk* chunkArray[512];
+    auto chunks = ecs.queryChunks(gecs::Query().all<TilemapComponent, TilemapSystemComponent>(), chunkArray, 512);
+
+    for(auto c : chunks) {
+        auto chunk = gecs::ChunkView<TilemapComponent, TilemapSystemComponent>(*c);
+
+        for(auto [tc, tsc] : chunk) {
+            for(int i = 0; i < tc.tilemap->layers.size(); i++) {
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, tc.tilemap->layers[i].tileset->texture->tex);
+                glBindVertexArray(tsc.vertexArray);
+                size_t offset = i * tc.tilemap->width * tc.tilemap->height * 6;
+                glDrawElements(GL_TRIANGLES, tsc.count, GL_UNSIGNED_SHORT, (void*)(offset * sizeof(GLushort)));
+            }
+        }
+    }
+
+    glBindVertexArray(0);
 
 }

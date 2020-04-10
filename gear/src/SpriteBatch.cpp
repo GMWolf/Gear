@@ -90,8 +90,6 @@ void gear::SpriteBatch::draw(const Texture& tex, glm::vec2 pos, glm::vec2 size, 
         }
     }
 
-
-
     {
         auto *vertices = static_cast<Vertex *>(map) + count;
         vertices[0].pos = pos;
@@ -110,7 +108,7 @@ void gear::SpriteBatch::draw(const Texture& tex, glm::vec2 pos, glm::vec2 size, 
 
     count += 6;
 
-    if (first + count >= batchSize) {
+    if (first + count >= batchSize * 6) {
         flush();
     }
 }
