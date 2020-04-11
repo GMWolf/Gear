@@ -246,7 +246,6 @@ static void processLifetime(gear::ecs::Registry& ecs, gear::ecs::CommandEncoder&
     };
 }
 
-
 static void processAnimation(gear::ecs::Registry& ecs, gear::ecs::CommandEncoder& cmd) {
     gecs::Chunk* chunkArray[1024];
     auto chunks = ecs.queryChunks(gecs::Query().all<gear::Sprite>(), chunkArray, 1024);
@@ -279,7 +278,7 @@ static void spawnEnemy(gear::AssetRegistry& assets, gear::ecs::CommandEncoder& c
                      gear::Transform{{480.0f * (rand()/(float)RAND_MAX), 720+spr.size.y}},
                      gear::CollisionShape{gear::Rectangle{{spr.bbox.left,spr.bbox.bottom}, {spr.bbox.right, spr.bbox.top}}},
                      Enemy{},
-                 Velocity{{0, -1 - (rand() / (float)RAND_MAX)}}
+                 Velocity{{0, -1.5 - 0.5*(rand() / (float)RAND_MAX)}}
     );
 
 }
@@ -299,7 +298,6 @@ void render(gear::SpriteBatch& batch, gear::AssetRegistry& assets, gear::ecs::Re
         auto shd = assets.get<gear::Shader>("simple_textured");
         gear::tilemapSystemRender(ecs, shd.get());
     }
-
 
     {
         auto shd = assets.get<gear::Shader>("simple_textured");
@@ -321,7 +319,6 @@ void render(gear::SpriteBatch& batch, gear::AssetRegistry& assets, gear::ecs::Re
                 gear::renderText(text.text, *text.font, transform.pos, batch);
             }
         };
-
 
         gear::renderText("Score: " + std::to_string(score), *font, glm::vec2(20, 680), batch);
 
@@ -382,7 +379,6 @@ public:
             spawnTimer = 20;
         }
 
-
         gear::ui::begin();
         perf.frameTime = app->frameTime;
         gear::ui::perfWindow(perf);
@@ -399,8 +395,6 @@ private:
     int spawnTimer = 10;
     gear::ui::PerfData perf {};
     gear::Application* app {};
-
-
 };
 
 int main() {

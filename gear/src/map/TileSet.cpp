@@ -20,6 +20,8 @@ gear::TileSet gear::TileSetLoader::load(const std::string &fileName, AssetRegist
     XMLElement* xTileOffset = xTileset->FirstChildElement("tileoffset");
     XMLElement* xImage = xTileset->FirstChildElement("image");
 
+
+
     auto imageSource = xImage->Attribute("source");
     auto imagePath = relPath / imageSource;
 
