@@ -8,12 +8,17 @@ ninja = require("luabuild.ninja");
 local M = {
     CXX_COMPILER = {
         name = "CXX_COMPILER";
-        command = "g++ -std=c++17 -c $in -o $out $args";
+        command = "clang++ -std=c++17 -c $in -o $out $args";
+    };
+
+    C_COMPILER = {
+        name = "C_COMPILER";
+        command = "clang -std=c99 -c $in -o $out $args";
     };
 
     CXX_LINKER = {
         name = "CXX_LINKER";
-        command = "g++ -o $out $in";
+        command = "clang++ -o $out $in $args";
     };
 
     CXX_ARCHIVE = {

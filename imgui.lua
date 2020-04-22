@@ -8,23 +8,23 @@ local target = require("luabuild.targets");
 local imgui_core = target.library {
     name = "imgui_core";
     sources = {
-        "deps/imgui/imgui.cpp",
-        "deps/imgui/imgui_widgets.cpp",
-        "deps/imgui/imgui_draw.cpp",
-        "deps/imgui/imgui_demo.cpp",
+        "imgui.cpp",
+        "imgui_widgets.cpp",
+        "imgui_draw.cpp",
+        "imgui_demo.cpp",
     };
     include_directories = {
-        public = {"deps/imgui"}
+        public = {"../imgui"}
     }
 }
 
 local imgui_glfw = target.library {
     name = "imgui_glfw";
     sources = {
-        "deps/imgui/examples/imgui_impl_glfw.cpp"
+        "examples/imgui_impl_glfw.cpp"
     };
     include_directories = {
-        public = {"deps/imgui/examples"}
+        public = {"examples"}
     };
     libs = {
         public = { imgui_core }
@@ -34,13 +34,16 @@ local imgui_glfw = target.library {
 local imgui_ogl3 = target.library {
     name = "imgui_ogl3";
     sources = {
-        "deps/imgui/examples/imgui_impl_opengl3.cpp"
+        "examples/imgui_impl_opengl3.cpp"
     };
     include_directories = {
-        public = {"deps/imgui/examples"}
+        public = {"examples"}
     };
     libs = {
-        public = { imgui_core }
+        public = { imgui_core, glad_lib }
+    };
+    definitions = {
+        IMGUI_IMPL_OPENGL_LOADER_GLAD = 1;
     }
 }
 

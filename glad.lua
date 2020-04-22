@@ -9,9 +9,9 @@ local target = require("luabuild.targets");
 return target.library {
     name = "glad";
     sources = {
-        "deps/glad/src/glad.c"
+        "src/glad.c"
     };
     include_directories = {
-        public = {"deps/glad/include"}
+        public = {"include"}
     }
 }

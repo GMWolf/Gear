@@ -7,8 +7,8 @@ local target = require("luabuild.targets");
 
 return target.library {
     name = "tinyxml2";
-    sources = { "deps/tinyxml2/tinyxml2.cpp"};
+    sources = { "tinyxml2.cpp"};
     include_directories = {
-        public = { "deps/tinyxml2" }
+        public = { "../tinyxml2" }
     }
 }

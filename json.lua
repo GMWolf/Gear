@@ -9,7 +9,7 @@ return targets.library {
 
     name = "nlohmann_json";
     include_directories = {
-        public = {"deps/json/include"}
+        public = {"include"}
     }
 
 }
