@@ -11,6 +11,6 @@ return target.library {
         "stb_impl.cpp"
     };
     include_directories = {
-        public = {"deps/stb"}
+        public = {"stb"}
     };
 };

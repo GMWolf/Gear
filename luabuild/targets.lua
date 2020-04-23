@@ -233,7 +233,9 @@ function M.executable(exeDef)
 
     end
 
-
+    return {
+        exe = CURRENT_DIRECTORY..exeDef.name;
+    }
 
 end
 

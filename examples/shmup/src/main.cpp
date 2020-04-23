@@ -95,7 +95,7 @@ static void createStage(gear::AssetRegistry& assets, gear::ecs::CommandEncoder& 
     }
 
     //tilemap
-    {
+    if (false){
         auto map = assets.get<gear::TileMap>("../../../../examples/shmup/assets/maps/map1.tmx");
         cmd.createEntity(
                 gear::TilemapComponent{map},
@@ -356,7 +356,7 @@ public:
         assetManager.load<gear::Shader>("shd_font");
         assetManager.load<gear::TextureAtlas>("shmup_textures.json");
         assetManager.load<gear::BitmapFont>("shmup_default_font.json");
-        assetManager.load<gear::TileMap>("../../../../examples/shmup/assets/maps/map1.tmx");
+        //assetManager.load<gear::TileMap>("../../../../examples/shmup/assets/maps/map1.tmx");
 
         di.invoke(createStage);
 

@@ -20,7 +20,14 @@ end
 
 
 function M.writeStep(step)
-    file:write("build ", step.outputs, " : ", step.rule, " ", step.inputs, "\n");
+    file:write("build ", step.outputs, " : ", step.rule, " ", step.inputs);
+
+    if step.implicit_dependencies then
+        file:write(" | ", table.concat(step.implicit_dependencies, " "));
+    end
+
+    file:write("\n");
+
     if step.variables then
         for k, v in pairs(step.variables) do
             file:write("  ", k, " = ", v, "\n");
