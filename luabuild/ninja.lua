@@ -8,6 +8,11 @@ local M = {};
 local file = io.open("build/build.ninja", "w");
 
 
+function M.close()
+    file:close();
+end
+
+
 function M.writeRule( rule)
     file:write("rule ", rule.name, "\n");
     file:write("  command = ", rule.command, "\n");
@@ -35,5 +40,6 @@ function M.writeStep(step)
     end
     file:write("\n\n");
 end
+
 
 return M;

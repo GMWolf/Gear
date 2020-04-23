@@ -19,6 +19,7 @@
 #include <gear/map/TileMap.h>
 #include <gear/map/TilemapSystem.h>
 #include <gear/RenderSystem.h>
+#include <iostream>
 
 #include "Collisions.h"
 
@@ -398,6 +399,8 @@ private:
 };
 
 int main() {
+
+    std::cout << " yo! " << std::endl;
 
     gear::AppConfig config {
         480, 720,
