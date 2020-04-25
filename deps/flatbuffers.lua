@@ -1,6 +1,7 @@
 
 
 targets = require("luabuild.targets");
+path = require("path");
 
 local compiler_source = {
     "src/idl_parser.cpp",
@@ -49,7 +50,7 @@ ninja.writeRule({
 });
 
 
-local flatlib = targets.library( {
+flatbuffers_lib = targets.library( {
    name = "flatbuffers";
    include_directories = {
        public = {"include"};
@@ -59,13 +60,15 @@ local flatlib = targets.library( {
 
 function flatc(file)
 
+    local dir = CURRENT_DIRECTORY..file:match("(.-)([^\\/]-%.?([^%.\\/]*))$");
+    print(dir);
     ninja.writeStep({
        rule = "FLATC";
-       outputs = CURRENT_DIRECTORY..file.."_generated.h";
+       outputs = dir..file.."_generated.h";
        inputs = "../"..CURRENT_DIRECTORY..file;
        implicit_dependencies = {flatc_exe.exe};
        variables = {
-           path = CURRENT_DIRECTORY..file:match("(.-)([^\\/]-%.?([^%.\\/]*))$"); -- get the directory
+           path = dir; -- get the directory
        }
     });
 
@@ -78,7 +81,7 @@ function flatc(file)
         };
         libs = {
             public = {
-                flatlib;
+                flatbuffers_lib;
             }
         };
         ideps = {

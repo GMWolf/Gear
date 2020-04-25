@@ -112,6 +112,11 @@ int main(int argc, char* argv[]) {
         }
     }
 
+
+    flatbuffers::FlatBufferBuilder builder;
+
+
+
     {
         nlohmann::json j;
         j["texture"] = outTexName;
@@ -121,6 +126,7 @@ int main(int argc, char* argv[]) {
             o["name"] = spr.name;
             o["subimages"] = {};
             int maxWidth = 0, maxHeight = 0;
+            std::vector<gear::Region> regions;
             for(auto& img : spr.images) {
                 nlohmann::json s;
                 s["x"] = img.x;

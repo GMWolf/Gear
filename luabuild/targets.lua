@@ -163,91 +163,21 @@ end
 
 function M.executable(exeDef)
 
+    local lib = M.library({
+       name = exeDef.name;
+       sources = exeDef.sources;
+       libs = exeDef.libs;
+       include_directories = exeDef.include_directories;
+    });
 
-    local oFiles = {};
-    local includeDirs = {};
-    local includeDirsExport = {};
-    local archives = {};
-    local linkArgs = exeDef.linkArgs or {};
-
-    local arguments = {};
-
-    if (exeDef.include_directories) then
-        if (exeDef.include_directories.public) then
-            for i, dir in ipairs(exeDef.include_directories.public) do
-                table.insert(includeDirs, "../"..CURRENT_DIRECTORY..dir);
-                table.insert(includeDirsExport, "../"..CURRENT_DIRECTORY..dir);
-            end
-        end
-    end
-
-    if exeDef.libs then
-        if exeDef.libs.private then
-            for i, lib in ipairs(exeDef.libs.public) do
-                for j, dir in ipairs(lib.includeDirs) do
-                    table.insert(includeDirs, dir);
-                end
-                for j, archive in ipairs(lib.archives) do
-                    table.insert(archives, archive);
-                end
-                for j, arg in ipairs(lib.linkArgs) do
-                    table.insert(linkArgs, arg);
-                end
-            end
-        end
-
-
-        if exeDef.libs.public then
-            for i, lib in ipairs(exeDef.libs.public) do
-                for j, dir in ipairs(lib.includeDirs) do
-                    table.insert(includeDirs, dir);
-                    table.insert(includeDirsExport, dir);
-                end
-                for j, archive in ipairs(lib.archives) do
-                    table.insert(archives, archive);
-                end
-                for j, arg in ipairs(lib.linkArgs) do
-                    table.insert(linkArgs, arg);
-                end
-            end
-        end
-
-    end
-
-    archives = dedup(archives);
-    linkArgs = dedup(linkArgs);
-
-    for i, dir in ipairs(includeDirs) do
-        table.insert(arguments, "-I"..dir);
-    end
-
-    if exeDef.sources then
-        for i, relsrc in ipairs(exeDef.sources) do
-            local src = CURRENT_DIRECTORY..relsrc;
-            local obj = src..".o";
-            ninja.writeStep( {
-                rule = "CXX_COMPILER",
-                inputs = "../"..src,
-                outputs = obj,
-                variables = {
-                    args = table.concat(arguments, " ");
-                };
-            });
-            table.insert(oFiles, obj);
-        end
-
-        ninja.writeStep({
-            rule = "CXX_LINKER",
-            inputs = table.concat(oFiles, " ").." "..table.concat(archives, " "),
-            outputs = CURRENT_DIRECTORY..exeDef.name;
-            variables = {
-                args = table.concat(linkArgs, " ");
-            };
-        });
-
-        table.insert(archives, CURRENT_DIRECTORY..exeDef.name);
-
-    end
+    ninja.writeStep({
+        rule = "CXX_LINKER",
+        inputs = table.concat(lib.archives, " "),
+        outputs = CURRENT_DIRECTORY..exeDef.name;
+        variables = {
+            args = table.concat(lib.linkArgs, " ");
+        };
+    });
 
     return {
         exe = CURRENT_DIRECTORY..exeDef.name;
