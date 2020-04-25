@@ -65,14 +65,14 @@ function flatc(file)
        inputs = "../"..CURRENT_DIRECTORY..file;
        implicit_dependencies = {flatc_exe.exe};
        variables = {
-           path = CURRENT_DIRECTORY;
+           path = CURRENT_DIRECTORY..file:match("(.-)([^\\/]-%.?([^%.\\/]*))$"); -- get the directory
        }
     });
 
     return targets.library({
         name = "file";
         include_directories = {
-            public = {
+            generated_public = {
                 CURRENT_DIRECTORY;
             }
         };

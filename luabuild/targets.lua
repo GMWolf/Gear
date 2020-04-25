@@ -60,8 +60,14 @@ function M.library(libDef)
     if (libDef.include_directories) then
         if (libDef.include_directories.public) then
             for i, dir in ipairs(libDef.include_directories.public) do
-                table.insert(includeDirs, CURRENT_DIRECTORY..dir);
-                table.insert(includeDirsExport, CURRENT_DIRECTORY..dir);
+                table.insert(includeDirs, "../"..CURRENT_DIRECTORY..dir);
+                table.insert(includeDirsExport, "../"..CURRENT_DIRECTORY..dir);
+            end
+        end
+        if (libDef.include_directories.generated_public) then
+            for i, dir in ipairs(libDef.include_directories.generated_public) do
+                table.insert(includeDirs, dir);
+                table.insert(includeDirsExport, dir);
             end
         end
     end
@@ -109,7 +115,7 @@ function M.library(libDef)
     ideps = dedup(ideps);
 
     for i, dir in ipairs(includeDirs) do
-        table.insert(arguments, "-I../"..dir);
+        table.insert(arguments, "-I"..dir);
     end
 
     if (libDef.definitions) then
@@ -169,8 +175,8 @@ function M.executable(exeDef)
     if (exeDef.include_directories) then
         if (exeDef.include_directories.public) then
             for i, dir in ipairs(exeDef.include_directories.public) do
-                table.insert(includeDirs, CURRENT_DIRECTORY..dir);
-                table.insert(includeDirsExport, CURRENT_DIRECTORY..dir);
+                table.insert(includeDirs, "../"..CURRENT_DIRECTORY..dir);
+                table.insert(includeDirsExport, "../"..CURRENT_DIRECTORY..dir);
             end
         end
     end
@@ -212,7 +218,7 @@ function M.executable(exeDef)
     linkArgs = dedup(linkArgs);
 
     for i, dir in ipairs(includeDirs) do
-        table.insert(arguments, "-I../"..dir);
+        table.insert(arguments, "-I"..dir);
     end
 
     if exeDef.sources then
