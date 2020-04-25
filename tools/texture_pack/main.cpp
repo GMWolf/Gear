@@ -12,7 +12,7 @@
 #include <nlohmann/json.hpp>
 #include <fstream>
 #include <yaml-cpp/yaml.h>
-#include <fbs/texture_atlas_generated.h>
+#include <gear/fbs/generated/texture_atlas_generated.h>
 
 namespace fs = std::filesystem;
 namespace tp = gear::texture_pack;

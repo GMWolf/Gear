@@ -10,7 +10,7 @@ targets = require("luabuild.targets");
 
 targets.subfile("deps/deps.lua")
 
-targets.subfile("gear/assets.lua");
+
 gear_lib = targets.subfile("gear/gear.lua");
 
 targets.subfile("tools/texture_pack/texture_packer.lua");
