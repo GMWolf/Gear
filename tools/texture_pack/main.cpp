@@ -12,7 +12,6 @@
 #include <nlohmann/json.hpp>
 #include <fstream>
 #include <yaml-cpp/yaml.h>
-#include <fbs/texture_atlas_generated.h>
 
 namespace fs = std::filesystem;
 namespace tp = gear::texture_pack;
@@ -112,6 +111,11 @@ int main(int argc, char* argv[]) {
         }
     }
 
+
+    flatbuffers::FlatBufferBuilder builder;
+
+
+
     {
         nlohmann::json j;
         j["texture"] = outTexName;
@@ -121,6 +125,7 @@ int main(int argc, char* argv[]) {
             o["name"] = spr.name;
             o["subimages"] = {};
             int maxWidth = 0, maxHeight = 0;
+            std::vector<gear::Region> regions;
             for(auto& img : spr.images) {
                 nlohmann::json s;
                 s["x"] = img.x;

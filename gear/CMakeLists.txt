@@ -1,0 +1,48 @@
+add_library(gear
+        include/gear/Application.h
+        src/Application.cpp
+        include/gear/ApplicationAdapter.h
+        include/gear/SpriteBatch.h
+        src/SpriteBatch.cpp
+        include/gear/Texture.h
+        src/Texture.cpp
+        include/gear/Shader.h
+        src/Shader.cpp
+        include/gear/TextureAtlas.h
+        src/TextureAtlas.cpp
+        include/gear/CollisionShape.h
+        include/gear/CollisionDetection.h
+        src/CollisionDetection.cpp
+        include/gear/View.h
+        src/View.cpp
+        include/gear/KeyboardKeys.h
+        include/gear/DI.h
+        include/gear/ECS/Core.h
+        include/gear/CoreComponents.h
+        include/gear/ECS/System.h
+        src/ECS/Core.cpp
+        include/gear/ECS/Core.h
+        include/gear/ECS/Config.h
+        include/gear/ECS/Component.h
+        include/gear/ECS/Archetype.h
+        src/ECS/Archetype.cpp
+        src/ECS/Component.cpp
+        include/gear/BitmapFont.h
+        src/BitmapFont.cpp
+        include/gear/AssetManager.h
+        src/AssetManager.cpp
+        include/gear/DebugUI.h
+        src/DebugUI.cpp
+        include/gear/Allocators.h
+        src/Allocators.cpp
+        include/gear/Util.h
+        include/gear/ECS/ChunkView.h
+        include/gear/ECS/ECS.h
+        include/gear/ECS/CommandBuffer.h
+        src/ECS/CommandBuffer.cpp
+        include/gear/RenderSystem.h
+        src/RenderSystem.cpp
+        include/gear/map/TileSet.h
+        src/map/TileSet.cpp include/gear/map/TileMap.h src/map/TileMap.cpp include/gear/map/TilemapSystem.h src/map/TilemapSystem.cpp)
+target_link_libraries(gear PUBLIC glfw glad stb glm nlohmann_json::nlohmann_json imgui_gear tinyxml2 cpp-base64)
+target_include_directories(gear PUBLIC include)
