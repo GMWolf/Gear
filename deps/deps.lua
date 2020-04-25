@@ -16,3 +16,5 @@ glfw_lib = targets.subfile("glfw.lua", "glfw");
 
 lyra_lib = targets.subfile("lyra.lua", "Lyra");
 yaml_lib = targets.subfile("yaml.lua", "yaml-cpp");
+
+targets.subfile("flatbuffers.lua", "flatbuffers");

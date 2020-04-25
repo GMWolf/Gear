@@ -1,0 +1,6 @@
+table Monster {
+  mana:short = 150;
+  hp:short = 100;
+  name:string;
+  inventory:[ubyte];
+}

@@ -51,6 +51,7 @@ function M.library(libDef)
     local includeDirsExport = {};
     local archives = {};
     local linkArgs = libDef.linkArgs or {};
+    local ideps = {};
 
     local arguments = {};
 
@@ -77,6 +78,9 @@ function M.library(libDef)
                 for j, arg in ipairs(lib.linkArgs) do
                     table.insert(linkArgs, arg);
                 end
+                for j, dep in ipairs(lib.ideps) do
+                    table.insert(ideps, dep);
+                end
             end
         end
 
@@ -93,12 +97,16 @@ function M.library(libDef)
                 for j, arg in ipairs(lib.linkArgs) do
                     table.insert(linkArgs, arg);
                 end
+                for j, dep in ipairs(lib.ideps) do
+                    table.insert(ideps, dep);
+                end
             end
         end
     end
 
     archives = dedup(archives);
     linkArgs = dedup(linkArgs);
+    ideps = dedup(ideps);
 
     for i, dir in ipairs(includeDirs) do
         table.insert(arguments, "-I../"..dir);
@@ -122,6 +130,7 @@ function M.library(libDef)
                 variables = {
                     args = table.concat(arguments, " ");
                 };
+                implicit_dependencies = ideps;
             });
             table.insert(oFiles, obj);
         end
@@ -140,6 +149,7 @@ function M.library(libDef)
         archives = archives; --archive to link to
         includeDirs = includeDirsExport; --includes to include
         linkArgs = linkArgs;
+        ideps = ideps;
     }
 
 end

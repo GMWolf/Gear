@@ -1,0 +1,30 @@
+
+namespace gear;
+
+struct fvec2 {
+    x: float;
+    y: float;
+}
+
+struct ivec2 {
+    x: int;
+    y: int;
+}
+
+struct Region {
+    pos: ivec2;
+    size: ivec2;
+}
+
+table Sprite {
+    name: string;
+    size: fvec2;
+    images: [Region];
+}
+
+table Atlas {
+    texture: string;
+    sprites: [Sprite];
+}
+
+root_type Atlas;

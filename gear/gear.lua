@@ -22,14 +22,18 @@ local gear_source = {
     "src/map/TilemapSystem.cpp",
 }
 
+
+local l = flatc("fbs/test.fbs");
+
 return target.library {
     name = "gear";
     sources = gear_source;
     libs = {
         public = {glad_lib, imgui_lib, stb_lib, json_lib, tinyxml2_lib, base64_lib, glfw_lib,
-                  glm_lib};
+                  glm_lib, l};
     };
     include_directories = {
         public = {"include"};
     };
 }
+
