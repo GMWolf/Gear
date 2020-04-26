@@ -17,7 +17,6 @@
 #include <gear/fbs/generated/font_generated.h>
 
 namespace fs = std::filesystem;
-namespace nj = nlohmann;
 
 int main(int argc, char* argv[]) {
 

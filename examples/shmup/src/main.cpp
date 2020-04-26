@@ -84,7 +84,7 @@ static void createStage(gear::AssetRegistry& assets, gear::ecs::CommandEncoder& 
         gear::Sprite spr = atlas->getSprite("ship2");
 
         Player player;
-        player.bulletSprite = atlas->getSprite("bullet_blue");
+        player.bulletSprite = atlas->getSprite("bullet_blue1");
         player.bulletShape = gear::Rectangle{{player.bulletSprite.bbox.left,player.bulletSprite.bbox.bottom},
                                              {player.bulletSprite.bbox.right, player.bulletSprite.bbox.top}};
 
@@ -220,7 +220,7 @@ static void processCollisions(gear::ecs::Registry& ecs, gear::ecs::CommandEncode
                 if (--enemy.health <= 0) {
                     score += 100;
                     cmd.destroyEntity(entities->first);
-                    cmd.createEntity(t, atlas->getSprite("explosion"), DestroyOnAnimationEnd{});
+                    cmd.createEntity(t, atlas->getSprite("explosion_0"), DestroyOnAnimationEnd{});
                     cmd.createEntity(gear::Transform{t.pos + glm::vec2(-25, 25)},
                                      Text{"100", assets.get<gear::BitmapFont>("shmup_default_font.bin")},
                                      Lifetime{1});

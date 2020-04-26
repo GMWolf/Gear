@@ -96,6 +96,7 @@ gear::texture_pack::SpriteDescriptor gear::texture_pack::getDescriptorFromPath(c
 gear::texture_pack::Sprite gear::texture_pack::loadSprite(const gear::texture_pack::SpriteDescriptor &desc) {
 
     Sprite sprite;
+    sprite.id = desc.id;
     sprite.name = desc.name;
     sprite.origin.x = desc.origin.x;
     sprite.origin.y = desc.origin.y;

@@ -8,6 +8,7 @@ struct Region {
 }
 
 table Sprite {
+    id: uint;
     name: string;
     size: fvec2;
     origin: fvec2;

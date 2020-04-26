@@ -24,6 +24,7 @@ namespace gear::texture_pack {
     };
 
     struct Sprite {
+        uint32_t id;
         std::string name;
         std::vector<SubImage> images;
         struct {
@@ -33,6 +34,7 @@ namespace gear::texture_pack {
 
 
     struct SpriteDescriptor {
+        uint32_t id;
         std::string name;
         std::vector<std::filesystem::path> images;
         struct {

@@ -14,6 +14,7 @@ local texPacker = targets.executable {
     };
     libs = {
         public = {
+            tinyxml2_lib,
             stb_lib, json_lib, yaml_lib, lyra_lib
         }
     };

@@ -11,20 +11,22 @@
 #include "TexturePacker.h"
 #include <fstream>
 #include <ios>
-#include <yaml-cpp/yaml.h>
 #include <gear/fbs/generated/texture_atlas_generated.h>
+#include <tinyxml2.h>
+
 
 namespace fs = std::filesystem;
 namespace tp = gear::texture_pack;
+namespace xml = tinyxml2;
 
 int main(int argc, char* argv[]) {
 
-    std::vector<std::string> inputPaths;
+    std::string inputPath;
     std::string outFileName = "out";
     bool showHelp = false;
     bool printInputs = false;
     auto cli = lyra::cli_parser()
-            | lyra::arg(inputPaths, "input file")
+            | lyra::arg(inputPath, "input file")
             ("input files").cardinality(1, std::numeric_limits<size_t>::max())
             | lyra::opt(outFileName, "output file name").required(1)
             ["-o"]["--output"]
@@ -51,33 +53,30 @@ int main(int argc, char* argv[]) {
     int pageWidth = 256, pageHeight = 256;
     std::vector<tp::SpriteDescriptor> descriptors;
 
-    for(auto& inputPath : inputPaths) {
+    {
+        auto reldir = fs::path(inputPath).parent_path();
 
-        auto config = YAML::LoadFile(inputPath);
-        auto sprites = config["sprites"];
-        pageWidth = config["width"].as<int>();
-        pageHeight = config["height"].as<int>();
+        xml::XMLDocument doc;
+        doc.LoadFile(inputPath.c_str());
+        xml::XMLElement* xTileSet = doc.FirstChildElement("tileset");
 
-        auto pathRelDir = fs::path(inputPath).parent_path();
-
-        assert(sprites.IsSequence());
-        for(const auto& n : sprites) {
-            assert(n.IsMap());
+        for(xml::XMLElement* xTile = xTileSet->FirstChildElement("tile"); xTile;
+        xTile = xTile->NextSiblingElement("tile")) {
+            xml::XMLElement* xImage = xTile->FirstChildElement("image");
+            auto source = xImage->Attribute("source");
+            std::cout << source << std::endl;
+            xml::XMLElement* xAnimation = xTile->FirstChildElement("animation");
             tp::SpriteDescriptor desc;
-            desc.name = n["name"].as<std::string>();
-            desc.origin.x = n["origin_x"] ? n["origin_x"].as<float>() : 0.0f;
-            desc.origin.y = n["origin_y"] ? n["origin_y"].as<float>() : 0.0f;
-            if (n["images"].IsSequence()) {
-                for(const auto& i : n["images"]) {
-                    desc.images.emplace_back(pathRelDir / i.as<std::string>());
-                }
-            } else {
-                desc.images.emplace_back(pathRelDir / n["images"].as<std::string>());
-            }
-
+            desc.id = xTile->IntAttribute("id");
+            desc.name = fs::path(source).stem();
+            desc.origin.x = 0;
+            desc.origin.y = 0;
+            desc.images.emplace_back(reldir / source);
             descriptors.push_back(desc);
         }
     }
+
+    std::cout << "done with loop" << std::endl;
 
     if (printInputs) {
         for(auto& spr : descriptors) {
@@ -95,13 +94,16 @@ int main(int argc, char* argv[]) {
     }
 
     {
+        std::cout << "packing sprites" << std::endl;
         tp::packSprites(sprites, pageWidth, pageHeight);
     }
 
     {
+        std::cout << "writing sprites" << std::endl;
         std::unique_ptr<tp::Pixel[]> data = std::make_unique<tp::Pixel[]>(pageWidth * pageHeight);
         tp::writeSprites(sprites, pageWidth, pageHeight, data.get());
 
+        std::cout << "writing page" << std::endl;
         tp::writePageTexture(outTexName, pageWidth, pageHeight, data.get());
     }
 
@@ -112,6 +114,7 @@ int main(int argc, char* argv[]) {
     }
 
 
+    std::cout << "writing fb" << std::endl;
     flatbuffers::FlatBufferBuilder builder(2048);
 
     {
@@ -128,7 +131,7 @@ int main(int argc, char* argv[]) {
 
             auto size = gear::bin::fvec2(maxWidth, maxHeight);
             auto origin = gear::bin::fvec2(spr.origin.x * maxWidth, spr.origin.y * maxHeight);
-            auto sprite = gear::bin::CreateSpriteDirect(builder, spr.name.c_str(), &size, &origin, &regions_vector);
+            auto sprite = gear::bin::CreateSpriteDirect(builder, spr.id, spr.name.c_str(), &size, &origin, &regions_vector);
             spriteBins.push_back(sprite);
         }
 
