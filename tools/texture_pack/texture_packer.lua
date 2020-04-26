@@ -19,7 +19,7 @@ local texPacker = targets.executable {
     };
     include_directories = {
         public = {
-            "../../"
+            "../../", "../"
         }
     }
 }
@@ -32,7 +32,7 @@ ninja.writeRule({
 function texture_pack(name, input)
     ninja.writeStep({
         rule = "TEXTURE_PACK";
-        outputs = CURRENT_DIRECTORY..name..".json".." "..CURRENT_DIRECTORY..name..".png";
+        outputs = CURRENT_DIRECTORY..name..".bin".." "..CURRENT_DIRECTORY..name..".png";
         inputs = "../"..CURRENT_DIRECTORY..input;
         implicit_dependencies = { texPacker.exe };
         variables = {

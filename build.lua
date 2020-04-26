@@ -21,5 +21,5 @@ targets.subfile("examples/shmup/shmup.lua");
 
 ninja.close();
 
-os.execute("ninja -C build -t compdb CXX_COMPILER C_COMPILER CXX_LINKER CXX_ARCHIVE > ../compile_commands.json");
+os.execute("ninja -C build -t compdb CXX_COMPILER > compile_commands.json");
 os.execute( "ninja -C build");

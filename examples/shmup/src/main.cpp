@@ -64,7 +64,7 @@ static int score = 0;
 
 static void createStage(gear::AssetRegistry& assets, gear::ecs::CommandEncoder& cmd) {
 
-    auto atlas = assets.get<gear::TextureAtlas>("shmup_textures.json");
+    auto atlas = assets.get<gear::TextureAtlas>("shmup_textures.bin");
     {
         gear::Sprite spr = atlas->getSprite("ship1");
         for (int i = 0; i < 5; i++) {
@@ -207,7 +207,7 @@ static void movePlayer(gear::Application* app, gear::ecs::Registry& ecs, gear::e
 static void processCollisions(gear::ecs::Registry& ecs, gear::ecs::CommandEncoder& cmd, gear::AssetRegistry& assets) {
     const gear::ecs::Archetype enemyArch = gear::ecs::Archetype::create<Enemy>();
     const gear::ecs::Archetype bulletArch = gear::ecs::Archetype::create<Bullet>();
-    auto atlas = assets.get<gear::TextureAtlas>("shmup_textures.json");
+    auto atlas = assets.get<gear::TextureAtlas>("shmup_textures.bin");
 
     gecs::Chunk* chunkArray[256];
     auto chunks = ecs.queryChunks(gecs::Query().all<CollisionPair>(), chunkArray, 256);
@@ -273,7 +273,7 @@ static void processAnimation(gear::ecs::Registry& ecs, gear::ecs::CommandEncoder
 }
 
 static void spawnEnemy(gear::AssetRegistry& assets, gear::ecs::CommandEncoder& cmd) {
-    auto atlas = assets.get<gear::TextureAtlas>("shmup_textures.json");
+    auto atlas = assets.get<gear::TextureAtlas>("shmup_textures.bin");
     gear::Sprite spr = atlas->getSprite("ship1");
     cmd.createEntity(spr,
                      gear::Transform{{480.0f * (rand()/(float)RAND_MAX), 720+spr.size.y}},
@@ -355,7 +355,7 @@ public:
 
         assetManager.load<gear::Shader>("simple_textured");
         assetManager.load<gear::Shader>("shd_font");
-        assetManager.load<gear::TextureAtlas>("shmup_textures.json");
+        assetManager.load<gear::TextureAtlas>("shmup_textures.bin");
         assetManager.load<gear::BitmapFont>("shmup_default_font.json");
         //assetManager.load<gear::TileMap>("../../../../examples/shmup/assets/maps/map1.tmx");
 

@@ -9,8 +9,8 @@
 #include <string>
 #include <filesystem>
 #include "TexturePacker.h"
-#include <nlohmann/json.hpp>
 #include <fstream>
+#include <ios>
 #include <yaml-cpp/yaml.h>
 #include <gear/fbs/generated/texture_atlas_generated.h>
 
@@ -24,7 +24,7 @@ int main(int argc, char* argv[]) {
     bool showHelp = false;
     bool printInputs = false;
     auto cli = lyra::cli_parser()
-            | lyra::arg(inputPaths, "input folders")
+            | lyra::arg(inputPaths, "input file")
             ("input files").cardinality(1, std::numeric_limits<size_t>::max())
             | lyra::opt(outFileName, "output file name").required(1)
             ["-o"]["--output"]
@@ -46,8 +46,7 @@ int main(int argc, char* argv[]) {
     }
 
     auto outTexName = (outFileName + ".png");
-    auto outAtlasName = (outFileName + ".json");
-
+    auto outAtlasName = (outFileName + ".bin");
 
     int pageWidth = 256, pageHeight = 256;
     std::vector<tp::SpriteDescriptor> descriptors;
@@ -113,41 +112,37 @@ int main(int argc, char* argv[]) {
     }
 
 
-    flatbuffers::FlatBufferBuilder builder;
-
-
+    flatbuffers::FlatBufferBuilder builder(2048);
 
     {
-        nlohmann::json j;
-        j["texture"] = outTexName;
-        j["sprites"] = {};
+        std::vector<flatbuffers::Offset<gear::bin::Sprite>> spriteBins;
         for(auto& spr : sprites) {
-            nlohmann::json o;
-            o["name"] = spr.name;
-            o["subimages"] = {};
             int maxWidth = 0, maxHeight = 0;
-            std::vector<gear::Region> regions;
+            std::vector<gear::bin::Region> regions_vector;
+            regions_vector.reserve(spr.images.size());
             for(auto& img : spr.images) {
-                nlohmann::json s;
-                s["x"] = img.x;
-                s["y"] = img.y;
-                s["w"] = img.width;
-                s["h"] = img.height;
-                o["subimages"].push_back(s);
+                regions_vector.emplace_back(gear::bin::ivec2(img.x, img.y), gear::bin::ivec2(img.width, img.height));
                 maxWidth = img.width > maxWidth ? img.width : maxWidth;
                 maxHeight = img.height > maxHeight ? img.height : maxHeight;
             }
-            o["size"]["x"] = maxWidth;
-            o["size"]["y"] = maxHeight;
-            o["origin"]["x"] = spr.origin.x * maxWidth;
-            o["origin"]["y"] = spr.origin.y * maxHeight;
-            j["sprites"].push_back(o);
+
+            auto size = gear::bin::fvec2(maxWidth, maxHeight);
+            auto origin = gear::bin::fvec2(spr.origin.x * maxWidth, spr.origin.y * maxHeight);
+            auto sprite = gear::bin::CreateSpriteDirect(builder, spr.name.c_str(), &size, &origin, &regions_vector);
+            spriteBins.push_back(sprite);
         }
 
-        {
-            std::ofstream ofs(outAtlasName);
-            ofs << std::setw(4) << j << std::endl;
-        }
+        auto texPathRel = fs::relative(outTexName, fs::path(outAtlasName).parent_path());
+        auto atlas = gear::bin::CreateAtlasDirect(builder, texPathRel.c_str(), &spriteBins);
+        builder.Finish(atlas);
+    }
+
+
+    {
+        auto buf = builder.GetBufferPointer();
+        auto bufSize = builder.GetSize();
+        std::ofstream ofs(outAtlasName , std::ios::out | std::ios::binary);
+        ofs.write((char*)buf, bufSize);
     }
 
     return 0;

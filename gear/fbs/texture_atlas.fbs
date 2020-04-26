@@ -1,5 +1,5 @@
 
-namespace gear;
+namespace gear.bin;
 
 struct fvec2 {
     x: float;
@@ -19,6 +19,7 @@ struct Region {
 table Sprite {
     name: string;
     size: fvec2;
+    origin: fvec2;
     images: [Region];
 }
 
