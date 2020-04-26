@@ -19,7 +19,7 @@ local texPacker = targets.executable {
     };
     include_directories = {
         public = {
-            "../../", "../"
+            "../../"
         }
     }
 }

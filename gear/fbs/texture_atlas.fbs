@@ -1,15 +1,6 @@
+include "common.fbs";
 
 namespace gear.bin;
-
-struct fvec2 {
-    x: float;
-    y: float;
-}
-
-struct ivec2 {
-    x: int;
-    y: int;
-}
 
 struct Region {
     pos: ivec2;

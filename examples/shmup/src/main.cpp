@@ -222,7 +222,7 @@ static void processCollisions(gear::ecs::Registry& ecs, gear::ecs::CommandEncode
                     cmd.destroyEntity(entities->first);
                     cmd.createEntity(t, atlas->getSprite("explosion"), DestroyOnAnimationEnd{});
                     cmd.createEntity(gear::Transform{t.pos + glm::vec2(-25, 25)},
-                                     Text{"100", assets.get<gear::BitmapFont>("shmup_default_font.json")},
+                                     Text{"100", assets.get<gear::BitmapFont>("shmup_default_font.bin")},
                                      Lifetime{1});
                 }
                 cmd.destroyEntity(entities->second);
@@ -306,7 +306,7 @@ void render(gear::SpriteBatch& batch, gear::AssetRegistry& assets, gear::ecs::Re
     }
 
     {
-        auto font = assets.get<gear::BitmapFont>("shmup_default_font.json");
+        auto font = assets.get<gear::BitmapFont>("shmup_default_font.bin");
         auto shd = assets.get<gear::Shader>("shd_font");
         shd->use();
         glUniform1i(shd->uniformLocation("tex"), 0);
@@ -356,7 +356,7 @@ public:
         assetManager.load<gear::Shader>("simple_textured");
         assetManager.load<gear::Shader>("shd_font");
         assetManager.load<gear::TextureAtlas>("shmup_textures.bin");
-        assetManager.load<gear::BitmapFont>("shmup_default_font.json");
+        assetManager.load<gear::BitmapFont>("shmup_default_font.bin");
         //assetManager.load<gear::TileMap>("../../../../examples/shmup/assets/maps/map1.tmx");
 
         di.invoke(createStage);

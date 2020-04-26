@@ -13,8 +13,8 @@
 #include <string>
 #include <yaml-cpp/yaml.h>
 #include <filesystem>
-#include <nlohmann/json.hpp>
 #include <fstream>
+#include <gear/fbs/generated/font_generated.h>
 
 namespace fs = std::filesystem;
 namespace nj = nlohmann;
@@ -49,6 +49,7 @@ int main(int argc, char* argv[]) {
 
     std::string bitmapOut = outFileName + ".png";
     std::string jsonOut = outFileName + ".json";
+    std::string binOut = outFileName + ".bin";
 
     const auto config = YAML::LoadFile(inputPath);
 
@@ -80,28 +81,36 @@ int main(int argc, char* argv[]) {
     stbi_write_png(bitmapOut.c_str(), bitmapWidth, bitmapHeight, 1, bitmap, 0);
 
 
-    nj::json j;
-    j["texture"] = bitmapOut;
-    j["glyphs"] = {};
-    j["rangeStart"] = rangeStart;
-    j["rangeCount"] = rangeCount;
-    auto& glyphs = j["glyphs"];
-    for(int i = 0; i < rangeCount; i++) {
-        nj::json g;
-        g["x0"] = pdata[i].x0;
-        g["x1"] = pdata[i].x1;
-        g["y0"] = pdata[i].y0;
-        g["y1"] = pdata[i].y1;
-        g["xadvance"] = pdata[i].xadvance;
-        g["xoff"] = pdata[i].xoff;
-        g["yoff"] = pdata[i].yoff;
-        g["xoff2"] = pdata[i].xoff2;
-        g["yoff2"] = pdata[i].yoff2;
-        glyphs.push_back(g);
+
+    flatbuffers::FlatBufferBuilder builder(2048);
+
+    {
+        std::vector<gear::bin::Glyph> glyphs;
+        glyphs.reserve(rangeCount);
+        for(int i = 0; i < rangeCount; i++) {
+            gear::bin::Glyph glyph {
+                pdata[i].x0,
+                pdata[i].y0,
+                pdata[i].x1,
+                pdata[i].y1,
+                pdata[i].xadvance,
+                pdata[i].xoff,
+                pdata[i].yoff,
+                pdata[i].xoff2,
+                pdata[i].yoff2
+            };
+            glyphs.push_back(glyph);
+        }
+        auto bitmapPathRelative = fs::relative(bitmapOut, fs::path(binOut).parent_path());
+        auto font = gear::bin::CreateFontDirect(builder, bitmapPathRelative.c_str(), rangeStart, rangeCount, &glyphs);
+        builder.Finish(font);
     }
 
     {
-        std::ofstream ofs(jsonOut);
-        ofs << std::setw(4) << j << std::endl;
+        auto buf = builder.GetBufferPointer();
+        auto bufSize = builder.GetSize();
+        std::ofstream ofs(binOut, std::ios::out | std::ios::binary);
+        ofs.write((char*)buf, bufSize);
     }
+    return 0;
 }

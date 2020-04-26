@@ -3,11 +3,9 @@
 //
 
 #include <gear/BitmapFont.h>
-#include <nlohmann/json.hpp>
 #include <fstream>
 #include <gear/SpriteBatch.h>
-
-namespace nj = nlohmann;
+#include <generated/font_generated.h>
 
 gear::BitmapFont::Glyph gear::BitmapFont::operator[](char c) const {
     return glyphs[c - rangeStart];
@@ -23,39 +21,41 @@ void gear::renderText(const std::string &text, const BitmapFont &font, glm::vec2
 }
 
 gear::BitmapFont gear::BitmapFontLoader::load(const std::string &name, AssetRegistry& registry) {
-    std::ifstream in(name);
-    nj::json j;
-    in >> j;
+
+
+    std::ifstream in(name, std::ios::binary);
+    in.seekg(0, std::ios::end);
+    size_t size = in.tellg();
+    in.seekg(0, std::ios::beg);
+    auto buffer = (char*)malloc(size);
+    in.read(buffer, size);
+
+    auto fontBin = gear::bin::GetFont(buffer);
 
     BitmapFont font;
+    registry.load<Texture>(fontBin->texture()->str());
+    font.texture = registry.get<Texture>(fontBin->texture()->str());
 
-    auto texFile = j["texture"];
-    registry.load<Texture>(texFile);
-    font.texture = registry.get<Texture>(texFile);
-
-    font.rangeStart = j["rangeStart"];
-    font.rangeCount = j["rangeCount"];
-
-    auto c = j["rangeCount"].size();
-    assert(j["glyphs"].size() == font.rangeCount);
+    font.rangeStart = fontBin->range_start();
+    font.rangeCount = fontBin->range_count();
 
     font.glyphs.reserve(font.rangeCount);
 
-    for(auto& g : j["glyphs"]) {
-
+    for(auto g : *fontBin->glyphs()) {
         BitmapFont::Glyph glyph {};
-        glyph.uv.x = g["x0"];
-        glyph.uv.y = g["y1"];
-        glyph.uv.z = g["x1"];
-        glyph.uv.w = g["y0"];
+        glyph.uv.x = g->x0();
+        glyph.uv.y = g->y1();
+        glyph.uv.z = g->x1();
+        glyph.uv.w = g->y0();
         glyph.size = {glyph.uv.z - glyph.uv.x, glyph.uv.y - glyph.uv.w};
         glyph.uv /= glm::vec4{font.texture->size, font.texture->size};
-        glyph.advance = g["xadvance"];
-        glyph.offset.x = g["xoff"];
-        glyph.offset.y = g["yoff2"];
+        glyph.advance = g->xadvance();
+        glyph.offset.x = g->xoff();
+        glyph.offset.y = g->yoff2();
 
         font.glyphs.push_back(glyph);
     }
 
+    free(buffer);
     return font;
 }

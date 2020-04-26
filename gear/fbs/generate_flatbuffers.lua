@@ -6,7 +6,9 @@
 
 
 local schemas = {
-    "texture_atlas.fbs"
+    "common.fbs",
+    "texture_atlas.fbs",
+    "font.fbs"
 }
 
 
