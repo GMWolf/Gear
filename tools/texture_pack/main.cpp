@@ -20,18 +20,6 @@
 namespace fs = std::filesystem;
 namespace xml = tinyxml2;
 
-xml::XMLElement* getCollisionElement(xml::XMLElement* xTile) {
-    xml::XMLElement* xObjectGroup = xTile->FirstChildElement("objectgroup");
-    for(xml::XMLElement* xObject = xObjectGroup->FirstChildElement("object"); xObject;
-    xObject = xObject->NextSiblingElement("object")) {
-        if (xObject->Attribute("name", "collision")) {
-            return xObject;
-        }
-    }
-    return nullptr;
-}
-
-
 stbrp_rect getRectById(const std::vector<stbrp_rect>& rects, int id) {
     return *std::find_if(rects.begin(), rects.end(), [id](const stbrp_rect& r){return r.id == id;});
 }
@@ -145,6 +133,10 @@ int main(int argc, char* argv[]) {
                  xTile = xTile->NextSiblingElement("tile")) {
                 int id = xTile->IntAttribute("id");
 
+                if (xTile->Attribute("type", "excluded")) {
+                    continue;
+                }
+
                 std::vector<gear::bin::UVs> uvs;
                 std::vector<flatbuffers::Offset<gear::bin::Object>> objects;
 
@@ -155,8 +147,7 @@ int main(int argc, char* argv[]) {
 
                 auto addFrame = [&](int frameId) {
                     auto rect = getRectById(rects, frameId);
-                    uvs.emplace_back( (float) rect.x / (float) pageWidth, (float) rect.y / (float) pageHeight,
-                                      (float) (rect.x + rect.w) / (float) pageWidth, (float) (rect.y + rect.h) / (float) pageHeight );
+                    uvs.emplace_back(rect.x, rect.y, (rect.x + rect.w),(rect.y + rect.h));
                 };
 
                 if (xAnimation) {
@@ -173,22 +164,31 @@ int main(int argc, char* argv[]) {
                     for(auto xObject = xObjects->FirstChildElement("object"); xObject;
                     xObject = xObject->NextSiblingElement("object")) {
                         auto name = builder.CreateString(xObject->Attribute("name"));
-                        auto ob = gear::bin::ObjectBuilder(builder);
-                        ob.add_name(name);
-                        ob.add_x(xObject->FloatAttribute("x"));
-                        ob.add_y(xObject->FloatAttribute("y"));
+                        gear::bin::Shape shape_type;
+                        flatbuffers::Offset<void> shape;
                         if (xObject->FirstChildElement("ellipse")) {
-                            ob.add_w(xObject->FloatAttribute("width"));
-                            ob.add_shape(gear::bin::Shape::Shape_Circle);
+                            shape_type = gear::bin::Shape_circle;
+                            shape =builder.CreateStruct(gear::bin::Circle {
+                                xObject->FloatAttribute("x"),
+                                xObject->FloatAttribute("y"),
+                                xObject->FloatAttribute("width") / 2.f
+                            }).Union();
                         } else if (xObject->FirstChildElement("point")) {
-                            ob.add_shape(gear::bin::Shape_Point);
+                            shape_type = gear::bin::Shape_point;
+                            shape = builder.CreateStruct(gear::bin::Point {
+                                    xObject->FloatAttribute("x"),
+                                    xObject->FloatAttribute("y")
+                            }).Union();
                         } else { // rectangle
-                            ob.add_w(xObject->FloatAttribute("width"));
-                            ob.add_h(xObject->FloatAttribute("height"));
-                            ob.add_shape(gear::bin::Shape_Rectangle);
+                            shape_type = gear::bin::Shape_rectangle;
+                            shape = builder.CreateStruct(gear::bin::Rectangle {
+                                    xObject->FloatAttribute("x"),
+                                    xObject->FloatAttribute("y"),
+                                    xObject->FloatAttribute("width"),
+                                    xObject->FloatAttribute("height")
+                            }).Union();
                         }
-
-                        objects.push_back(ob.Finish());
+                        objects.push_back(gear::bin::CreateObject(builder, name, shape_type, shape));
                     }
                 }
 

@@ -37,31 +37,31 @@
    <frame tileid="10" duration="16"/>
   </animation>
  </tile>
- <tile id="3">
+ <tile id="3" type="excluded">
   <image width="89" height="89" source="explosion/explosion_1.png"/>
  </tile>
- <tile id="4">
+ <tile id="4" type="excluded">
   <image width="89" height="89" source="explosion/explosion_2.png"/>
  </tile>
- <tile id="5">
+ <tile id="5" type="excluded">
   <image width="89" height="89" source="explosion/explosion_3.png"/>
  </tile>
- <tile id="6">
+ <tile id="6" type="excluded">
   <image width="89" height="89" source="explosion/explosion_4.png"/>
  </tile>
- <tile id="7">
+ <tile id="7" type="excluded">
   <image width="89" height="89" source="explosion/explosion_5.png"/>
  </tile>
- <tile id="8">
+ <tile id="8" type="excluded">
   <image width="89" height="89" source="explosion/explosion_6.png"/>
  </tile>
- <tile id="9">
+ <tile id="9" type="excluded">
   <image width="89" height="89" source="explosion/explosion_7.png"/>
  </tile>
- <tile id="10">
+ <tile id="10" type="excluded">
   <image width="89" height="89" source="explosion/explosion_8.png"/>
  </tile>
- <tile id="11">
+ <tile id="11" type="excluded">
   <image width="89" height="89" source="explosion/explosion_9.png"/>
  </tile>
  <tile id="12">

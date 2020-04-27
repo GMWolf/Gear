@@ -37,6 +37,7 @@ gear::TextureAtlas gear::TextureAtlasLoader::load(const std::string &name, Asset
             TexRegion region{};
             region.crop = {0, 0, 0, 0};
             region.uvs = glm::vec4{uvs->x0(), uvs->y0(), uvs->x1(), uvs->y1()};
+            region.uvs /= glm::vec4{spr.tex->size, spr.tex->size};
             spr.texRegions.push_back(region);
         }
 
@@ -46,19 +47,22 @@ gear::TextureAtlas gear::TextureAtlasLoader::load(const std::string &name, Asset
 
         bool hasOrigin = false;
         if (auto origin = o->objects()->LookupByKey("origin")) {
-            spr.origin.x = origin->x();
-            spr.origin.y = origin->y();
+            spr.origin.x = origin->shape_as_point()->x();
+            spr.origin.y = origin->shape_as_point()->y();
         } else {
             if (auto col = o->objects()->LookupByKey("collision")) {
-                if (col->shape() == gear::bin::Shape_Circle) {
-                    spr.origin.x = col->x() + col->w() / 2;
-                    spr.origin.y = col->y() + col->w() / 2;
-                } else if (col->shape() == gear::bin::Shape_Rectangle) {
-                    spr.origin.x = col->x() + col->w() / 2;
-                    spr.origin.y = col->y() + col->h() / 2;
+                if (auto circle = col->shape_as_circle()) {
+                    spr.origin.x = circle->x() + circle->r();
+                    spr.origin.y = circle->y() + circle->r();
+                } else if (auto rect = col->shape_as_rectangle()) {
+                    spr.origin.x = rect->x() + rect->w() / 2;
+                    spr.origin.y = rect->y() + rect->h() / 2;
+                } else if (auto point = col->shape_as_point()){
+                    spr.origin.x = point->x();
+                    spr.origin.y = point->y();
                 } else {
-                    spr.origin.x = col->x();
-                    spr.origin.y = col->y();
+                    spr.origin.x = 0;
+                    spr.origin.y = 0;
                 }
 
                 //make origin relative to bottom left
@@ -72,17 +76,17 @@ gear::TextureAtlas gear::TextureAtlasLoader::load(const std::string &name, Asset
 
 
         if (auto col = o->objects()->LookupByKey("collision")) {
-            if (col->shape() == gear::bin::Shape_Rectangle) {
+            if (auto rect = col->shape_as_rectangle()) {
                 spr.mask = Rectangle {
-                    {col->x() - spr.origin.x, col->y() - spr.origin.y},
-                    {col->x() + col->w() - spr.origin.x, col->y() + col->h() - spr.origin.y}
+                    {rect->x() - spr.origin.x, rect->y() - spr.origin.y},
+                    {rect->x() + rect->w() - spr.origin.x, rect->y() + rect->h() - spr.origin.y}
                 };
-            } else if (col->shape() == gear::bin::Shape_Circle) {
-                float x = col->x();
-                float y = spr.size.y - col->y() - col->w();
+            } else if (auto circle = col->shape_as_circle()) {
+                float x = circle->x();
+                float y = spr.size.y - circle->y() - circle->r() * 2;
                 spr.mask = Circle {
-                        {(x + col->w() / 2) - spr.origin.x, (y + col->w() / 2) - spr.origin.y},
-                        col->w() / 2
+                        {(x + circle->r()) - spr.origin.x, (y + circle->r()) - spr.origin.y},
+                        circle->r()
                 };
             }
         }

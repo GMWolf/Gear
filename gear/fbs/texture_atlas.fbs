@@ -3,21 +3,39 @@ include "common.fbs";
 namespace gear.bin;
 
 struct UVs{
-    x0: float;
-    y0: float;
-    x1: float;
-    y1: float;
+    x0: short;
+    y0: short;
+    x1: short;
+    y1: short;
 }
 
-enum Shape:byte { Rectangle, Circle, Point }
-
-table Object {
-    name: string (key);
-    shape: Shape = Rectangle;
+struct Rectangle {
     x: float;
     y: float;
     w: float;
     h: float;
+}
+
+struct Circle {
+    x: float;
+    y: float;
+    r: float;
+}
+
+struct Point {
+    x: float;
+    y: float;
+}
+
+union Shape {
+    rectangle: Rectangle,
+    circle: Circle,
+    point: Point,
+}
+
+table Object {
+    name: string (key);
+    shape: Shape;
 }
 
 table Sprite {
