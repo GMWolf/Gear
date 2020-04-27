@@ -19,6 +19,12 @@ function M.writeRule( rule)
     if (rule.generator) then
         file:write("  generator = 1\n");
     end
+    if (rule.deps) then
+        file:write("  deps = ", rule.deps, "\n");
+    end
+    if (rule.depfile) then
+        file:write("  depfile = ", rule.depfile, "\n");
+    end
 
     file:write("\n\n");
 end

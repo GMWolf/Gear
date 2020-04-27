@@ -12,6 +12,7 @@
 #include <memory>
 #include <vector>
 #include "AssetManager.h"
+#include "CollisionShape.h"
 
 namespace gear {
 
@@ -44,12 +45,7 @@ namespace gear {
         AssetReference<Texture> tex;
         uint16_t imageIndex {0};
 
-        struct {
-            float left;
-            float bottom;
-            float right;
-            float top;
-        } bbox;
+        std::optional<CollisionShape> mask;
     };
 
     class TextureLoader : public AssetLoader<Texture> {

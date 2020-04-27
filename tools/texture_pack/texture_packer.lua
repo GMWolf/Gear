@@ -9,8 +9,7 @@ local ninja = require("luabuild.ninja");
 local texPacker = targets.executable {
     name = "texture_packer";
     sources = {
-        "main.cpp",
-        "TexturePacker.cpp"
+        "main.cpp"
     };
     libs = {
         public = {

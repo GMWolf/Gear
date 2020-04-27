@@ -24,6 +24,7 @@ namespace gear {
             glm::vec2 uv;
         };
 
+
     public:
         explicit SpriteBatch(size_t size);
 

@@ -2,17 +2,29 @@ include "common.fbs";
 
 namespace gear.bin;
 
-struct Region {
-    pos: ivec2;
-    size: ivec2;
+struct UVs{
+    x0: float;
+    y0: float;
+    x1: float;
+    y1: float;
+}
+
+enum Shape:byte { Rectangle, Circle, Point }
+
+table Object {
+    name: string (key);
+    shape: Shape = Rectangle;
+    x: float;
+    y: float;
+    w: float;
+    h: float;
 }
 
 table Sprite {
-    id: uint;
     name: string;
     size: fvec2;
-    origin: fvec2;
-    images: [Region];
+    images: [UVs];
+    objects: [Object];
 }
 
 table Atlas {

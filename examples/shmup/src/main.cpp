@@ -71,9 +71,7 @@ static void createStage(gear::AssetRegistry& assets, gear::ecs::CommandEncoder& 
 
             cmd.createEntity(gear::Sprite(spr),
                              gear::Transform{{480 * i / 5, 600}},
-                             gear::CollisionShape{gear::Rectangle{
-                                 {spr.bbox.left,spr.bbox.bottom},
-                                 {spr.bbox.right, spr.bbox.top}}},
+                             *spr.mask,
                              Enemy{},
                              Velocity{{0, -1.5}}
                     );
@@ -85,12 +83,11 @@ static void createStage(gear::AssetRegistry& assets, gear::ecs::CommandEncoder& 
 
         Player player;
         player.bulletSprite = atlas->getSprite("bullet_blue1");
-        player.bulletShape = gear::Rectangle{{player.bulletSprite.bbox.left,player.bulletSprite.bbox.bottom},
-                                             {player.bulletSprite.bbox.right, player.bulletSprite.bbox.top}};
+        player.bulletShape = *spr.mask;
 
         cmd.createEntity( spr,
                 gear::Transform{{480 / 2, 32}},
-                gear::CollisionShape{gear::Rectangle{{spr.bbox.left,spr.bbox.bottom}, {spr.bbox.right, spr.bbox.top}}},
+                *spr.mask,
                 player);
 
     }
@@ -153,7 +150,7 @@ static void movePlayer(gear::Application* app, gear::ecs::Registry& ecs, gear::e
                 cmd.createEntity( gear::Sprite(player.bulletSprite),
                                   player.bulletShape,
                                   gear::Transform{transform.pos + glm::vec2(0, 24)},
-                                  Bullet{{0, 10}}
+                                  Bullet{{0, 1}}
                 );
 
                 player.shootTimer = 6;
@@ -277,7 +274,7 @@ static void spawnEnemy(gear::AssetRegistry& assets, gear::ecs::CommandEncoder& c
     gear::Sprite spr = atlas->getSprite("ship1");
     cmd.createEntity(spr,
                      gear::Transform{{480.0f * (rand()/(float)RAND_MAX), 720+spr.size.y}},
-                     gear::CollisionShape{gear::Rectangle{{spr.bbox.left,spr.bbox.bottom}, {spr.bbox.right, spr.bbox.top}}},
+                     *spr.mask,
                      Enemy{},
                  Velocity{{0, -1.5 - 0.5*(rand() / (float)RAND_MAX)}}
     );

@@ -8,16 +8,33 @@
 #include <vector>
 #include <string>
 #include <filesystem>
-#include "TexturePacker.h"
 #include <fstream>
 #include <ios>
 #include <gear/fbs/generated/texture_atlas_generated.h>
 #include <tinyxml2.h>
+#include <stb_rect_pack.h>
+#include <stb_image.h>
+#include <stb_image_write.h>
 
 
 namespace fs = std::filesystem;
-namespace tp = gear::texture_pack;
 namespace xml = tinyxml2;
+
+xml::XMLElement* getCollisionElement(xml::XMLElement* xTile) {
+    xml::XMLElement* xObjectGroup = xTile->FirstChildElement("objectgroup");
+    for(xml::XMLElement* xObject = xObjectGroup->FirstChildElement("object"); xObject;
+    xObject = xObject->NextSiblingElement("object")) {
+        if (xObject->Attribute("name", "collision")) {
+            return xObject;
+        }
+    }
+    return nullptr;
+}
+
+
+stbrp_rect getRectById(const std::vector<stbrp_rect>& rects, int id) {
+    return *std::find_if(rects.begin(), rects.end(), [id](const stbrp_rect& r){return r.id == id;});
+}
 
 int main(int argc, char* argv[]) {
 
@@ -50,102 +67,154 @@ int main(int argc, char* argv[]) {
     auto outTexName = (outFileName + ".png");
     auto outAtlasName = (outFileName + ".bin");
 
-    int pageWidth = 256, pageHeight = 256;
-    std::vector<tp::SpriteDescriptor> descriptors;
 
     {
-        auto reldir = fs::path(inputPath).parent_path();
-
         xml::XMLDocument doc;
         doc.LoadFile(inputPath.c_str());
-        xml::XMLElement* xTileSet = doc.FirstChildElement("tileset");
+        auto xTileSet = doc.FirstChildElement("tileset");
 
-        for(xml::XMLElement* xTile = xTileSet->FirstChildElement("tile"); xTile;
-        xTile = xTile->NextSiblingElement("tile")) {
-            xml::XMLElement* xImage = xTile->FirstChildElement("image");
-            auto source = xImage->Attribute("source");
-            std::cout << source << std::endl;
-            xml::XMLElement* xAnimation = xTile->FirstChildElement("animation");
-            tp::SpriteDescriptor desc;
-            desc.id = xTile->IntAttribute("id");
-            desc.name = fs::path(source).stem();
-            desc.origin.x = 0;
-            desc.origin.y = 0;
-            desc.images.emplace_back(reldir / source);
-            descriptors.push_back(desc);
-        }
-    }
+        std::vector<stbrp_rect> rects;
+        int pageWidth = 0, pageHeight = 0;
 
-    std::cout << "done with loop" << std::endl;
-
-    if (printInputs) {
-        for(auto& spr : descriptors) {
-            for(auto& img : spr.images) {
-                std::cout << img << " ";
-            }
-        }
-        return 0;
-    }
-
-    std::vector<tp::Sprite> sprites;
-    sprites.reserve(descriptors.size());
-    for(auto& desc : descriptors) {
-        sprites.push_back(tp::loadSprite(desc));
-    }
-
-    {
-        std::cout << "packing sprites" << std::endl;
-        tp::packSprites(sprites, pageWidth, pageHeight);
-    }
-
-    {
-        std::cout << "writing sprites" << std::endl;
-        std::unique_ptr<tp::Pixel[]> data = std::make_unique<tp::Pixel[]>(pageWidth * pageHeight);
-        tp::writeSprites(sprites, pageWidth, pageHeight, data.get());
-
-        std::cout << "writing page" << std::endl;
-        tp::writePageTexture(outTexName, pageWidth, pageHeight, data.get());
-    }
-
-    {
-        for(auto& s : sprites) {
-           tp::freeSprite(s);
-        }
-    }
-
-
-    std::cout << "writing fb" << std::endl;
-    flatbuffers::FlatBufferBuilder builder(2048);
-
-    {
-        std::vector<flatbuffers::Offset<gear::bin::Sprite>> spriteBins;
-        for(auto& spr : sprites) {
-            int maxWidth = 0, maxHeight = 0;
-            std::vector<gear::bin::Region> regions_vector;
-            regions_vector.reserve(spr.images.size());
-            for(auto& img : spr.images) {
-                regions_vector.emplace_back(gear::bin::ivec2(img.x, img.y), gear::bin::ivec2(img.width, img.height));
-                maxWidth = img.width > maxWidth ? img.width : maxWidth;
-                maxHeight = img.height > maxHeight ? img.height : maxHeight;
+        //Pack rectangles
+        {
+            for (auto xTile = xTileSet->FirstChildElement("tile"); xTile;
+                 xTile = xTile->NextSiblingElement("tile")) {
+                auto xImage = xTile->FirstChildElement("image");
+                unsigned short width = xImage->IntAttribute("width");
+                unsigned short height = xImage->IntAttribute("height");
+                int id = xTile->IntAttribute("id");
+                rects.push_back({id, width, height});
             }
 
-            auto size = gear::bin::fvec2(maxWidth, maxHeight);
-            auto origin = gear::bin::fvec2(spr.origin.x * maxWidth, spr.origin.y * maxHeight);
-            auto sprite = gear::bin::CreateSpriteDirect(builder, spr.id, spr.name.c_str(), &size, &origin, &regions_vector);
-            spriteBins.push_back(sprite);
+            stbrp_context ctx;
+            std::vector<stbrp_node> nodes;
+            bool packed = false;
+
+            for(int size = 256; !packed && size <= 4096; size*=2) {
+                pageWidth = size;
+                pageHeight = size;
+                nodes.resize(pageWidth);
+                stbrp_init_target(&ctx, pageWidth, pageHeight, nodes.data(), pageWidth);
+                packed = stbrp_pack_rects(&ctx, rects.data(), rects.size());
+            }
+
+            if (!packed) {
+                std::cerr << "could not pack sprites\n";
+                return 1;
+            }
         }
 
-        auto texPathRel = fs::relative(outTexName, fs::path(outAtlasName).parent_path());
-        auto atlas = gear::bin::CreateAtlasDirect(builder, texPathRel.c_str(), &spriteBins);
-        builder.Finish(atlas);
-    }
+        // Create texture
+        {
+            std::unique_ptr<uint32_t[]> textureData = std::make_unique<uint32_t[]>(pageWidth * pageHeight);
+
+            auto reldir = fs::path(inputPath).parent_path();
+            for (auto xTile = xTileSet->FirstChildElement("tile"); xTile;
+                 xTile = xTile->NextSiblingElement("tile")) {
+                int id = xTile->IntAttribute("id");
+                auto rect = getRectById(rects, id);
+                auto xImage = xTile->FirstChildElement("image");
+                auto source = xImage->Attribute("source");
+                int w, h, c;
+                stbi_set_flip_vertically_on_load(1);
+                auto imageData = (uint32_t*) stbi_load((reldir / source).c_str(), &w, &h, &c, 4);
+
+                for(int x = 0; x < rect.w; x++) {
+                    for(int y = 0; y < rect.h; y++) {
+                        int px = rect.x + x;
+                        int py = rect.y + y;
+
+                        textureData[px + py * pageWidth] = imageData[x + y * rect.w];
+                    }
+                }
+
+                stbi_image_free(imageData);
+            }
+
+            stbi_flip_vertically_on_write(1);
+            stbi_write_png(outTexName.c_str(), pageWidth, pageHeight, 4, textureData.get(), pageWidth * sizeof(uint32_t));
+        }
+
+        // Write binary output
+        {
+            flatbuffers::FlatBufferBuilder builder(2048);
+            std::vector<flatbuffers::Offset<gear::bin::Sprite>> sprites;
+
+            for (auto xTile = xTileSet->FirstChildElement("tile"); xTile;
+                 xTile = xTile->NextSiblingElement("tile")) {
+                int id = xTile->IntAttribute("id");
+
+                std::vector<gear::bin::UVs> uvs;
+                std::vector<flatbuffers::Offset<gear::bin::Object>> objects;
+
+                auto xImage = xTile->FirstChildElement("image");
+                auto source = xImage->Attribute("source");
+                auto xAnimation = xTile->FirstChildElement("animation");
+                auto xObjects = xTile->FirstChildElement("objectgroup");
+
+                auto addFrame = [&](int frameId) {
+                    auto rect = getRectById(rects, frameId);
+                    uvs.emplace_back( (float) rect.x / (float) pageWidth, (float) rect.y / (float) pageHeight,
+                                      (float) (rect.x + rect.w) / (float) pageWidth, (float) (rect.y + rect.h) / (float) pageHeight );
+                };
+
+                if (xAnimation) {
+                    for(auto xFrame = xAnimation->FirstChildElement("frame"); xFrame;
+                    xFrame = xFrame->NextSiblingElement("frame")) {
+                        auto frameId = xFrame->IntAttribute("tileid");
+                        addFrame(frameId);
+                    }
+                } else {
+                   addFrame(id);
+                }
+
+                if (xObjects) {
+                    for(auto xObject = xObjects->FirstChildElement("object"); xObject;
+                    xObject = xObject->NextSiblingElement("object")) {
+                        auto name = builder.CreateString(xObject->Attribute("name"));
+                        auto ob = gear::bin::ObjectBuilder(builder);
+                        ob.add_name(name);
+                        ob.add_x(xObject->FloatAttribute("x"));
+                        ob.add_y(xObject->FloatAttribute("y"));
+                        if (xObject->FirstChildElement("ellipse")) {
+                            ob.add_w(xObject->FloatAttribute("width"));
+                            ob.add_shape(gear::bin::Shape::Shape_Circle);
+                        } else if (xObject->FirstChildElement("point")) {
+                            ob.add_shape(gear::bin::Shape_Point);
+                        } else { // rectangle
+                            ob.add_w(xObject->FloatAttribute("width"));
+                            ob.add_h(xObject->FloatAttribute("height"));
+                            ob.add_shape(gear::bin::Shape_Rectangle);
+                        }
+
+                        objects.push_back(ob.Finish());
+                    }
+                }
 
 
-    {
-        auto buf = builder.GetBufferPointer();
-        auto bufSize = builder.GetSize();
-        std::ofstream ofs(outAtlasName , std::ios::out | std::ios::binary);
-        ofs.write((char*)buf, bufSize);
+                std::string name = fs::path(source).stem();
+                gear::bin::fvec2 size {
+                        (float)xImage->IntAttribute("width"),
+                        (float)xImage->IntAttribute("height")
+                };
+
+
+                auto sprite = gear::bin::CreateSpriteDirect(builder, name.c_str(), &size, &uvs, &objects);
+                sprites.push_back(sprite);
+            }
+
+            auto texPathRel = fs::relative(outTexName, fs::path(outAtlasName).parent_path());
+            auto atlas = gear::bin::CreateAtlasDirect(builder, texPathRel.c_str(), &sprites);
+            builder.Finish(atlas);
+
+
+            auto buf = builder.GetBufferPointer();
+            auto bufSize = builder.GetSize();
+            std::ofstream ofs(outAtlasName , std::ios::out | std::ios::binary);
+            ofs.write((char*)buf, bufSize);
+        }
+
     }
 
     return 0;
