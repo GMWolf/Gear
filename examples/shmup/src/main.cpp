@@ -20,6 +20,7 @@
 #include <gear/map/TilemapSystem.h>
 #include <gear/RenderSystem.h>
 #include <iostream>
+#include <gear/PrimDraw.h>
 
 #include "Collisions.h"
 
@@ -83,7 +84,7 @@ static void createStage(gear::AssetRegistry& assets, gear::ecs::CommandEncoder& 
 
         Player player;
         player.bulletSprite = atlas->getSprite("bullet_blue1");
-        player.bulletShape = *spr.mask;
+        player.bulletShape = *player.bulletSprite.mask;
 
         cmd.createEntity( spr,
                 gear::Transform{{480 / 2, 32}},
@@ -150,7 +151,7 @@ static void movePlayer(gear::Application* app, gear::ecs::Registry& ecs, gear::e
                 cmd.createEntity( gear::Sprite(player.bulletSprite),
                                   player.bulletShape,
                                   gear::Transform{transform.pos + glm::vec2(0, 24)},
-                                  Bullet{{0, 1}}
+                                  Bullet{{0, 2}}
                 );
 
                 player.shootTimer = 6;
@@ -325,6 +326,39 @@ void render(gear::SpriteBatch& batch, gear::AssetRegistry& assets, gear::ecs::Re
 
 }
 
+void debugDraw(gear::PrimDraw& dd, gear::AssetRegistry& assets, gear::ecs::Registry& ecs) {
+
+    const size_t chunkArraySize = 1024;
+    gecs::Chunk* chunkArray[chunkArraySize];
+    {
+
+        gear::View view {{0,0}, {480, 720}};
+
+        auto shd = assets.get<gear::Shader>("shd_prim");
+        shd->use();
+        glUniform1i(shd->uniformLocation("tex"), 0);
+        auto vm = view.matrix();
+        glUniformMatrix4fv(shd->uniformLocation("view"), 1, GL_FALSE, glm::value_ptr(vm));
+
+        auto chunks = ecs.queryChunks(gecs::Query().all<gear::Transform, gear::CollisionShape>(), chunkArray,
+                                      chunkArraySize);
+
+        for(auto c : chunks) {
+            auto chunk = gecs::ChunkView<gear::Transform, gear::CollisionShape>(*c);
+            for(auto[transform, shape] : chunk) {
+                if (auto circle = std::get_if<gear::Circle>(&shape)) {
+                    dd.circle(transform.pos + circle->center, circle->radius);
+                }
+                if (auto rect = std::get_if<gear::Rectangle>(&shape)) {
+                    dd.rect(transform.pos + rect->min, transform.pos + rect->max);
+                }
+            }
+        }
+    }
+
+    dd.flush();
+}
+
 void submitCommandBuffer(gecs::CommandBuffer& cmd, gecs::CommandEncoder& encoder, gecs::Registry& ecs) {
     gecs::executeCommandBuffer(cmd, ecs);
     gecs::resetCommandBuffer(cmd);
@@ -338,6 +372,7 @@ public:
         di.emplace<gear::ecs::Registry>();
         di.emplace<gear::AssetRegistry>();
         di.emplace<gear::SpriteBatch>(500);
+        di.emplace<gear::PrimDraw>();
         di.emplace<gear::Application*>(app);
         auto& cmdbuff = di.emplace<gear::ecs::CommandBuffer>(256'000'000);
         di.emplace<gear::ecs::CommandEncoder>(cmdbuff);
@@ -352,6 +387,7 @@ public:
 
         assetManager.load<gear::Shader>("simple_textured");
         assetManager.load<gear::Shader>("shd_font");
+        assetManager.load<gear::Shader>("shd_prim");
         assetManager.load<gear::TextureAtlas>("shmup_textures.bin");
         assetManager.load<gear::BitmapFont>("shmup_default_font.bin");
         //assetManager.load<gear::TileMap>("../../../../examples/shmup/assets/maps/map1.tmx");
@@ -369,6 +405,7 @@ public:
         di.invoke(processCollisions);
         di.invoke(gear::tilemapSystemCreateSystemComponent);
         di.invoke(render);
+        di.invoke(debugDraw);
         di.invoke(processAnimation);
         di.invoke(processLifetime);
         di.invoke(submitCommandBuffer);

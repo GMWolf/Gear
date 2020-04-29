@@ -120,6 +120,10 @@ int main(int argc, char* argv[]) {
                 stbi_image_free(imageData);
             }
 
+            std::ofstream ofs(outAtlasName+".raw" , std::ios::out | std::ios::binary);
+            ofs.write((char*)textureData.get(), pageWidth * pageHeight * 4);
+
+
             stbi_flip_vertically_on_write(1);
             stbi_write_png(outTexName.c_str(), pageWidth, pageHeight, 4, textureData.get(), pageWidth * sizeof(uint32_t));
         }

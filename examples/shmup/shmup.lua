@@ -19,5 +19,6 @@ targets.executable {
 
 texture_pack("shmup_textures", "assets/sprites/Sprites.tsx");
 shader_pack("simple_textured", "src/shaders/simple_textured.vert", "src/shaders/simple_textured.frag");
-shader_pack("shd_font", "src/shaders/simple_textured.vert", "src/shaders/font.frag")
+shader_pack("shd_font", "src/shaders/simple_textured.vert", "src/shaders/font.frag");
+shader_pack("shd_prim", "src/shaders/prim.vert", "src/shaders/prim.frag");
 font_pack("shmup_default_font", "assets/fonts/defaultFont.yaml");
