@@ -48,9 +48,19 @@ namespace gear {
         std::optional<CollisionShape> mask;
     };
 
+
+    namespace assets {
+        class Sprite;
+    }
+
     class TextureLoader {
     public:
         static Texture load(const std::string& name, AssetRegistry& registry);
+    };
+
+    class SpriteLoader {
+    public:
+        static Sprite load(const assets::Sprite* spriteDef, AssetRegistry& registry);
     };
 }
 

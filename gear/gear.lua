@@ -6,7 +6,6 @@ local gear_source = {
     "src/SpriteBatch.cpp",
     "src/Texture.cpp",
     "src/Shader.cpp",
-    "src/TextureAtlas.cpp",
     "src/CollisionDetection.cpp",
     "src/View.cpp",
     "src/ECS/Core.cpp",

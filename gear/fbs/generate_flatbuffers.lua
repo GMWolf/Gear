@@ -7,7 +7,7 @@
 
 local schemas = {
     "common.fbs",
-    "texture_atlas.fbs",
+    "sprite.fbs",
     "font.fbs",
     "map.fbs",
     "shader.fbs",

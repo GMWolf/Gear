@@ -31,8 +31,8 @@ void gear::AssetRegistry::loadBundle(const std::string & fileName) {
                 auto path = asset->asset_as_texture()->str();
                 getTexture(name).ptr->store.emplace(TextureLoader::load(path, *this));
             } break;
-            case assets::Asset_Atlas: {
-                getAtlas(name).ptr->store.emplace(TextureAtlasLoader::load(asset->asset_as_Atlas(), *this));
+            case assets::Asset_Sprite: {
+                getSprite(name).ptr->store.emplace(SpriteLoader::load(asset->asset_as_Sprite(), *this));
             } break;
             case assets::Asset_Font: {
                 getFont(name).ptr->store.emplace(BitmapFontLoader::load(asset->asset_as_Font(), *this));
@@ -55,11 +55,11 @@ gear::AssetReference<gear::Texture> gear::AssetRegistry::getTexture(const std::s
     return {it->second};
 }
 
-gear::AssetReference<gear::TextureAtlas> gear::AssetRegistry::getAtlas(const std::string &name) {
-    auto it = atlases.find(name);
-    if (it == atlases.end()) {
-        auto d = std::make_shared<AssetEntry<TextureAtlas>>();
-        it = atlases.insert({name, d}).first;
+gear::AssetReference<gear::Sprite> gear::AssetRegistry::getSprite(const std::string &name) {
+    auto it = sprites.find(name);
+    if (it == sprites.end()) {
+        auto d = std::make_shared<AssetEntry<Sprite>>();
+        it = sprites.insert({name, d}).first;
     }
     return {it->second};
 }

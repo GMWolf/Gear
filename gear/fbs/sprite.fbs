@@ -39,15 +39,10 @@ table Object {
 }
 
 table Sprite {
-    name: string;
+    texture: string;
     size: fvec2;
     images: [UVs];
     objects: [Object];
 }
 
-table Atlas {
-    texture: string;
-    sprites: [Sprite];
-}
-
-root_type Atlas;
+root_type Sprite;

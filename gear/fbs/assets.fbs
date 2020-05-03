@@ -1,4 +1,4 @@
-include "texture_atlas.fbs";
+include "sprite.fbs";
 include "font.fbs";
 include "shader.fbs";
 
@@ -7,7 +7,7 @@ namespace gear.assets;
 
 union Asset {
     texture: string,
-    Atlas,
+    Sprite,
     Font,
     Shader,
 }

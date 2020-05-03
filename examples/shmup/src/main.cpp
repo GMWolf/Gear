@@ -4,7 +4,6 @@
 #include <gear/Application.h>
 #include <gear/ApplicationAdapter.h>
 #include <gear/DI.h>
-#include <gear/TextureAtlas.h>
 #include <gear/SpriteBatch.h>
 #include <gear/CollisionShape.h>
 #include <gear/Shader.h>
@@ -65,9 +64,8 @@ static int score = 0;
 
 static void createStage(gear::AssetRegistry& assets, gear::ecs::CommandEncoder& cmd) {
 
-    auto atlas = assets.getAtlas("Sprites");
     {
-        gear::Sprite spr = atlas->getSprite("ship1");
+        gear::Sprite spr = *assets.getSprite("ship1");
         for (int i = 0; i < 5; i++) {
 
             cmd.createEntity(gear::Sprite(spr),
@@ -80,10 +78,10 @@ static void createStage(gear::AssetRegistry& assets, gear::ecs::CommandEncoder& 
     }
 
     {
-        gear::Sprite spr = atlas->getSprite("ship2");
+        gear::Sprite spr = *assets.getSprite("ship2");
 
         Player player;
-        player.bulletSprite = atlas->getSprite("bullet_blue1");
+        player.bulletSprite = *assets.getSprite("bullet_blue1");
         player.bulletShape = *player.bulletSprite.mask;
 
         cmd.createEntity( spr,
@@ -205,7 +203,6 @@ static void movePlayer(gear::Application* app, gear::ecs::Registry& ecs, gear::e
 static void processCollisions(gear::ecs::Registry& ecs, gear::ecs::CommandEncoder& cmd, gear::AssetRegistry& assets) {
     const gear::ecs::Archetype enemyArch = gear::ecs::Archetype::create<Enemy>();
     const gear::ecs::Archetype bulletArch = gear::ecs::Archetype::create<Bullet>();
-    auto atlas = assets.getAtlas("Sprites");
 
     gecs::Chunk* chunkArray[256];
     auto chunks = ecs.queryChunks(gecs::Query().all<CollisionPair>(), chunkArray, 256);
@@ -218,7 +215,7 @@ static void processCollisions(gear::ecs::Registry& ecs, gear::ecs::CommandEncode
                 if (--enemy.health <= 0) {
                     score += 100;
                     cmd.destroyEntity(entities->first);
-                    cmd.createEntity(t, atlas->getSprite("explosion_0"), DestroyOnAnimationEnd{});
+                    cmd.createEntity(t, assets.getSprite("explosion_0"), DestroyOnAnimationEnd{});
                     cmd.createEntity(gear::Transform{t.pos + glm::vec2(-25, 25)},
                                      Text{"100", assets.getFont("default")},
                                      Lifetime{1});
@@ -271,8 +268,7 @@ static void processAnimation(gear::ecs::Registry& ecs, gear::ecs::CommandEncoder
 }
 
 static void spawnEnemy(gear::AssetRegistry& assets, gear::ecs::CommandEncoder& cmd) {
-    auto atlas = assets.getAtlas("Sprites");
-    gear::Sprite spr = atlas->getSprite("ship1");
+    gear::Sprite spr = *assets.getSprite("ship1");
     cmd.createEntity(spr,
                      gear::Transform{{480.0f * (rand()/(float)RAND_MAX), 720+spr.size.y}},
                      *spr.mask,

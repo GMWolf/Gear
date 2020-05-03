@@ -128,7 +128,16 @@ int main(int argc, char* argv[]) {
         // Write binary output
         {
             flatbuffers::FlatBufferBuilder builder(2048);
-            std::vector<flatbuffers::Offset<gear::assets::Sprite>> sprites;
+            std::vector<flatbuffers::Offset<gear::assets::AssetEntry>> entries;
+
+            auto tilesetName = xTileSet->Attribute("name");
+            auto texPathRel = fs::relative(outTexName, fs::path(outAtlasName).parent_path());
+            auto texName = std::string(tilesetName) + "_texture";
+            auto texNameOffset = builder.CreateString(texName);
+            auto texoffset = builder.CreateString(texPathRel.c_str());
+
+            entries.push_back(gear::assets::CreateAssetEntryDirect(builder, texName.c_str(), gear::assets::Asset_texture, texoffset.Union()));
+
 
             for (auto xTile = xTileSet->FirstChildElement("tile"); xTile;
                  xTile = xTile->NextSiblingElement("tile")) {
@@ -193,7 +202,6 @@ int main(int argc, char* argv[]) {
                     }
                 }
 
-
                 std::string name = fs::path(source).stem();
                 gear::assets::fvec2 size {
                         (float)xImage->IntAttribute("width"),
@@ -201,19 +209,11 @@ int main(int argc, char* argv[]) {
                 };
 
 
-                auto sprite = gear::assets::CreateSpriteDirect(builder, name.c_str(), &size, &uvs, &objects);
-                sprites.push_back(sprite);
+                auto objectsOffset = builder.CreateVector(objects);
+                auto uvsOffset = builder.CreateVectorOfStructs(uvs);
+                auto sprite = gear::assets::CreateSprite(builder, texNameOffset, &size, uvsOffset, objectsOffset);
+                entries.push_back(gear::assets::CreateAssetEntryDirect(builder, name.c_str(), gear::assets::Asset_Sprite, sprite.Union()));
             }
-
-            auto name = xTileSet->Attribute("name");
-            auto texPathRel = fs::relative(outTexName, fs::path(outAtlasName).parent_path());
-            auto texName = std::string(name) + "_texture";
-            auto tex = builder.CreateString(texPathRel.c_str());
-
-            auto atlas = gear::assets::CreateAtlasDirect(builder, texName.c_str(), &sprites);
-            std::vector<flatbuffers::Offset<gear::assets::AssetEntry>> entries;
-            entries.push_back(gear::assets::CreateAssetEntryDirect(builder, texName.c_str(), gear::assets::Asset_texture, tex.Union()));
-            entries.push_back(gear::assets::CreateAssetEntryDirect(builder, name, gear::assets::Asset_Atlas, atlas.Union()));
 
             auto bundle = gear::assets::CreateBundleDirect(builder, &entries);
             gear::assets::FinishBundleBuffer(builder, bundle);

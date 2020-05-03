@@ -60,6 +60,7 @@ namespace gear {
     class TextureAtlas;
     class BitmapFont;
     class Shader;
+    class Sprite;
 
     class AssetRegistry {
     public:
@@ -68,14 +69,14 @@ namespace gear {
         AssetRegistry& operator=(const AssetRegistry&) = delete;
 
         AssetReference<Texture> getTexture(const std::string& name);
-        AssetReference<TextureAtlas> getAtlas(const std::string& name);
+        AssetReference<Sprite> getSprite(const std::string& name);
         AssetReference<BitmapFont> getFont(const std::string& name);
         AssetReference<Shader> getShader(const std::string& name);
 
         void loadBundle(const std::string& name);
     private:
         std::unordered_map<std::string, std::shared_ptr<AssetEntry<Texture>>> textures;
-        std::unordered_map<std::string, std::shared_ptr<AssetEntry<TextureAtlas>>> atlases;
+        std::unordered_map<std::string, std::shared_ptr<AssetEntry<Sprite>>> sprites;
         std::unordered_map<std::string, std::shared_ptr<AssetEntry<BitmapFont>>> fonts;
         std::unordered_map<std::string, std::shared_ptr<AssetEntry<Shader>>> shaders;
     };
