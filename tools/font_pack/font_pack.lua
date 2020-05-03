@@ -14,7 +14,7 @@ local font_packer = targets.executable {
     };
     libs = {
         public = {
-            lyra_lib, stb_lib, json_lib, yaml_lib
+            lyra_lib, stb_lib, yaml_lib
         }
     };
     include_directories = {

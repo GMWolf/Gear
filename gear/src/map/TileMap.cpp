@@ -32,10 +32,10 @@ gear::TileMap gear::TileMapLoader::load(const std::string &fileName, AssetRegist
     xTileSet = xTileSet->NextSiblingElement("tileset")) {
         auto source = xTileSet->Attribute("source");
         auto path = relPath / source;
-        registry.load<TileSet>(path.string());
+        /*registry.load<TileSet>(path.string());
         tilesets.emplace_back(
                 xTileSet->IntAttribute("firstgid"),
-                registry.get<TileSet>(path.string()));
+                registry.get<TileSet>(path.string()));*/
     }
 
     TileMap map = TileMap {

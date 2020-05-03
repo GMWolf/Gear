@@ -25,8 +25,7 @@ gear::TileSet gear::TileSetLoader::load(const std::string &fileName, AssetRegist
     auto imageSource = xImage->Attribute("source");
     auto imagePath = relPath / imageSource;
 
-    registry.load<Texture>(imagePath.string());
-    AssetReference texture = registry.get<Texture>(imagePath.string());
+    AssetReference texture = registry.getTexture(imagePath.string());
 
     TileSet ts{
         xTileset->Attribute("name"),

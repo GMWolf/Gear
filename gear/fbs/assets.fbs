@@ -1,0 +1,24 @@
+include "texture_atlas.fbs";
+include "font.fbs";
+include "shader.fbs";
+
+namespace gear.assets;
+
+
+union Asset {
+    texture: string,
+    Atlas,
+    Font,
+    Shader,
+}
+
+table AssetEntry {
+    name: string;
+    asset: Asset;
+}
+
+table Bundle {
+    assets: [AssetEntry];
+}
+
+root_type Bundle;

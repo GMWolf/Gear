@@ -1,5 +1,5 @@
 
-namespace gear.bin;
+namespace gear.assets;
 
 struct fvec2 {
     x: float;

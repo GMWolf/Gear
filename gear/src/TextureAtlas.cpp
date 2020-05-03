@@ -12,21 +12,13 @@ gear::Sprite gear::TextureAtlas::getSprite(const std::string &name) const {
     return sprites.at(name);
 }
 
-gear::TextureAtlas gear::TextureAtlasLoader::load(const std::string &name, AssetRegistry& registry) {
 
-
-    std::ifstream in(name, std::ios::binary);
-    in.seekg(0, std::ios::end);
-    size_t size = in.tellg();
-    in.seekg(0, std::ios::beg);
-    auto buffer = (char*)malloc(size);
-    in.read(buffer, size);
-
-    auto atlasBin = gear::bin::GetAtlas(buffer);
+gear::TextureAtlas gear::TextureAtlasLoader::load(const gear::assets::Atlas* atlasBin, gear::AssetRegistry& registry) {
 
     TextureAtlas atlas;
-    registry.load<Texture>(atlasBin->texture()->str());
-    atlas.texture = registry.get<Texture>(atlasBin->texture()->str());
+
+    auto texName = atlasBin->texture()->str();
+    atlas.texture = registry.getTexture(texName);
 
     for(auto o : *atlasBin->sprites()) {
         Sprite spr;
@@ -78,8 +70,8 @@ gear::TextureAtlas gear::TextureAtlasLoader::load(const std::string &name, Asset
         if (auto col = o->objects()->LookupByKey("collision")) {
             if (auto rect = col->shape_as_rectangle()) {
                 spr.mask = Rectangle {
-                    {rect->x() - spr.origin.x, rect->y() - spr.origin.y},
-                    {rect->x() + rect->w() - spr.origin.x, rect->y() + rect->h() - spr.origin.y}
+                        {rect->x() - spr.origin.x, rect->y() - spr.origin.y},
+                        {rect->x() + rect->w() - spr.origin.x, rect->y() + rect->h() - spr.origin.y}
                 };
             } else if (auto circle = col->shape_as_circle()) {
                 float x = circle->x();
@@ -91,12 +83,8 @@ gear::TextureAtlas gear::TextureAtlasLoader::load(const std::string &name, Asset
             }
         }
 
-
         atlas.sprites.emplace(std::make_pair(o->name()->str(), spr));
     }
 
-    free(buffer);
-
     return atlas;
 }
-

@@ -20,34 +20,24 @@ void gear::renderText(const std::string &text, const BitmapFont &font, glm::vec2
     }
 }
 
-gear::BitmapFont gear::BitmapFontLoader::load(const std::string &name, AssetRegistry& registry) {
-
-
-    std::ifstream in(name, std::ios::binary);
-    in.seekg(0, std::ios::end);
-    size_t size = in.tellg();
-    in.seekg(0, std::ios::beg);
-    auto buffer = (char*)malloc(size);
-    in.read(buffer, size);
-
-    auto fontBin = gear::bin::GetFont(buffer);
-
+gear::BitmapFont gear::BitmapFontLoader::load(const gear::assets::Font *fontDef, gear::AssetRegistry &registry) {
     BitmapFont font;
-    registry.load<Texture>(fontBin->texture()->str());
-    font.texture = registry.get<Texture>(fontBin->texture()->str());
 
-    font.rangeStart = fontBin->range_start();
-    font.rangeCount = fontBin->range_count();
+    auto texName = fontDef->texture()->str();
+    font.texture = registry.getTexture(texName);
+
+    font.rangeStart = fontDef->range_start();
+    font.rangeCount = fontDef->range_count();
 
     font.glyphs.reserve(font.rangeCount);
 
-    for(auto g : *fontBin->glyphs()) {
+    for(auto g : *fontDef->glyphs()) {
         BitmapFont::Glyph glyph {};
         glyph.uv.x = g->x0();
-        glyph.uv.y = g->y1();
+        glyph.uv.y = g->y0();
         glyph.uv.z = g->x1();
-        glyph.uv.w = g->y0();
-        glyph.size = {glyph.uv.z - glyph.uv.x, glyph.uv.y - glyph.uv.w};
+        glyph.uv.w = g->y1();
+        glyph.size = {glyph.uv.z - glyph.uv.x, glyph.uv.w - glyph.uv.y};
         glyph.uv /= glm::vec4{font.texture->size, font.texture->size};
         glyph.advance = g->xadvance();
         glyph.offset.x = g->xoff();
@@ -56,6 +46,5 @@ gear::BitmapFont gear::BitmapFontLoader::load(const std::string &name, AssetRegi
         font.glyphs.push_back(glyph);
     }
 
-    free(buffer);
     return font;
 }

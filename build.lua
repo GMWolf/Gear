@@ -16,6 +16,7 @@ gear_lib = targets.subfile("gear/gear.lua");
 targets.subfile("tools/texture_pack/texture_packer.lua");
 targets.subfile("tools/shader_pack/shader_pack.lua");
 targets.subfile("tools/font_pack/font_pack.lua");
+targets.subfile("tools/map_pack/map_pack.lua");
 
 targets.subfile("examples/shmup/shmup.lua");
 

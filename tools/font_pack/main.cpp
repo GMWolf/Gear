@@ -14,7 +14,7 @@
 #include <yaml-cpp/yaml.h>
 #include <filesystem>
 #include <fstream>
-#include <gear/fbs/generated/font_generated.h>
+#include <gear/fbs/generated/assets_generated.h>
 
 namespace fs = std::filesystem;
 
@@ -47,8 +47,7 @@ int main(int argc, char* argv[]) {
     }
 
     std::string bitmapOut = outFileName + ".png";
-    std::string jsonOut = outFileName + ".json";
-    std::string binOut = outFileName + ".bin";
+    std::string binOut = outFileName + ".bundle";
 
     const auto config = YAML::LoadFile(inputPath);
 
@@ -57,6 +56,7 @@ int main(int argc, char* argv[]) {
     auto lineHeight = config["line_height"].as<float>();
     auto rangeStart = config["range_start"].as<int>();
     auto rangeCount = config["range_count"].as<int>();
+    auto name = config["name"].as<std::string>();
 
     auto pathRelDir = fs::path(inputPath).parent_path();
     auto file = pathRelDir / config["font"].as<std::string>();
@@ -77,21 +77,19 @@ int main(int argc, char* argv[]) {
     stbtt_PackSetOversampling(&spc, 1, 1);
     stbtt_PackFontRange(&spc, ttf_data, 0, lineHeight, rangeStart, rangeCount, pdata);
     stbtt_PackEnd(&spc);
+
     stbi_write_png(bitmapOut.c_str(), bitmapWidth, bitmapHeight, 1, bitmap, 0);
 
-
-
     flatbuffers::FlatBufferBuilder builder(2048);
-
     {
-        std::vector<gear::bin::Glyph> glyphs;
+        std::vector<gear::assets::Glyph> glyphs;
         glyphs.reserve(rangeCount);
         for(int i = 0; i < rangeCount; i++) {
-            gear::bin::Glyph glyph {
+            gear::assets::Glyph glyph {
                 pdata[i].x0,
-                pdata[i].y0,
+                static_cast<uint16_t>(bitmapHeight - pdata[i].y1),
                 pdata[i].x1,
-                pdata[i].y1,
+                static_cast<uint16_t>(bitmapHeight - pdata[i].y0),
                 pdata[i].xadvance,
                 pdata[i].xoff,
                 pdata[i].yoff,
@@ -101,8 +99,17 @@ int main(int argc, char* argv[]) {
             glyphs.push_back(glyph);
         }
         auto bitmapPathRelative = fs::relative(bitmapOut, fs::path(binOut).parent_path());
-        auto font = gear::bin::CreateFontDirect(builder, bitmapPathRelative.c_str(), rangeStart, rangeCount, &glyphs);
-        builder.Finish(font);
+        auto tex = builder.CreateString(bitmapPathRelative.c_str());
+        auto texName = name + "_texture";
+
+        auto font = gear::assets::CreateFontDirect(builder, texName.c_str(), rangeStart, rangeCount, &glyphs);
+
+        std::vector<flatbuffers::Offset<gear::assets::AssetEntry>> entries;
+        entries.push_back(gear::assets::CreateAssetEntryDirect(builder, texName.c_str(), gear::assets::Asset_texture, tex.Union()));
+        entries.push_back(gear::assets::CreateAssetEntryDirect(builder, name.c_str(), gear::assets::Asset_Font, font.Union()));
+        auto bundle = gear::assets::CreateBundleDirect(builder, &entries);
+
+        builder.Finish(bundle);
     }
 
     {

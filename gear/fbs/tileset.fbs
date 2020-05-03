@@ -1,0 +1,12 @@
+namespace gear.bin;
+
+table TileSet {
+    name: string;
+    texture: string;
+    tileWidth: short;
+    tileHeight: short;
+    tileCount: short;
+    columns: short;
+}
+
+root_type TileSet;

@@ -33,9 +33,13 @@ namespace gear {
         friend class BitmapFontLoader;
     };
 
-    class BitmapFontLoader : public AssetLoader<BitmapFont> {
+    namespace assets {
+        class Font;
+    }
+
+    class BitmapFontLoader {
     public:
-        BitmapFont load(const std::string &name, AssetRegistry& registry) override;
+        static BitmapFont load(const assets::Font* fontDef, AssetRegistry& registry);
     };
 
     class SpriteBatch;

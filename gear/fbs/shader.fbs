@@ -1,0 +1,8 @@
+namespace gear.assets;
+
+table Shader {
+    vertex: string;
+    fragment: string;
+}
+
+root_type Shader;

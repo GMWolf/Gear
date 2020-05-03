@@ -8,7 +8,10 @@
 local schemas = {
     "common.fbs",
     "texture_atlas.fbs",
-    "font.fbs"
+    "font.fbs",
+    "map.fbs",
+    "shader.fbs",
+    "assets.fbs",
 }
 
 

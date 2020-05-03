@@ -23,8 +23,13 @@ namespace gear {
         friend class TextureAtlasLoader;
     };
 
-    class TextureAtlasLoader : public AssetLoader<TextureAtlas> {
-        TextureAtlas load(const std::string &name, AssetRegistry& registry) override;
+    namespace assets {
+        class Atlas;
+    }
+
+    class TextureAtlasLoader{
+    public:
+        static TextureAtlas load(const assets::Atlas* atlas, AssetRegistry& registry);
     };
 }
 

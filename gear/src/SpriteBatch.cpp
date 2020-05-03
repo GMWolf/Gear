@@ -11,7 +11,7 @@ void gear::SpriteBatch::flush() {
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
         //Flush range
-        glFlushMappedBufferRange(GL_ARRAY_BUFFER, 0, count * sizeof(Vertex));
+        glFlushMappedBufferRange(GL_ARRAY_BUFFER, first * 4 * sizeof(Vertex), count * 4 * sizeof(Vertex));
         glUnmapBuffer(GL_ARRAY_BUFFER);
         map = nullptr;
 
@@ -31,7 +31,7 @@ void gear::SpriteBatch::flush() {
 
 void gear::SpriteBatch::bufferUpdate() {
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    map = glMapBufferRange(GL_ARRAY_BUFFER, first * 4 * sizeof(Vertex), (batchSize - first) * 4 * sizeof(Vertex),
+    map = glMapBufferRange(GL_ARRAY_BUFFER, 0, batchSize * 4 * sizeof(Vertex),
                            GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT | GL_MAP_INVALIDATE_RANGE_BIT |
                            GL_MAP_FLUSH_EXPLICIT_BIT);
 }
@@ -95,7 +95,7 @@ void gear::SpriteBatch::draw(const Texture& tex, glm::vec2 pos, glm::vec2 size, 
     }
 
     {
-        auto *vertices = static_cast<Vertex *>(map) + count * 4;
+        auto *vertices = static_cast<Vertex *>(map) + ((first + count) * 4);
         vertices[0].pos = pos;
         vertices[0].uv  = {uv.x, uv.y};
         vertices[1].pos = pos + glm::vec2{0, size.y};

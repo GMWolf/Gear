@@ -10,12 +10,11 @@
 #include <filesystem>
 #include <fstream>
 #include <ios>
-#include <gear/fbs/generated/texture_atlas_generated.h>
+#include <gear/fbs/generated/assets_generated.h>
 #include <tinyxml2.h>
 #include <stb_rect_pack.h>
 #include <stb_image.h>
 #include <stb_image_write.h>
-
 
 namespace fs = std::filesystem;
 namespace xml = tinyxml2;
@@ -54,7 +53,6 @@ int main(int argc, char* argv[]) {
 
     auto outTexName = (outFileName + ".png");
     auto outAtlasName = (outFileName + ".bin");
-
 
     {
         xml::XMLDocument doc;
@@ -123,7 +121,6 @@ int main(int argc, char* argv[]) {
             std::ofstream ofs(outAtlasName+".raw" , std::ios::out | std::ios::binary);
             ofs.write((char*)textureData.get(), pageWidth * pageHeight * 4);
 
-
             stbi_flip_vertically_on_write(1);
             stbi_write_png(outTexName.c_str(), pageWidth, pageHeight, 4, textureData.get(), pageWidth * sizeof(uint32_t));
         }
@@ -131,7 +128,7 @@ int main(int argc, char* argv[]) {
         // Write binary output
         {
             flatbuffers::FlatBufferBuilder builder(2048);
-            std::vector<flatbuffers::Offset<gear::bin::Sprite>> sprites;
+            std::vector<flatbuffers::Offset<gear::assets::Sprite>> sprites;
 
             for (auto xTile = xTileSet->FirstChildElement("tile"); xTile;
                  xTile = xTile->NextSiblingElement("tile")) {
@@ -141,8 +138,8 @@ int main(int argc, char* argv[]) {
                     continue;
                 }
 
-                std::vector<gear::bin::UVs> uvs;
-                std::vector<flatbuffers::Offset<gear::bin::Object>> objects;
+                std::vector<gear::assets::UVs> uvs;
+                std::vector<flatbuffers::Offset<gear::assets::Object>> objects;
 
                 auto xImage = xTile->FirstChildElement("image");
                 auto source = xImage->Attribute("source");
@@ -168,50 +165,59 @@ int main(int argc, char* argv[]) {
                     for(auto xObject = xObjects->FirstChildElement("object"); xObject;
                     xObject = xObject->NextSiblingElement("object")) {
                         auto name = builder.CreateString(xObject->Attribute("name"));
-                        gear::bin::Shape shape_type;
+                        gear::assets::Shape shape_type;
                         flatbuffers::Offset<void> shape;
                         if (xObject->FirstChildElement("ellipse")) {
-                            shape_type = gear::bin::Shape_circle;
-                            shape =builder.CreateStruct(gear::bin::Circle {
+                            shape_type = gear::assets::Shape_circle;
+                            shape =builder.CreateStruct(gear::assets::Circle {
                                 xObject->FloatAttribute("x"),
                                 xObject->FloatAttribute("y"),
                                 xObject->FloatAttribute("width") / 2.f
                             }).Union();
                         } else if (xObject->FirstChildElement("point")) {
-                            shape_type = gear::bin::Shape_point;
-                            shape = builder.CreateStruct(gear::bin::Point {
+                            shape_type = gear::assets::Shape_point;
+                            shape = builder.CreateStruct(gear::assets::Point {
                                     xObject->FloatAttribute("x"),
                                     xObject->FloatAttribute("y")
                             }).Union();
                         } else { // rectangle
-                            shape_type = gear::bin::Shape_rectangle;
-                            shape = builder.CreateStruct(gear::bin::Rectangle {
+                            shape_type = gear::assets::Shape_rectangle;
+                            shape = builder.CreateStruct(gear::assets::Rectangle {
                                     xObject->FloatAttribute("x"),
                                     xObject->FloatAttribute("y"),
                                     xObject->FloatAttribute("width"),
                                     xObject->FloatAttribute("height")
                             }).Union();
                         }
-                        objects.push_back(gear::bin::CreateObject(builder, name, shape_type, shape));
+                        objects.push_back(gear::assets::CreateObject(builder, name, shape_type, shape));
                     }
                 }
 
 
                 std::string name = fs::path(source).stem();
-                gear::bin::fvec2 size {
+                gear::assets::fvec2 size {
                         (float)xImage->IntAttribute("width"),
                         (float)xImage->IntAttribute("height")
                 };
 
 
-                auto sprite = gear::bin::CreateSpriteDirect(builder, name.c_str(), &size, &uvs, &objects);
+                auto sprite = gear::assets::CreateSpriteDirect(builder, name.c_str(), &size, &uvs, &objects);
                 sprites.push_back(sprite);
             }
 
+            auto name = xTileSet->Attribute("name");
             auto texPathRel = fs::relative(outTexName, fs::path(outAtlasName).parent_path());
-            auto atlas = gear::bin::CreateAtlasDirect(builder, texPathRel.c_str(), &sprites);
-            builder.Finish(atlas);
+            auto texName = std::string(name) + "_texture";
+            auto tex = builder.CreateString(texPathRel.c_str());
 
+            auto atlas = gear::assets::CreateAtlasDirect(builder, texName.c_str(), &sprites);
+            std::vector<flatbuffers::Offset<gear::assets::AssetEntry>> entries;
+            entries.push_back(gear::assets::CreateAssetEntryDirect(builder, texName.c_str(), gear::assets::Asset_texture, tex.Union()));
+            entries.push_back(gear::assets::CreateAssetEntryDirect(builder, name, gear::assets::Asset_Atlas, atlas.Union()));
+
+            auto bundle = gear::assets::CreateBundleDirect(builder, &entries);
+            gear::assets::FinishBundleBuffer(builder, bundle);
+            builder.Finish(bundle);
 
             auto buf = builder.GetBufferPointer();
             auto bufSize = builder.GetSize();

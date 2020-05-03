@@ -8,24 +8,33 @@
 local targets = require("luabuild.targets");
 local ninja = require("luabuild.ninja");
 
-local script_path = "../"..CURRENT_DIRECTORY.."shader_packer.lua";
+local shaderPacker = targets.executable {
+    name = "shader_packer";
+    sources = {
+        "shader_packer.cpp"
+    };
+    libs = {
+        public = {
+            yaml_lib, lyra_lib
+        };
+    };
+    include_directories = {
+        public = {
+            "../../"
+        }
+    }
+}
 
 ninja.writeRule({
     name = "SHADER_PACK";
-    command = "lua "..script_path.." $vertex $fragment $out";
-})
+    command = shaderPacker.exe.." -o $out $in";
+});
 
-function shader_pack(name, vertex, fragment)
+function shader_pack(input)
     ninja.writeStep({
         rule = "SHADER_PACK";
-        outputs = CURRENT_DIRECTORY..name;
-        inputs = "../"..CURRENT_DIRECTORY..vertex.." ".."../"..CURRENT_DIRECTORY..fragment;
-        variables = {
-            vertex = "../"..CURRENT_DIRECTORY..vertex;
-            fragment = "../"..CURRENT_DIRECTORY..fragment;
-        };
-        implicit_dependencies = {
-            script_path
-        }
-    })
+        outputs = CURRENT_DIRECTORY..input..".bin";
+        inputs = "../"..CURRENT_DIRECTORY..input;
+        implicit_dependencies = { shaderPacker.exe };
+    });
 end

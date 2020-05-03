@@ -37,8 +37,8 @@ namespace gear {
     };
 
 
-    struct TileSetLoader : public AssetLoader<TileSet> {
-        TileSet load(const std::string& name, AssetRegistry& registry) override;
+    struct TileSetLoader {
+        TileSet load(const std::string& name, AssetRegistry& registry);
     };
 
 

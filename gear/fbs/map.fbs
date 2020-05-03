@@ -1,0 +1,13 @@
+
+namespace gear.bin;
+
+table Layer {
+    tileSet: string;
+    data: [uint];
+}
+
+table Map {
+    layers: [Layer];
+}
+
+root_type Map;

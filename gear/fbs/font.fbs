@@ -1,6 +1,6 @@
 include "common.fbs";
 
-namespace gear.bin;
+namespace gear.assets;
 
 struct Glyph {
     x0: ushort;

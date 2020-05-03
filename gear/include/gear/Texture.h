@@ -48,9 +48,9 @@ namespace gear {
         std::optional<CollisionShape> mask;
     };
 
-    class TextureLoader : public AssetLoader<Texture> {
+    class TextureLoader {
     public:
-        Texture load(const std::string& name, AssetRegistry& registry) override;
+        static Texture load(const std::string& name, AssetRegistry& registry);
     };
 }
 

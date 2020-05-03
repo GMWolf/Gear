@@ -43,7 +43,8 @@ gear::Texture::Texture(glm::vec4 color) {
 gear::Texture::Texture(GLuint tex, glm::ivec2 size) : tex(tex), size(size){
 }
 
-gear::Texture gear::TextureLoader::load(const std::string &name, AssetRegistry& registry) {
+
+gear::Texture gear::TextureLoader::load(const std::string &name, gear::AssetRegistry &registry) {
     int x, y, n;
     stbi_set_flip_vertically_on_load(1);
     unsigned char* data = stbi_load(name.c_str(), &x, &y, &n, 4);
