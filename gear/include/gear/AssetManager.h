@@ -13,6 +13,8 @@
 #include <optional>
 #include <variant>
 #include <any>
+#include <gear/map/Map.h>
+
 
 namespace gear {
 
@@ -61,6 +63,8 @@ namespace gear {
     class BitmapFont;
     class Shader;
     class Sprite;
+    class TileSet;
+    class Map;
 
     class AssetRegistry {
     public:
@@ -72,6 +76,8 @@ namespace gear {
         AssetReference<Sprite> getSprite(const std::string& name);
         AssetReference<BitmapFont> getFont(const std::string& name);
         AssetReference<Shader> getShader(const std::string& name);
+        AssetReference<TileSet> getTileSet(const std::string& name);
+        AssetReference<Map> getMap(const std::string& map);
 
         void loadBundle(const std::string& name);
     private:
@@ -79,9 +85,9 @@ namespace gear {
         std::unordered_map<std::string, std::shared_ptr<AssetEntry<Sprite>>> sprites;
         std::unordered_map<std::string, std::shared_ptr<AssetEntry<BitmapFont>>> fonts;
         std::unordered_map<std::string, std::shared_ptr<AssetEntry<Shader>>> shaders;
+        std::unordered_map<std::string, std::shared_ptr<AssetEntry<TileSet>>> tileSets;
+        std::unordered_map<std::string, std::shared_ptr<AssetEntry<Map>>> maps;
     };
-
-
 
 
 }

@@ -1,7 +1,6 @@
-namespace gear.bin;
+namespace gear.assets;
 
 table TileSet {
-    name: string;
     texture: string;
     tileWidth: short;
     tileHeight: short;

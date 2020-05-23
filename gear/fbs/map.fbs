@@ -1,8 +1,11 @@
 
-namespace gear.bin;
+namespace gear.assets;
 
 table Layer {
+    name: string;
     tileSet: string;
+    width: short;
+    height: short;
     data: [uint];
 }
 

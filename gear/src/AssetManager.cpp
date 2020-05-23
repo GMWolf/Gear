@@ -7,9 +7,11 @@
 #include <fstream>
 #include <ios>
 #include <gear/Texture.h>
-#include <gear/TextureAtlas.h>
 #include <gear/BitmapFont.h>
 #include <gear/Shader.h>
+#include <gear/map/TileSet.h>
+#include <gear/map/TileMap.h>
+#include <gear/map/Map.h>
 
 void gear::AssetRegistry::loadBundle(const std::string & fileName) {
 
@@ -40,6 +42,11 @@ void gear::AssetRegistry::loadBundle(const std::string & fileName) {
             case assets::Asset_Shader: {
                 getShader(name).ptr->store.emplace(ShaderLoader::load(asset->asset_as_Shader(), *this));
             } break;
+            case assets::Asset_TileSet:
+                getTileSet(name).ptr->store.emplace()
+                break;
+            case assets::Asset_Map:
+                break;
         }
     }
 
@@ -80,4 +87,17 @@ gear::AssetReference<gear::Shader> gear::AssetRegistry::getShader(const std::str
         it = shaders.insert({name, d}).first;
     }
     return {it->second};
+}
+
+gear::AssetReference<gear::TileSet> gear::AssetRegistry::getTileSet(const std::string &name) {
+    auto it = tileSets.find(name);
+    if (it == tileSets.end()) {
+        auto d = std::make_shared<AssetEntry<TileSet>>();
+        it = tileSets.insert({name, d}).first;
+    }
+    return {it->second};
+}
+
+gear::AssetReference<gear::Map> gear::AssetRegistry::getMap(const std::string &map) {
+    return gear::AssetReference<gear::Map>();
 }

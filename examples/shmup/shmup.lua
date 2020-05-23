@@ -22,4 +22,5 @@ shader_pack("src/shaders/font.yaml");
 shader_pack("src/shaders/prim.yaml");
 shader_pack("src/shaders/textured.yaml");
 font_pack("shmup_default_font", "assets/fonts/defaultFont.yaml");
-map_pack("map", "assets/maps/map1.tmx");
+map_pack("assets/maps/map1.tmx");
+tileset_pack("assets/maps/tile01.tsx");

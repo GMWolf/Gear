@@ -20,6 +20,7 @@ local gear_source = {
     "src/map/TileSet.cpp",
     "src/map/TileMap.cpp",
     "src/map/TilemapSystem.cpp",
+    "src/map/Map.cpp",
     "src/PrimDraw.cpp",
 }
 

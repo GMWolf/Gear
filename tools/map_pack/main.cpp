@@ -3,14 +3,14 @@
 //
 #include <tinyxml2.h>
 #include <filesystem>
-#include <lyra/lyra.hpp>
 #include <iostream>
 #include <utility>
 #include <base64.h>
 #include <cctype>
 #include <flatbuffers/flatbuffers.h>
-#include <gear/fbs/generated/map_generated.h>
+#include <gear/fbs/generated/assets_generated.h>
 #include <fstream>
+#include <lyra/lyra.hpp>
 
 namespace fs = std::filesystem;
 namespace xml = tinyxml2;
@@ -62,9 +62,11 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
+    auto relpath = fs::path(inputPath).parent_path();
+
 
     flatbuffers::FlatBufferBuilder builder(2048);
-    std::vector<flatbuffers::Offset<gear::bin::Layer>> layers;
+    std::vector<flatbuffers::Offset<gear::assets::Layer>> layers;
 
     {
         xml::XMLDocument doc;
@@ -78,9 +80,13 @@ int main(int argc, char* argv[]) {
         for(auto xTileset = xMap->FirstChildElement("tileset"); xTileset;
         xTileset = xTileset->NextSiblingElement("tileset")) {
             int firstId = xTileset->IntAttribute("firstgid");
-            auto source = xTileset->Attribute("source");
+            auto source = relpath / xTileset->Attribute("source");
+
+            xml::XMLDocument tilesetDoc;
+            tilesetDoc.LoadFile(source.c_str());
+            auto name = tilesetDoc.FirstChildElement("tileset")->Attribute("name");
             firstIds.emplace_back(firstId);
-            tilesets.emplace_back(source);
+            tilesets.emplace_back(name);
         }
 
         //get layers
@@ -107,12 +113,16 @@ int main(int argc, char* argv[]) {
                 tiles.push_back(id);
             }
 
-            auto layer = gear::bin::CreateLayerDirect(builder, tilesets[tilesetId].c_str(), &tiles);
+            auto layer = gear::assets::CreateLayerDirect(builder, tilesets[tilesetId].c_str(), &tiles);
             layers.push_back(layer);
         }
 
-        auto map = gear::bin::CreateMapDirect(builder, &layers);
-        builder.Finish(map);
+        auto map = gear::assets::CreateMapDirect(builder, &layers);
+
+        std::vector<flatbuffers::Offset<gear::assets::AssetEntry>> entries;
+        entries.push_back(gear::assets::CreateAssetEntryDirect(builder, "map", gear::assets::Asset_Map, map.Union()));
+        auto bundle = gear::assets::CreateBundleDirect(builder, &entries);
+        builder.Finish(bundle);
 
         auto buf = builder.GetBufferPointer();
         auto bufSize = builder.GetSize();

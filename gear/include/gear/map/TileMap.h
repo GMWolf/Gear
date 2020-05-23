@@ -15,7 +15,7 @@
 
 namespace gear {
 
-    struct TileLayer {
+    struct TileMap {
 
         struct Tile {
             uint32_t id : 13;
@@ -29,19 +29,6 @@ namespace gear {
         std::unique_ptr<Tile[]> tileData;
         int width;
         int height;
-    };
-
-    struct TileMap {
-        std::vector<TileLayer> layers;
-        int width;
-        int height;
-        int tileWidth;
-        int tileHeight;
-    };
-
-
-    struct TileMapLoader  {
-        TileMap load(const std::string& name, AssetRegistry& registry);
     };
 
 }

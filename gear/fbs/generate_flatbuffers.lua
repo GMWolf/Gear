@@ -12,6 +12,7 @@ local schemas = {
     "map.fbs",
     "shader.fbs",
     "assets.fbs",
+    "tileset.fbs",
 }
 
 

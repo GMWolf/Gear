@@ -5,6 +5,8 @@
 #include <gear/map/TileSet.h>
 #include <tinyxml2.h>
 #include <filesystem>
+#include <gear/AssetManager.h>
+#include <generated/tileset_generated.h>
 
 gear::TileSet gear::TileSetLoader::load(const std::string &fileName, AssetRegistry& registry) {
 
@@ -71,4 +73,12 @@ glm::vec4 gear::TileSet::getTileUVs(int tileIndex, bool hflip, bool vflip, bool 
     }
 
     return uvs;
+}
+
+
+gear::TileSet loadTileSet(const gear::assets::TileSet* tileSetDef, gear::AssetRegistry& registry) {
+
+
+
+
 }

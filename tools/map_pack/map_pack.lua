@@ -31,10 +31,10 @@ ninja.writeRule({
     command = mapPacker.exe.." -o $out $in";
 });
 
-function map_pack(name, input)
+function map_pack(input)
     ninja.writeStep({
         rule = "MAP_PACK";
-        outputs = CURRENT_DIRECTORY..name..".bin";
+        outputs = CURRENT_DIRECTORY..input..".bin";
         inputs = "../"..CURRENT_DIRECTORY..input;
         implicit_dependencies = { mapPacker.exe };
     });
