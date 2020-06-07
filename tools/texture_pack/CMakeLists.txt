@@ -3,15 +3,15 @@ target_link_libraries(texture_packer PUBLIC tinyxml2 stb yaml-cpp bfg_lyra)
 target_include_directories(texture_packer PUBLIC ../..)
 
 
-function(add_texture_pack name input)
-
+function(add_atlas input)
     add_custom_command(
-            COMMAND texture_packer ARGS -o ${name} ${CMAKE_CURRENT_LIST_DIR}/${input}
-            OUTPUT ${name}.bin ${name}.png
+            COMMAND texture_packer ARGS -o ${input} ${CMAKE_CURRENT_LIST_DIR}/${input}
+            OUTPUT ${input}.bin ${input}.png
             DEPENDS "${input}" texture_packer
             USES_TERMINAL
     )
 
-    add_custom_target(${name}
-            DEPENDS "${name}.bin" "${name}.png")
+    set(ADD_ATLAS_OUT_FILES ${input}.bin ${input}.png PARENT_SCOPE)
 endfunction()
+
+

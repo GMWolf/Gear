@@ -47,7 +47,7 @@ int main(int argc, char* argv[]) {
     }
 
     std::string bitmapOut = outFileName + ".png";
-    std::string binOut = outFileName + ".bundle";
+    std::string binOut = outFileName + ".bin";
 
     const auto config = YAML::LoadFile(inputPath);
 

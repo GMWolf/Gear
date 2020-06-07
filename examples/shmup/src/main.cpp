@@ -374,8 +374,8 @@ public:
         di.emplace<gear::ecs::CommandEncoder>(cmdbuff);
         auto& assetManager = di.emplace<gear::AssetRegistry>();
 
-        assetManager.loadBundle("shmup_textures.bin");
-        assetManager.loadBundle("shmup_default_font.bundle");
+        assetManager.loadBundle("assets/sprites/Sprites.tsx.bin");
+        assetManager.loadBundle("assets/fonts/defaultFont.yaml.bin");
         assetManager.loadBundle("src/shaders/font.yaml.bin");
         assetManager.loadBundle("src/shaders/prim.yaml.bin");
         assetManager.loadBundle("src/shaders/textured.yaml.bin");
