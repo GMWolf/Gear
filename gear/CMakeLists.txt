@@ -14,6 +14,8 @@ set(GEAR_ECS_SOURCES
         include/gear/ECS/ECS.h
         include/gear/ECS/ChunkView.h
         include/gear/ECS/System.h
+        include/gear/ECS/Prefab.h
+        src/ECS/Prefab.cpp
         )
 
 
@@ -51,7 +53,7 @@ add_library(gear
         src/map/Map.cpp
         include/gear/PrimDraw.h
         src/PrimDraw.cpp
-        include/gear/ECS/Prefab.h src/ECS/Prefab.cpp)
+        )
 
 target_sources(gear PRIVATE ${GEAR_ECS_SOURCES})
 
