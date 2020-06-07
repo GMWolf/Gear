@@ -152,7 +152,7 @@ static void movePlayer(gear::Application* app, gear::ecs::Registry& ecs, gear::e
                                   Bullet{{0, 2}}
                 );
 
-                player.shootTimer = 6;
+                player.shootTimer = 12;
             }
         }
 
@@ -291,9 +291,11 @@ namespace gear::ecs {
     };
 }
 
-static void spawnEnemy(gear::AssetRegistry& assets, gear::ecs::CommandEncoder& cmd) {
-    gear::Sprite spr = *assets.getSprite("ship1");
-    cmd.createEntity(EnemyProvider{spr} );
+static void spawnEnemy(gecs::Prefab prefab, gear::AssetRegistry& assets, gear::ecs::CommandEncoder& cmd) {
+    cmd.createEntity(prefab,
+            gear::Transform{{480.0f * (rand()/(float)RAND_MAX), 720}},
+            Velocity{{0, -1.5 - 0.5*(rand() / (float)RAND_MAX)}});
+    //cmd.createEntity(EnemyProvider{*assets.getSprite("ship1")});
 }
 
 void render(gear::SpriteBatch& batch, gear::AssetRegistry& assets, gear::ecs::Registry& ecs) {
@@ -379,40 +381,48 @@ void submitCommandBuffer(gecs::CommandBuffer& cmd, gecs::CommandEncoder& encoder
     encoder.reset();
 }
 
+gear::ecs::Prefab createEnemyPrefab(gear::ecs::Registry& reg, gear::AssetRegistry& assets, gear::ecs::CommandEncoder& encoder) {
+    auto sprite = *assets.getSprite("ship1");
+    gecs::EntityRef e = encoder.createEntity(
+            Enemy{},
+            *sprite.mask,
+            sprite);
+
+    return gecs::Prefab{e};
+};
+
 class Game : public gear::ApplicationAdapter {
 public:
     void init(gear::Application *_app) override {
         app = _app;
-        di.emplace<gear::ecs::Registry>();
-        di.emplace<gear::AssetRegistry>();
-        di.emplace<gear::SpriteBatch>(500);
-        di.emplace<gear::PrimDraw>();
-        di.emplace<gear::Application*>(app);
-        auto& cmdbuff = di.emplace<gear::ecs::CommandBuffer>(256'000'000);
-        di.emplace<gear::ecs::CommandEncoder>(cmdbuff);
-        auto& assetManager = di.emplace<gear::AssetRegistry>();
+        batch.emplace(100);
+        primDraw.emplace();
+        assets.emplace();
 
-        assetManager.loadBundle("assets.bin");
+        assets->loadBundle("assets.bin");
 
-        di.invoke(createStage);
+        enemyPrefab = createEnemyPrefab(prefabs, *assets, cmdEncoder);
+        submitCommandBuffer(cmd, cmdEncoder, prefabs);
+
+        createStage(*assets, cmdEncoder);
 
         gear::ui::initialize(app->window);
     }
 
     void update() override {
 
-        di.invoke(movePlayer);
-        di.invoke(checkCollisions);
-        di.invoke(submitCommandBuffer);
-        di.invoke(processCollisions);
-        di.invoke(gear::tilemapSystemCreateSystemComponent);
-        di.invoke(render);
-        di.invoke(debugDraw);
-        di.invoke(processAnimation);
-        di.invoke(processLifetime);
-        di.invoke(submitCommandBuffer);
+        movePlayer(app, world, cmdEncoder);
+        checkCollisions(world, cmdEncoder);
+        submitCommandBuffer(cmd, cmdEncoder, world);
+        processCollisions(world, cmdEncoder, *assets);
+        render(*batch, *assets, world);
+        debugDraw(*primDraw, *assets, world);
+        processAnimation(world, cmdEncoder);
+        processLifetime(world, cmdEncoder);
+        submitCommandBuffer(cmd, cmdEncoder, world);
+
         if (--spawnTimer <= 0) {
-            di.invoke(spawnEnemy);
+            spawnEnemy(enemyPrefab, *assets, cmdEncoder);
             spawnTimer = 20;
         }
 
@@ -423,12 +433,26 @@ public:
     }
 
     void end() override {
-        di.reset();
         gear::ui::cleanup();
+        batch.reset();
+        primDraw.reset();
+        assets.reset();
     }
 
 private:
-    gear::DI di;
+
+    gear::ecs::Registry world;
+    gear::ecs::Registry prefabs;
+    gear::ecs::EntityPool pool;
+    gear::ecs::CommandBuffer cmd{pool, 256'000'000};
+    gear::ecs::CommandEncoder cmdEncoder{cmd};
+
+    gear::ecs::Prefab enemyPrefab;
+
+    std::optional<gear::AssetRegistry> assets;
+    std::optional<gear::SpriteBatch> batch;
+    std::optional<gear::PrimDraw> primDraw;
+
     int spawnTimer = 10;
     gear::ui::PerfData perf {};
     gear::Application* app {};

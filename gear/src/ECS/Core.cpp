@@ -41,7 +41,7 @@ namespace gear::ecs {
 
 
 
-    Entity* Registry::emplaceEntity(const Archetype &archetype) {
+    void Registry::emplaceEntity(const Archetype &archetype, Entity* entity) {
         Archetype realArchetype = archetype | Component<EntityRef>::ID();
         auto chunk = getFreeChunk(realArchetype);
         if (!chunk) {
@@ -50,7 +50,6 @@ namespace gear::ecs {
 
         uint16_t eid = chunk->size;
 
-        auto* entity = getFreeEntity();
         entity->chunk = chunk;
         entity->index = eid;
 
@@ -58,10 +57,9 @@ namespace gear::ecs {
         static_cast<EntityRef*>(chunk->get(Component<EntityRef>::ID(), eid))->version = entity->version;
 
         chunk->size++;
-        return entity;
     }
 
-    Entity *Registry::getFreeEntity() {
+    Entity *EntityPool::getFreeEntity() {
         if (freeEntities.empty()) {
             auto& slab = entitySlabVec.emplace_back(std::make_unique<EntitySlab>());
             for(auto& e : *slab) {
@@ -77,13 +75,28 @@ namespace gear::ecs {
         return ret;
     }
 
+
+    void EntityPool::getFreeEntities(Entity **vec, size_t count) {
+        for(int i = 0; i < count; i++) {
+            vec[count] = getFreeEntity();
+        }
+    }
+
+    void EntityPool::free(Entity *entity) {
+        freeEntities.push_back(entity);
+    }
+
+    size_t EntityPool::getAllocatedEntityCount() {
+        return entitySlabSize * entitySlabVec.size();
+    }
+
     void Registry::emplaceComponent(Entity *entity, ComponentId componentId, void * componentPtr) {
         ComponentInfo::component[componentId].functions.emplaceMove(entity->chunk->get(componentId, entity->index), componentPtr);
     }
 
 
     static void destroyEntityFromChunk(Chunk* chunk, uint16_t index) {
-        //move last index into entity being destoroyed.
+        //move last index into entity being destroyed.
         //Then destroy last index
 
         uint16_t fromIndex = chunk->size - 1;
@@ -115,7 +128,6 @@ namespace gear::ecs {
         destroyEntityFromChunk(chunk, index);
 
         //make destroyed entity available
-        freeEntities.push_back(entity);
         entity->chunk = nullptr;
         entity->version++;
     }
@@ -181,7 +193,7 @@ namespace gear::ecs {
         return (char*)getData(componentId) + (index * ComponentInfo::component[componentId].size);
     }
 
-    bool EntityRef::alive() {
+    bool EntityRef::alive() const {
         return version == entity->version;
     }
 }

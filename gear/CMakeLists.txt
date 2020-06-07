@@ -51,7 +51,7 @@ add_library(gear
         src/map/Map.cpp
         include/gear/PrimDraw.h
         src/PrimDraw.cpp
-)
+        include/gear/ECS/Prefab.h src/ECS/Prefab.cpp)
 
 target_sources(gear PRIVATE ${GEAR_ECS_SOURCES})
 

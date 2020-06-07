@@ -57,18 +57,21 @@ namespace gear::ecs {
 
 
     class CommandDecoder {
+        CommandBuffer& cmd;
         void* head;
         size_t space;
 
         void* read(size_t size, size_t align);
 
     public:
-        explicit CommandDecoder(CommandBuffer& cmd) : head(cmd.buffer), space(cmd.bufferSize) {};
+        explicit CommandDecoder(CommandBuffer& cmd) : cmd(cmd), head(cmd.buffer), space(cmd.bufferSize) {};
 
         template<class T>
         T* read();
 
         std::pair<ComponentId, void*> readComponent();
+
+        CommandBuffer& buffer();
     };
 
     void *CommandDecoder::read(size_t size, size_t align) {
@@ -92,11 +95,16 @@ namespace gear::ecs {
         return std::make_pair(id, ptr);
     }
 
+    CommandBuffer &CommandDecoder::buffer() {
+        return cmd;
+    }
+
     void executeCreate(CommandDecoder& cmd, Registry& registry) {
+        Entity* entity = *cmd.read<Entity*>();
         auto archetype = *cmd.read<Archetype>();
 
         //Create entity and move components
-        auto* entity = registry.emplaceEntity(archetype);
+        registry.emplaceEntity(archetype, entity);
         size_t componentCount = archetype.bits.count();
         for(int i = 0; i < componentCount; i++) {
             auto [componentId, componentPtr] = cmd.readComponent();
@@ -107,9 +115,10 @@ namespace gear::ecs {
 
     void executeDestroy(CommandDecoder& cmd, Registry& registry) {
         auto entityRef = cmd.read<EntityRef>();
-
         if (entityRef->alive()) {
-            registry.destroyEntity(entityRef->entity);
+            Entity* e = entityRef->entity;
+            registry.destroyEntity(e);
+            cmd.buffer().entityPool.free(e);
         }
     }
 
@@ -157,13 +166,13 @@ namespace gear::ecs {
     }
 
     void resetCreate(CommandDecoder& cmd) {
+        Entity* entity = *cmd.read<Entity*>();
         auto archetype = *cmd.read<Archetype>();
         size_t componentCount = archetype.bits.count();
         for(int i = 0; i < componentCount; i++) {
             auto [componentId, componentPtr] = cmd.readComponent();
             ComponentInfo::component[componentId].functions.destroy(componentPtr);
         }
-        archetype.~Archetype();
     }
 
     void resetDestroy(CommandDecoder& cmd) {
@@ -208,5 +217,5 @@ namespace gear::ecs {
         buffer.commandCount = 0;
     }
 
-    CommandBuffer::CommandBuffer(size_t size) : buffer(static_cast<std::byte *>(malloc(size))), bufferSize(size), commandCount(0) {}
+    CommandBuffer::CommandBuffer(EntityPool& pool, size_t size) : entityPool(pool), buffer(static_cast<std::byte *>(malloc(size))), bufferSize(size), commandCount(0) {}
 }

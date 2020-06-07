@@ -20,10 +20,11 @@ namespace gear::ecs {
     };
 
     struct CommandBuffer {
-        explicit CommandBuffer(size_t size);
+        explicit CommandBuffer(EntityPool& pool, size_t size);
         std::byte* buffer {nullptr};
         size_t bufferSize {0};
         size_t commandCount {0};
+        EntityPool& entityPool;
     };
 
     class CommandEncoder {
@@ -44,7 +45,7 @@ namespace gear::ecs {
         explicit CommandEncoder(CommandBuffer &cmd) : cmd(cmd), head(cmd.buffer), space(cmd.bufferSize) {};
 
         template<class... T>
-        void createEntity(T&&... t);
+        EntityRef createEntity(T&&... t);
         void destroyEntity(const EntityRef& entity);
         template<class T>
         void createComponent(const EntityRef& entity, T&& t);
@@ -88,7 +89,6 @@ namespace gear::ecs {
         static Archetype archetype(const CopyProvider<T>& cpy);
     };
 
-
     template<class T>
     Archetype ComponentProvider<CopyProvider<T>>::archetype(const CopyProvider<T>& cpy) {
         return Archetype::create<T>();
@@ -115,11 +115,17 @@ namespace gear::ecs {
     }
 
     template<class... T>
-    void CommandEncoder::createEntity(T &&... t) {
+    EntityRef CommandEncoder::createEntity(T &&... t) {
+        Entity* entity = cmd.entityPool.getFreeEntity();
         write(CommandType::CreateEntity);
+        write(entity);
         write((ComponentProvider<std::remove_reference_t<T>>::archetype(t) | ...));
         (ComponentProvider<std::remove_reference_t<T>>::writeComponents(t, *this), ...);
         cmd.commandCount++;
+        return EntityRef{
+            entity,
+            entity->version
+        };
     }
 
     template<class T>

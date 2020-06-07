@@ -45,7 +45,7 @@ namespace gear::ecs {
     struct EntityRef {
         Entity* entity;
         uint32_t version;
-        bool alive();
+        bool alive() const;
 
         template<class... T>
         std::tuple<T&...> get() {
@@ -53,7 +53,22 @@ namespace gear::ecs {
         }
     };
 
+    class EntityPool {
+    public:
+        void getFreeEntities(Entity** vec, size_t count);
 
+        Entity* getFreeEntity();
+
+        void free(Entity* entity);
+
+        size_t getAllocatedEntityCount();
+
+    private:
+        static const size_t entitySlabSize = 512;
+        using EntitySlab = std::array<Entity, entitySlabSize>;
+        std::vector<std::unique_ptr<EntitySlab>> entitySlabVec;
+        std::vector<Entity*> freeEntities;
+    };
 
     class Registry {
     public:
@@ -61,7 +76,7 @@ namespace gear::ecs {
         Registry(const Registry&) = delete;
         Registry& operator=(const Registry&) = delete;
 
-        Entity* emplaceEntity(const Archetype& archetype);
+        void emplaceEntity(const Archetype& archetype, Entity* entity);
         void mutateEntity(Entity* entity, const Archetype& archetype);
         void emplaceComponent(Entity* entity, ComponentId componentId, void* componentPtr);
         void destroyEntity(Entity* entity);
@@ -73,15 +88,8 @@ namespace gear::ecs {
         using Store = std::unordered_map<Archetype, ChunkVec, Archetype::Hash>;
         Store archetypeChunks;
 
-        static const size_t entitySlabSize = 512;
-        using EntitySlab = std::array<Entity, entitySlabSize>;
-        std::vector<std::unique_ptr<EntitySlab>> entitySlabVec;
-        std::vector<Entity*> freeEntities;
-
         Chunk* createChunk(const Archetype& a);
         Chunk* getFreeChunk(const Archetype& a);
-
-        Entity* getFreeEntity();
     };
 
 
