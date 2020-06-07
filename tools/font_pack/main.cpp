@@ -99,7 +99,7 @@ int main(int argc, char* argv[]) {
             glyphs.push_back(glyph);
         }
         auto bitmapPathRelative = fs::relative(bitmapOut, fs::path(binOut).parent_path());
-        auto tex = builder.CreateString(bitmapPathRelative.c_str());
+        auto tex = builder.CreateString(bitmapOut.c_str());
         auto texName = name + "_texture";
 
         auto font = gear::assets::CreateFontDirect(builder, texName.c_str(), rangeStart, rangeCount, &glyphs);
