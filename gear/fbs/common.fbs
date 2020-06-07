@@ -1,0 +1,12 @@
+
+namespace gear.assets;
+
+struct fvec2 {
+    x: float;
+    y: float;
+}
+
+struct ivec2 {
+    x: int;
+    y: int;
+}

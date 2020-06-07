@@ -1,22 +1,16 @@
-add_executable(font_pack main.cpp)
-target_link_libraries(font_pack PUBLIC bfg_lyra stb nlohmann_json::nlohmann_json yaml-cpp)
 
+add_executable(font_packer main.cpp)
+target_link_libraries(font_packer PUBLIC stb yaml-cpp bfg_lyra)
+target_include_directories(font_packer PUBLIC ../../)
 
-function(add_font name input)
-
+function(add_font_pack name input)
     add_custom_command(
-            COMMAND font_pack ARGS -o ${name} ${CMAKE_CURRENT_LIST_DIR}/${input}
-            OUTPUT ${name}.json ${name}.png
-            DEPENDS "${input}" texture_pack
+            COMMAND font_packer ARGS -o ${name} ${CMAKE_CURRENT_LIST_DIR}/${input}
+            OUTPUT ${name}.bundle ${name}.png
+            DEPENDS "${input}" font_packer
             USES_TERMINAL
     )
 
     add_custom_target(${name}
-            SOURCES ${input}
-            DEPENDS "${name}.json" "${name}.png")
-
-    set_target_properties(${name} PROPERTIES
-            GEAR_ASSET_PATH "${name}.json"
-            GEAR_ASSET_TYPE "font")
-
+            DEPENDS "${name}.bundle")
 endfunction()

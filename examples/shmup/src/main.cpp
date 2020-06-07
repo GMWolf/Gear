@@ -4,7 +4,6 @@
 #include <gear/Application.h>
 #include <gear/ApplicationAdapter.h>
 #include <gear/DI.h>
-#include <gear/TextureAtlas.h>
 #include <gear/SpriteBatch.h>
 #include <gear/CollisionShape.h>
 #include <gear/Shader.h>
@@ -19,6 +18,8 @@
 #include <gear/map/TileMap.h>
 #include <gear/map/TilemapSystem.h>
 #include <gear/RenderSystem.h>
+#include <iostream>
+#include <gear/PrimDraw.h>
 
 #include "Collisions.h"
 
@@ -63,16 +64,13 @@ static int score = 0;
 
 static void createStage(gear::AssetRegistry& assets, gear::ecs::CommandEncoder& cmd) {
 
-    auto atlas = assets.get<gear::TextureAtlas>("shmup_textures.json");
     {
-        gear::Sprite spr = atlas->getSprite("ship1");
+        gear::Sprite spr = *assets.getSprite("ship1");
         for (int i = 0; i < 5; i++) {
 
             cmd.createEntity(gear::Sprite(spr),
                              gear::Transform{{480 * i / 5, 600}},
-                             gear::CollisionShape{gear::Rectangle{
-                                 {spr.bbox.left,spr.bbox.bottom},
-                                 {spr.bbox.right, spr.bbox.top}}},
+                             *spr.mask,
                              Enemy{},
                              Velocity{{0, -1.5}}
                     );
@@ -80,28 +78,27 @@ static void createStage(gear::AssetRegistry& assets, gear::ecs::CommandEncoder& 
     }
 
     {
-        gear::Sprite spr = atlas->getSprite("ship2");
+        gear::Sprite spr = *assets.getSprite("ship2");
 
         Player player;
-        player.bulletSprite = atlas->getSprite("bullet_blue");
-        player.bulletShape = gear::Rectangle{{player.bulletSprite.bbox.left,player.bulletSprite.bbox.bottom},
-                                             {player.bulletSprite.bbox.right, player.bulletSprite.bbox.top}};
+        player.bulletSprite = *assets.getSprite("bullet_blue1");
+        player.bulletShape = *player.bulletSprite.mask;
 
         cmd.createEntity( spr,
                 gear::Transform{{480 / 2, 32}},
-                gear::CollisionShape{gear::Rectangle{{spr.bbox.left,spr.bbox.bottom}, {spr.bbox.right, spr.bbox.top}}},
+                *spr.mask,
                 player);
 
     }
 
     //tilemap
-    {
-        auto map = assets.get<gear::TileMap>("../../../../examples/shmup/assets/maps/map1.tmx");
-        cmd.createEntity(
+    if (false){
+        //auto map = assets.getTileMap("../../../../examples/shmup/assets/maps/map1.tmx");
+        /*cmd.createEntity(
                 gear::TilemapComponent{map},
                 gear::Transform{{0,0}},
                 Velocity{{0, -1}}
-                );
+                );*/
     }
 
     //collision filters
@@ -152,7 +149,7 @@ static void movePlayer(gear::Application* app, gear::ecs::Registry& ecs, gear::e
                 cmd.createEntity( gear::Sprite(player.bulletSprite),
                                   player.bulletShape,
                                   gear::Transform{transform.pos + glm::vec2(0, 24)},
-                                  Bullet{{0, 10}}
+                                  Bullet{{0, 2}}
                 );
 
                 player.shootTimer = 6;
@@ -206,7 +203,6 @@ static void movePlayer(gear::Application* app, gear::ecs::Registry& ecs, gear::e
 static void processCollisions(gear::ecs::Registry& ecs, gear::ecs::CommandEncoder& cmd, gear::AssetRegistry& assets) {
     const gear::ecs::Archetype enemyArch = gear::ecs::Archetype::create<Enemy>();
     const gear::ecs::Archetype bulletArch = gear::ecs::Archetype::create<Bullet>();
-    auto atlas = assets.get<gear::TextureAtlas>("shmup_textures.json");
 
     gecs::Chunk* chunkArray[256];
     auto chunks = ecs.queryChunks(gecs::Query().all<CollisionPair>(), chunkArray, 256);
@@ -219,9 +215,9 @@ static void processCollisions(gear::ecs::Registry& ecs, gear::ecs::CommandEncode
                 if (--enemy.health <= 0) {
                     score += 100;
                     cmd.destroyEntity(entities->first);
-                    cmd.createEntity(t, atlas->getSprite("explosion"), DestroyOnAnimationEnd{});
+                    cmd.createEntity(t, assets.getSprite("explosion_0"), DestroyOnAnimationEnd{});
                     cmd.createEntity(gear::Transform{t.pos + glm::vec2(-25, 25)},
-                                     Text{"100", assets.get<gear::BitmapFont>("shmup_default_font.json")},
+                                     Text{"100", assets.getFont("default")},
                                      Lifetime{1});
                 }
                 cmd.destroyEntity(entities->second);
@@ -272,11 +268,10 @@ static void processAnimation(gear::ecs::Registry& ecs, gear::ecs::CommandEncoder
 }
 
 static void spawnEnemy(gear::AssetRegistry& assets, gear::ecs::CommandEncoder& cmd) {
-    auto atlas = assets.get<gear::TextureAtlas>("shmup_textures.json");
-    gear::Sprite spr = atlas->getSprite("ship1");
+    gear::Sprite spr = *assets.getSprite("ship1");
     cmd.createEntity(spr,
                      gear::Transform{{480.0f * (rand()/(float)RAND_MAX), 720+spr.size.y}},
-                     gear::CollisionShape{gear::Rectangle{{spr.bbox.left,spr.bbox.bottom}, {spr.bbox.right, spr.bbox.top}}},
+                     *spr.mask,
                      Enemy{},
                  Velocity{{0, -1.5 - 0.5*(rand() / (float)RAND_MAX)}}
     );
@@ -295,18 +290,18 @@ void render(gear::SpriteBatch& batch, gear::AssetRegistry& assets, gear::ecs::Re
 
     //tiles
     {
-        auto shd = assets.get<gear::Shader>("simple_textured");
+        auto shd = assets.getShader("textured");
         gear::tilemapSystemRender(ecs, shd.get());
     }
 
     {
-        auto shd = assets.get<gear::Shader>("simple_textured");
+        auto shd = assets.getShader("textured");
         gear::renderSprites(ecs, batch, shd.get());
     }
 
     {
-        auto font = assets.get<gear::BitmapFont>("shmup_default_font.json");
-        auto shd = assets.get<gear::Shader>("shd_font");
+        auto font = assets.getFont("default");
+        auto shd = assets.getShader("font");
         shd->use();
         glUniform1i(shd->uniformLocation("tex"), 0);
         auto vm = view.matrix();
@@ -327,6 +322,39 @@ void render(gear::SpriteBatch& batch, gear::AssetRegistry& assets, gear::ecs::Re
 
 }
 
+void debugDraw(gear::PrimDraw& dd, gear::AssetRegistry& assets, gear::ecs::Registry& ecs) {
+
+    const size_t chunkArraySize = 1024;
+    gecs::Chunk* chunkArray[chunkArraySize];
+    {
+
+        gear::View view {{0,0}, {480, 720}};
+
+        auto shd = assets.getShader("prim");
+        shd->use();
+        glUniform1i(shd->uniformLocation("tex"), 0);
+        auto vm = view.matrix();
+        glUniformMatrix4fv(shd->uniformLocation("view"), 1, GL_FALSE, glm::value_ptr(vm));
+
+        auto chunks = ecs.queryChunks(gecs::Query().all<gear::Transform, gear::CollisionShape>(), chunkArray,
+                                      chunkArraySize);
+
+        for(auto c : chunks) {
+            auto chunk = gecs::ChunkView<gear::Transform, gear::CollisionShape>(*c);
+            for(auto[transform, shape] : chunk) {
+                if (auto circle = std::get_if<gear::Circle>(&shape)) {
+                    dd.circle(transform.pos + circle->center, circle->radius);
+                }
+                if (auto rect = std::get_if<gear::Rectangle>(&shape)) {
+                    dd.rect(transform.pos + rect->min, transform.pos + rect->max);
+                }
+            }
+        }
+    }
+
+    dd.flush();
+}
+
 void submitCommandBuffer(gecs::CommandBuffer& cmd, gecs::CommandEncoder& encoder, gecs::Registry& ecs) {
     gecs::executeCommandBuffer(cmd, ecs);
     gecs::resetCommandBuffer(cmd);
@@ -340,23 +368,19 @@ public:
         di.emplace<gear::ecs::Registry>();
         di.emplace<gear::AssetRegistry>();
         di.emplace<gear::SpriteBatch>(500);
+        di.emplace<gear::PrimDraw>();
         di.emplace<gear::Application*>(app);
         auto& cmdbuff = di.emplace<gear::ecs::CommandBuffer>(256'000'000);
         di.emplace<gear::ecs::CommandEncoder>(cmdbuff);
         auto& assetManager = di.emplace<gear::AssetRegistry>();
 
-        assetManager.setLoader<gear::Shader>(gear::ShaderLoader());
-        assetManager.setLoader<gear::BitmapFont>(gear::BitmapFontLoader());
-        assetManager.setLoader<gear::TextureAtlas>(gear::TextureAtlasLoader());
-        assetManager.setLoader<gear::TileSet>(gear::TileSetLoader());
-        assetManager.setLoader<gear::TileMap>(gear::TileMapLoader());
-        assetManager.setLoader<gear::Texture>(gear::TextureLoader());
-
-        assetManager.load<gear::Shader>("simple_textured");
-        assetManager.load<gear::Shader>("shd_font");
-        assetManager.load<gear::TextureAtlas>("shmup_textures.json");
-        assetManager.load<gear::BitmapFont>("shmup_default_font.json");
-        assetManager.load<gear::TileMap>("../../../../examples/shmup/assets/maps/map1.tmx");
+        assetManager.loadBundle("shmup_textures.bin");
+        assetManager.loadBundle("shmup_default_font.bundle");
+        assetManager.loadBundle("src/shaders/font.yaml.bin");
+        assetManager.loadBundle("src/shaders/prim.yaml.bin");
+        assetManager.loadBundle("src/shaders/textured.yaml.bin");
+        //assetManager.loadBundle("assets/maps/map1.tmx.bin");
+        //assetManager.load<gear::TileMap>("../../../../examples/shmup/assets/maps/map1.tmx");
 
         di.invoke(createStage);
 
@@ -371,6 +395,7 @@ public:
         di.invoke(processCollisions);
         di.invoke(gear::tilemapSystemCreateSystemComponent);
         di.invoke(render);
+        di.invoke(debugDraw);
         di.invoke(processAnimation);
         di.invoke(processLifetime);
         di.invoke(submitCommandBuffer);
@@ -398,6 +423,8 @@ private:
 };
 
 int main() {
+
+    std::cout << " yo! " << std::endl;
 
     gear::AppConfig config {
         480, 720,

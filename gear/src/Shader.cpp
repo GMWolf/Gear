@@ -8,28 +8,7 @@
 #include <streambuf>
 #include <vector>
 #include <iostream>
-
-gear::Shader::Shader(const std::string &path) {
-
-    std::ifstream t(path);
-    std::string source((std::istreambuf_iterator<char>(t)),
-            std::istreambuf_iterator<char>());
-
-    const char* versionString = "#version 330 core\n";
-    const char* shaderData = source.c_str();
-    const char* vs[]{
-        versionString,
-        "#define VERTEX_SHADER\n\n",
-        shaderData
-    };
-    const char* fs[]{
-        versionString,
-        "#define FRAGMENT_SHADER\n\n",
-        shaderData
-    };
-
-    init(vs, 3, fs, 3);
-}
+#include <generated/shader_generated.h>
 
 gear::Shader::Shader(const std::string &vs, const std::string &fs){
     const char* vsPtr = vs.c_str();
@@ -111,6 +90,6 @@ gear::Shader &gear::Shader::operator=(gear::Shader &&o) noexcept {
 }
 
 
-gear::Shader gear::ShaderLoader::load(const std::string &name, AssetRegistry& registry) {
-    return Shader(name);
+gear::Shader gear::ShaderLoader::load(const gear::assets::Shader* shader, AssetRegistry& registry) {
+    return Shader(shader->vertex()->c_str(), shader->fragment()->c_str());
 }

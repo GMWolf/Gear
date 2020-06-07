@@ -19,7 +19,3 @@ add_library(imgui_ogl3
 target_include_directories(imgui_ogl3 PUBLIC deps/imgui/examples)
 target_link_libraries(imgui_ogl3 PUBLIC imgui glad)
 target_compile_definitions(imgui_ogl3 PUBLIC IMGUI_IMPL_OPENGL_LOADER_GLAD)
-
-
-add_library(imgui_gear INTERFACE)
-target_link_libraries(imgui_gear INTERFACE imgui imgui_glfw imgui_ogl3)

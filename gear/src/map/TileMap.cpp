@@ -13,6 +13,7 @@ const unsigned FLIPPED_HORIZONTALLY_FLAG = 0x80000000;
 const unsigned FLIPPED_VERTICALLY_FLAG   = 0x40000000;
 const unsigned FLIPPED_DIAGONALLY_FLAG   = 0x20000000;
 
+/*
 gear::TileMap gear::TileMapLoader::load(const std::string &fileName, AssetRegistry& registry) {
 
     using namespace tinyxml2;
@@ -32,10 +33,10 @@ gear::TileMap gear::TileMapLoader::load(const std::string &fileName, AssetRegist
     xTileSet = xTileSet->NextSiblingElement("tileset")) {
         auto source = xTileSet->Attribute("source");
         auto path = relPath / source;
-        registry.load<TileSet>(path.string());
-        tilesets.emplace_back(
-                xTileSet->IntAttribute("firstgid"),
-                registry.get<TileSet>(path.string()));
+        //registry.load<TileSet>(path.string());
+        //tilesets.emplace_back(
+        //        xTileSet->IntAttribute("firstgid"),
+        //        registry.get<TileSet>(path.string()));
     }
 
     TileMap map = TileMap {
@@ -80,3 +81,4 @@ gear::TileMap gear::TileMapLoader::load(const std::string &fileName, AssetRegist
     return map;
 }
 
+*/

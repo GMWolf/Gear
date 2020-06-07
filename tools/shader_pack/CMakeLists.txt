@@ -1,14 +1,16 @@
 
-set(gear_tools_shader_pack_internal_dir ${CMAKE_CURRENT_LIST_DIR} CACHE INTERNAL "")
+add_executable(shader_packer shader_packer.cpp)
+target_link_libraries(shader_packer PUBLIC yaml-cpp bfg_lyra)
+target_include_directories(shader_packer PUBLIC ../../)
 
-function(add_shader name vertex fragment)
-    file(READ ${vertex} vertexText)
-    file(READ ${fragment} fragmentText)
-    configure_file(${gear_tools_shader_pack_internal_dir}/template.glsl.in ${name})
+function(add_shader_pack name input)
+    add_custom_command(
+            COMMAND shader_packer ARGS -o ${input}.bin ${CMAKE_CURRENT_LIST_DIR}/${input}
+            OUTPUT ${input}.bin
+            DEPENDS "${input}" shader_packer
+            USES_TERMINAL
+    )
 
-    add_custom_target(${name} DEPENDS ${name})
-
-    set_target_properties(${name} PROPERTIES
-            GEAR_ASSET_PATH "${name}"
-            GEAR_ASSET_TYPE "shader")
+    add_custom_target(${name}
+            DEPENDS "${input}.bin")
 endfunction()

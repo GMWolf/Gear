@@ -14,7 +14,9 @@
 #include <variant>
 #include <any>
 
+
 namespace gear {
+
 
 
     template<class T>
@@ -53,58 +55,38 @@ namespace gear {
 
     };
 
-    class AssetRegistry;
 
-    template<class T>
-    class AssetLoader {
-    public:
-        virtual T load(const std::string& name, AssetRegistry& registry) = 0;
-        virtual ~AssetLoader() = default;
-    };
+
+    class Texture;
+    class TextureAtlas;
+    class BitmapFont;
+    class Shader;
+    class Sprite;
+    class TileSet;
+    class Map;
 
     class AssetRegistry {
     public:
-        template<class T> AssetReference<T> get(const std::string& name) ;
+        AssetRegistry() = default;
+        AssetRegistry(const AssetRegistry&) = delete;
+        AssetRegistry& operator=(const AssetRegistry&) = delete;
 
-        template<class T>
-        void load(const std::string& name, AssetLoader<T>& assetLoader);
+        AssetReference<Texture> getTexture(const std::string& name);
+        AssetReference<Sprite> getSprite(const std::string& name);
+        AssetReference<BitmapFont> getFont(const std::string& name);
+        AssetReference<Shader> getShader(const std::string& name);
+        AssetReference<TileSet> getTileSet(const std::string& name);
+        AssetReference<Map> getMap(const std::string& map);
 
-        template<class T>
-        void load(const std::string& name);
-
-        template<class T, class L>
-        void setLoader(L&& loader);
+        void loadBundle(const std::string& name);
     private:
-        std::unordered_map<std::string, std::shared_ptr<void>> assets;
-        std::unordered_map<std::type_index, std::shared_ptr<void>> loaders;
+        std::unordered_map<std::string, std::shared_ptr<AssetEntry<Texture>>> textures;
+        std::unordered_map<std::string, std::shared_ptr<AssetEntry<Sprite>>> sprites;
+        std::unordered_map<std::string, std::shared_ptr<AssetEntry<BitmapFont>>> fonts;
+        std::unordered_map<std::string, std::shared_ptr<AssetEntry<Shader>>> shaders;
+        std::unordered_map<std::string, std::shared_ptr<AssetEntry<TileSet>>> tileSets;
+        std::unordered_map<std::string, std::shared_ptr<AssetEntry<Map>>> maps;
     };
-
-
-    template<class T>
-    AssetReference<T> AssetRegistry::get(const std::string &name) {
-        auto it = assets.find(name);
-        if (it == assets.end()) {
-            std::shared_ptr<void> d = std::make_shared<AssetEntry<T>>();
-            it = assets.insert({name, d}).first;
-        }
-        return {std::static_pointer_cast<AssetEntry<T>>(it->second)};
-    }
-
-    template<class T>
-    void gear::AssetRegistry::load(const std::string &name, AssetLoader<T> &assetLoader) {
-        get<T>(name).ptr->store.emplace(assetLoader.load(name, *this));
-    }
-
-    template<class T>
-    void AssetRegistry::load(const std::string &name) {
-        AssetLoader<T>& loader = *static_cast<AssetLoader<T>*>(loaders[typeid(T)].get());
-        load(name, loader);
-    }
-
-    template<class T, class L>
-    void AssetRegistry::setLoader(L&& loader) {
-        loaders[typeid(T)] = std::make_shared<L>(std::forward<L>(loader));
-    }
 
 
 }

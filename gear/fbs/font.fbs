@@ -1,0 +1,27 @@
+include "common.fbs";
+
+namespace gear.assets;
+
+struct Glyph {
+    x0: ushort;
+    y0: ushort;
+    x1: ushort;
+    y1: ushort;
+
+    xadvance: float;
+    xoff: float;
+    yoff: float;
+    xoff2: float;
+    yoff2: float;
+}
+
+
+table Font {
+    texture: string;
+    range_start: int;
+    range_count: int;
+
+    glyphs: [Glyph];
+}
+
+root_type Font;

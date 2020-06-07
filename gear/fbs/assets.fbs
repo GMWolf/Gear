@@ -1,0 +1,27 @@
+include "sprite.fbs";
+include "font.fbs";
+include "shader.fbs";
+include "tileset.fbs";
+include "map.fbs";
+
+namespace gear.assets;
+
+union Asset {
+    texture: string,
+    Sprite,
+    Font,
+    Shader,
+    TileSet,
+    Map,
+}
+
+table AssetEntry {
+    name: string;
+    asset: Asset;
+}
+
+table Bundle {
+    assets: [AssetEntry];
+}
+
+root_type Bundle;

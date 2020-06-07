@@ -8,7 +8,6 @@
 #include <string>
 #include <cstdint>
 #include <gear/Texture.h>
-#include <gear/AssetManager.h>
 #include <glm/vec4.hpp>
 
 namespace gear {
@@ -37,9 +36,12 @@ namespace gear {
     };
 
 
-    struct TileSetLoader : public AssetLoader<TileSet> {
-        TileSet load(const std::string& name, AssetRegistry& registry) override;
-    };
+    namespace assets {
+        class TileSet;
+    }
+    class AssetRegistry;
+
+    TileSet loadTileSet(const assets::TileSet* tileSetDef, AssetRegistry& registry);
 
 
 }

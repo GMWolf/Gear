@@ -1,0 +1,11 @@
+namespace gear.assets;
+
+table TileSet {
+    texture: string;
+    tileWidth: short;
+    tileHeight: short;
+    tileCount: short;
+    columns: short;
+}
+
+root_type TileSet;

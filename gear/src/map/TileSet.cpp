@@ -5,7 +5,10 @@
 #include <gear/map/TileSet.h>
 #include <tinyxml2.h>
 #include <filesystem>
+#include <gear/AssetManager.h>
+#include <generated/tileset_generated.h>
 
+/*
 gear::TileSet gear::TileSetLoader::load(const std::string &fileName, AssetRegistry& registry) {
 
     using namespace tinyxml2;
@@ -25,8 +28,7 @@ gear::TileSet gear::TileSetLoader::load(const std::string &fileName, AssetRegist
     auto imageSource = xImage->Attribute("source");
     auto imagePath = relPath / imageSource;
 
-    registry.load<Texture>(imagePath.string());
-    AssetReference texture = registry.get<Texture>(imagePath.string());
+    AssetReference texture = registry.getTexture(imagePath.string());
 
     TileSet ts{
         xTileset->Attribute("name"),
@@ -48,7 +50,7 @@ gear::TileSet gear::TileSetLoader::load(const std::string &fileName, AssetRegist
     return ts;
 }
 
-
+*/
 glm::vec4 gear::TileSet::getTileUVs(int tileIndex, bool hflip, bool vflip, bool dflip) const{
     auto tileX = (tileIndex - 1) % columnCount;
     auto tileY = (tileIndex - 1) / columnCount;
@@ -72,4 +74,12 @@ glm::vec4 gear::TileSet::getTileUVs(int tileIndex, bool hflip, bool vflip, bool 
     }
 
     return uvs;
+}
+
+
+gear::TileSet loadTileSet(const gear::assets::TileSet* tileSetDef, gear::AssetRegistry& registry) {
+
+
+
+
 }
