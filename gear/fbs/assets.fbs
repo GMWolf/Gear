@@ -6,6 +6,10 @@ include "map.fbs";
 
 namespace gear.assets;
 
+table NestedBundle {
+    bundle: [ubyte] (nested_flatbuffer: "Bundle");
+}
+
 union Asset {
     texture: string,
     Sprite,
@@ -13,6 +17,7 @@ union Asset {
     Shader,
     TileSet,
     Map,
+    NestedBundle,
 }
 
 table AssetEntry {

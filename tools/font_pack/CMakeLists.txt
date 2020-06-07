@@ -12,4 +12,5 @@ function(add_font input)
     )
 
     set(ADD_FONT_OUT_FILES ${input}.bin ${input}.png PARENT_SCOPE)
+    set(ADD_FONT_BUNDLES ${input}.bin PARENT_SCOPE)
 endfunction()

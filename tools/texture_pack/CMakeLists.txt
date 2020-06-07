@@ -12,6 +12,7 @@ function(add_atlas input)
     )
 
     set(ADD_ATLAS_OUT_FILES ${input}.bin ${input}.png PARENT_SCOPE)
+    set(ADD_ATLAS_BUNDLES ${input}.bin PARENT_SCOPE)
 endfunction()
 
 

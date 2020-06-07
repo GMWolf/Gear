@@ -13,18 +13,9 @@
 #include <gear/map/TileMap.h>
 #include <gear/map/Map.h>
 
-void gear::AssetRegistry::loadBundle(const std::string & fileName) {
 
-    std::ifstream in(fileName, std::ios::binary);
-    in.seekg(0, std::ios::end);
-    size_t bufferSize = in.tellg();
-    in.seekg(0, std::ios::beg);
-    auto buffer = (char*)malloc(bufferSize);
-    in.read(buffer, bufferSize);
-
-    auto bundleDef = gear::assets::GetBundle(buffer);
-
-    for(auto asset : *bundleDef->assets()) {
+void gear::AssetRegistry::loadBundle(const gear::assets::Bundle *bundle) {
+    for(auto asset : *bundle->assets()) {
         auto name = asset->name()->str();
         switch(asset->asset_type()) {
             case assets::Asset_NONE:
@@ -47,8 +38,26 @@ void gear::AssetRegistry::loadBundle(const std::string & fileName) {
                 break;
             case assets::Asset_Map:
                 break;
+            case assets::Asset_NestedBundle:
+                loadBundle(asset->asset_as_NestedBundle()->bundle_nested_root());
+                break;
         }
     }
+}
+
+
+void gear::AssetRegistry::loadBundle(const std::string & fileName) {
+
+    std::ifstream in(fileName, std::ios::binary);
+    in.seekg(0, std::ios::end);
+    size_t bufferSize = in.tellg();
+    in.seekg(0, std::ios::beg);
+    auto buffer = (char*)malloc(bufferSize);
+    in.read(buffer, bufferSize);
+
+    auto bundle = gear::assets::GetBundle(buffer);
+
+    loadBundle(bundle);
 
     free(buffer);
 }
@@ -101,3 +110,5 @@ gear::AssetReference<gear::TileSet> gear::AssetRegistry::getTileSet(const std::s
 gear::AssetReference<gear::Map> gear::AssetRegistry::getMap(const std::string &map) {
     return gear::AssetReference<gear::Map>();
 }
+
+

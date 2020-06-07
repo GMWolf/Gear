@@ -374,13 +374,7 @@ public:
         di.emplace<gear::ecs::CommandEncoder>(cmdbuff);
         auto& assetManager = di.emplace<gear::AssetRegistry>();
 
-        assetManager.loadBundle("assets/sprites/Sprites.tsx.bin");
-        assetManager.loadBundle("assets/fonts/defaultFont.yaml.bin");
-        assetManager.loadBundle("src/shaders/font.yaml.bin");
-        assetManager.loadBundle("src/shaders/prim.yaml.bin");
-        assetManager.loadBundle("src/shaders/textured.yaml.bin");
-        //assetManager.loadBundle("assets/maps/map1.tmx.bin");
-        //assetManager.load<gear::TileMap>("../../../../examples/shmup/assets/maps/map1.tmx");
+        assetManager.loadBundle("assets.bin");
 
         di.invoke(createStage);
 

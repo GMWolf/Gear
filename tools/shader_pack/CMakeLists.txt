@@ -12,5 +12,6 @@ function(add_shader input)
     )
 
     set(ADD_SHADER_OUT_FILES ${input}.bin PARENT_SCOPE)
+    set(ADD_SHADER_BUNDLES ${input}.bin PARENT_SCOPE)
 endfunction()
 

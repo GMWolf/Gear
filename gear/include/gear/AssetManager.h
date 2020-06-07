@@ -64,6 +64,9 @@ namespace gear {
     class Sprite;
     class TileSet;
     class Map;
+    namespace assets{
+        class Bundle;
+    }
 
     class AssetRegistry {
     public:
@@ -79,6 +82,7 @@ namespace gear {
         AssetReference<Map> getMap(const std::string& map);
 
         void loadBundle(const std::string& name);
+        void loadBundle(const assets::Bundle* bundle);
     private:
         std::unordered_map<std::string, std::shared_ptr<AssetEntry<Texture>>> textures;
         std::unordered_map<std::string, std::shared_ptr<AssetEntry<Sprite>>> sprites;
