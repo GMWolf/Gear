@@ -20,12 +20,24 @@ namespace gear::ecs {
         return nullptr;
     }
 
-    bool CommandEncoder::writeComponent(ComponentId id, void *cptr) {
+    bool CommandEncoder::writeComponentMove(ComponentId id, void *cptr) {
         if (!write(id))
             return false;
 
         if (void* p = allocate(ComponentInfo::component[id].size, ComponentInfo::component[id].align)) {
-            ComponentInfo::component[id].functions.emplace(p, cptr);
+            ComponentInfo::component[id].functions.emplaceMove(p, cptr);
+            return true;
+        }
+
+        return false;
+    }
+
+    bool CommandEncoder::writeComponentCopy(ComponentId id, const void *cptr) {
+        if (!write(id))
+            return false;
+
+        if (void* p = allocate(ComponentInfo::component[id].size, ComponentInfo::component[id].align)) {
+            ComponentInfo::component[id].functions.emplaceCopy(p, cptr);
             return true;
         }
 

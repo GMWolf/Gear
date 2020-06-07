@@ -40,8 +40,6 @@ namespace gear::ecs {
         template<class T>
         bool write(const T& t);
 
-        bool writeComponent(ComponentId id, void *ptr);
-
     public:
         explicit CommandEncoder(CommandBuffer &cmd) : cmd(cmd), head(cmd.buffer), space(cmd.bufferSize) {};
 
@@ -53,7 +51,53 @@ namespace gear::ecs {
         void reset();
         template<class T>
         void destroyComponent(const EntityRef& entity);
+
+        bool writeComponentMove(ComponentId id, void *cptr);
+        bool writeComponentCopy(ComponentId id, const void *cptr);
     };
+
+    template<class T>
+    struct ComponentProvider {
+        static void writeComponents(T& t, CommandEncoder& encoder);
+        static Archetype archetype(const T& t);
+    };
+
+    template<class T>
+    Archetype ComponentProvider<T>::archetype(const T& t) {
+        return Archetype::create<T>();
+    }
+
+    template<class T>
+    void ComponentProvider<T>::writeComponents(T& t, CommandEncoder& encoder){
+        encoder.writeComponentMove(Component<T>::ID(), &t);
+    }
+
+    template<class T>
+    struct CopyProvider {
+            explicit CopyProvider(T& t);
+            const T& t;
+    };
+
+    template<class T>
+    CopyProvider<T>::CopyProvider(T &t) : t(t){
+    }
+
+    template<class T>
+    struct ComponentProvider<CopyProvider<T>> {
+        static void writeComponents(CopyProvider<T>& cpy, CommandEncoder& encoder);
+        static Archetype archetype(const CopyProvider<T>& cpy);
+    };
+
+
+    template<class T>
+    Archetype ComponentProvider<CopyProvider<T>>::archetype(const CopyProvider<T>& cpy) {
+        return Archetype::create<T>();
+    }
+
+    template<class T>
+    void ComponentProvider<CopyProvider<T>>::writeComponents(CopyProvider<T>& cpy, CommandEncoder& encoder){
+        encoder.writeComponentCopy(Component<T>::ID(), &cpy.t);
+    }
 
     template<class T>
     T *CommandEncoder::allocate() {
@@ -73,8 +117,8 @@ namespace gear::ecs {
     template<class... T>
     void CommandEncoder::createEntity(T &&... t) {
         write(CommandType::CreateEntity);
-        write(Archetype::create<std::remove_reference_t<T>...>());
-        (writeComponent(Component<std::remove_reference_t<T>>::ID(), &t), ...);
+        write((ComponentProvider<std::remove_reference_t<T>>::archetype(t) | ...));
+        (ComponentProvider<std::remove_reference_t<T>>::writeComponents(t, *this), ...);
         cmd.commandCount++;
     }
 
@@ -82,7 +126,7 @@ namespace gear::ecs {
     void CommandEncoder::createComponent(const EntityRef &entity, T&& t) {
         write(CommandType::CreateComponent);
         write(entity);
-        writeComponent(Component<std::remove_reference_t<T>>::ID(), &t);
+        writeComponentMove(Component<std::remove_reference_t<T>>::ID(), &t);
         cmd.commandCount++;
     }
 

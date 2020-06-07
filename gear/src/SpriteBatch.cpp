@@ -72,6 +72,7 @@ gear::SpriteBatch::SpriteBatch(size_t size) : batchSize(size) {
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
+
     fillElementBuffer();
 
     nulltex = std::make_unique<Texture>(glm::vec4{1, 0, 1, 1});
@@ -116,7 +117,6 @@ void gear::SpriteBatch::draw(const Texture& tex, glm::vec2 pos, glm::vec2 size, 
 void gear::SpriteBatch::draw(const Texture& tex, const TexRegion& texRegion, glm::vec2 pos, glm::vec2 size) {
     draw(tex, pos, size, texRegion.uvs);
 }
-
 
 void gear::SpriteBatch::draw(const gear::Sprite &sprite, glm::vec2 pos, glm::vec2 size) {
 

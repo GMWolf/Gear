@@ -78,7 +78,7 @@ namespace gear::ecs {
     }
 
     void Registry::emplaceComponent(Entity *entity, ComponentId componentId, void * componentPtr) {
-        ComponentInfo::component[componentId].functions.emplace(entity->chunk->get(componentId, entity->index), componentPtr);
+        ComponentInfo::component[componentId].functions.emplaceMove(entity->chunk->get(componentId, entity->index), componentPtr);
     }
 
 
@@ -140,7 +140,7 @@ namespace gear::ecs {
                 if (sharedArchetype[i]) {
                     void *from = chunkFrom->get(i, indexFrom);
                     void *to = newChunk->get(i, eid);
-                    ComponentInfo::component[i].functions.emplace(to, from);
+                    ComponentInfo::component[i].functions.emplaceMove(to, from);
                 }
             }
 

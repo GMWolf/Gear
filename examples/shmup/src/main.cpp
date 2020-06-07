@@ -68,7 +68,7 @@ static void createStage(gear::AssetRegistry& assets, gear::ecs::CommandEncoder& 
         gear::Sprite spr = *assets.getSprite("ship1");
         for (int i = 0; i < 5; i++) {
 
-            cmd.createEntity(gear::Sprite(spr),
+            cmd.createEntity(gear::ecs::CopyProvider{spr},
                              gear::Transform{{480 * i / 5, 600}},
                              *spr.mask,
                              Enemy{},
@@ -267,15 +267,33 @@ static void processAnimation(gear::ecs::Registry& ecs, gear::ecs::CommandEncoder
     }
 }
 
+
+struct EnemyProvider {
+    gear::Sprite spr;
+};
+
+namespace gear::ecs {
+    template<>
+    struct ComponentProvider<EnemyProvider> {
+        static void writeComponents(EnemyProvider& t, CommandEncoder& encoder) {
+            Enemy e;
+            gear::Transform transform{{480.0f * (rand()/(float)RAND_MAX), 720+t.spr.size.y}};
+            Velocity v{{0, -1.5 - 0.5*(rand() / (float)RAND_MAX)}};
+            encoder.writeComponentMove(Component<Enemy>::ID(), &e);
+            encoder.writeComponentMove(Component<Transform>::ID(), &transform);
+            encoder.writeComponentMove(Component<CollisionShape>::ID(), &*t.spr.mask);
+            encoder.writeComponentMove(Component<Sprite>::ID(), &t.spr);
+            encoder.writeComponentMove(Component<Velocity>::ID(), &v);
+        }
+        static Archetype archetype(const EnemyProvider& t) {
+            return Archetype::create<Enemy, Transform, Sprite, CollisionShape, Velocity>();
+        }
+    };
+}
+
 static void spawnEnemy(gear::AssetRegistry& assets, gear::ecs::CommandEncoder& cmd) {
     gear::Sprite spr = *assets.getSprite("ship1");
-    cmd.createEntity(spr,
-                     gear::Transform{{480.0f * (rand()/(float)RAND_MAX), 720+spr.size.y}},
-                     *spr.mask,
-                     Enemy{},
-                 Velocity{{0, -1.5 - 0.5*(rand() / (float)RAND_MAX)}}
-    );
-
+    cmd.createEntity(EnemyProvider{spr} );
 }
 
 void render(gear::SpriteBatch& batch, gear::AssetRegistry& assets, gear::ecs::Registry& ecs) {
@@ -417,8 +435,6 @@ private:
 };
 
 int main() {
-
-    std::cout << " yo! " << std::endl;
 
     gear::AppConfig config {
         480, 720,

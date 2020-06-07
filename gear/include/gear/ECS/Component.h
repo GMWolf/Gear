@@ -21,7 +21,9 @@ namespace gear::ecs {
         const char* debugName;
 
         struct {
-            void (*emplace)(void* ptr, void* from);
+            void (*emplaceCopy)(void* ptr, const void* from);
+            void (*emplaceMove)(void* ptr, void* from);
+            void (*copy)(void* from, void* to);
             void (*destroy)(void* ptr);
             void (*move)(void* from, void* to);
         } functions;
@@ -35,9 +37,11 @@ namespace gear::ecs {
         static ComponentId ID();
 
         struct Functions {
-            static void emplace(void* ptr, void* from);
+            static void emplaceCopy(void* ptr, const void* from);
+            static void emplaceMove(void* ptr, void* from);
             static void destroy(void* ptr);
             static void move(void* from, void* to);
+            static void copy(void* from, void* to);
         };
 
     private:
@@ -52,7 +56,8 @@ namespace gear::ecs {
         i.id = nextComponentId++;
         assert(i.id < MaxComponents);
         i.debugName = typeid(T).name();
-        i.functions.emplace = &Functions::emplace;
+        i.functions.emplaceCopy = &Functions::emplaceCopy;
+        i.functions.emplaceMove = &Functions::emplaceMove;
         i.functions.destroy = &Functions::destroy;
         i.functions.move = &Functions::move;
 
@@ -73,9 +78,15 @@ namespace gear::ecs {
     }
 
     template<class T>
-    void Component<T>::Functions::emplace(void *ptr, void *from) {
+    void Component<T>::Functions::emplaceMove(void *ptr, void *from) {
         T& t = *static_cast<T*>(from);
         new (ptr) T(std::move(t));
+    }
+
+    template<class T>
+    void Component<T>::Functions::emplaceCopy(void *ptr, const void *from) {
+        const T& t = *static_cast<const T*>(from);
+        new (ptr) T(t);
     }
 
     template<class T>
@@ -91,6 +102,12 @@ namespace gear::ecs {
         tTo = std::move(tFrom);
     }
 
+    template<class T>
+    void Component<T>::Functions::copy(void *from, void *to) {
+        T& tFrom = *static_cast<T*>(from);
+        T& tTo = *static_cast<T*>(to);
+        tTo = tFrom;
+    }
 
 
 }
