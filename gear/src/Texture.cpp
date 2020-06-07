@@ -3,9 +3,9 @@
 //
 
 #include <gear/Texture.h>
-#include <stb_image.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <generated/sprite_generated.h>
+#include <generated/texture_generated.h>
 
 gear::Texture::Texture(gear::Texture && o) noexcept : size(o.size), tex(o.tex) {
     o.size = {0,0};
@@ -45,22 +45,18 @@ gear::Texture::Texture(GLuint tex, glm::ivec2 size) : tex(tex), size(size){
 }
 
 
-gear::Texture gear::TextureLoader::load(const std::string &name, gear::AssetRegistry &registry) {
-    int x, y, n;
-    stbi_set_flip_vertically_on_load(1);
-    unsigned char* data = stbi_load(name.c_str(), &x, &y, &n, 4);
+gear::Texture gear::TextureLoader::load(const gear::assets::Texture* texDef, gear::AssetRegistry &registry) {
     GLuint tex;
     glGenTextures(1, &tex);
     glBindTexture(GL_TEXTURE_2D, tex);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 1);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, x, y, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, texDef->width(), texDef->height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, texDef->data()->data());
 
     glBindTexture(GL_TEXTURE_2D, 0);
-    stbi_image_free(data);
 
-    return Texture(tex, {x, y});
+    return Texture(tex, {texDef->width(), texDef->height()});
 }
 
 gear::Sprite gear::SpriteLoader::load(const gear::assets::Sprite* spriteDef, gear::AssetRegistry &registry) {

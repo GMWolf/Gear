@@ -1,0 +1,8 @@
+namespace gear.assets;
+table Texture {
+    width: short;
+    height: short;
+    data: [uint];
+}
+
+root_type Texture;

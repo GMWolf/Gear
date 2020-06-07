@@ -68,17 +68,17 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    auto* bitmap = static_cast<unsigned char*>(calloc(bitmapWidth * bitmapHeight, sizeof(unsigned char)));
+    std::vector<uint32_t> bitmap(bitmapWidth * bitmapHeight, 0);
 
     stbtt_packedchar pdata[256];
     memset(pdata, 0, sizeof(pdata));
     stbtt_pack_context spc;
-    stbtt_PackBegin(&spc, bitmap, bitmapWidth, bitmapHeight, 0, 1, nullptr);
+    stbtt_PackBegin(&spc, (unsigned char*)bitmap.data(), bitmapWidth, bitmapHeight, 0, 1, nullptr);
     stbtt_PackSetOversampling(&spc, 1, 1);
     stbtt_PackFontRange(&spc, ttf_data, 0, lineHeight, rangeStart, rangeCount, pdata);
     stbtt_PackEnd(&spc);
 
-    stbi_write_png(bitmapOut.c_str(), bitmapWidth, bitmapHeight, 1, bitmap, 0);
+    stbi_write_png(bitmapOut.c_str(), bitmapWidth, bitmapHeight, 1, bitmap.data(), 0);
 
     flatbuffers::FlatBufferBuilder builder(2048);
     {
@@ -99,13 +99,13 @@ int main(int argc, char* argv[]) {
             glyphs.push_back(glyph);
         }
         auto bitmapPathRelative = fs::relative(bitmapOut, fs::path(binOut).parent_path());
-        auto tex = builder.CreateString(bitmapOut.c_str());
+        auto tex = gear::assets::CreateTextureDirect(builder, bitmapWidth, bitmapHeight, &bitmap);
         auto texName = name + "_texture";
 
         auto font = gear::assets::CreateFontDirect(builder, texName.c_str(), rangeStart, rangeCount, &glyphs);
 
         std::vector<flatbuffers::Offset<gear::assets::AssetEntry>> entries;
-        entries.push_back(gear::assets::CreateAssetEntryDirect(builder, texName.c_str(), gear::assets::Asset_texture, tex.Union()));
+        entries.push_back(gear::assets::CreateAssetEntryDirect(builder, texName.c_str(), gear::assets::Asset_Texture, tex.Union()));
         entries.push_back(gear::assets::CreateAssetEntryDirect(builder, name.c_str(), gear::assets::Asset_Font, font.Union()));
         auto bundle = gear::assets::CreateBundleDirect(builder, &entries);
 

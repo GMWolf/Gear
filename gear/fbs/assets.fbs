@@ -3,6 +3,7 @@ include "font.fbs";
 include "shader.fbs";
 include "tileset.fbs";
 include "map.fbs";
+include "texture.fbs";
 
 namespace gear.assets;
 
@@ -10,8 +11,9 @@ table NestedBundle {
     bundle: [ubyte] (nested_flatbuffer: "Bundle");
 }
 
+
 union Asset {
-    texture: string,
+    Texture,
     Sprite,
     Font,
     Shader,

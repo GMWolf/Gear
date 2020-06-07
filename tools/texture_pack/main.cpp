@@ -92,9 +92,8 @@ int main(int argc, char* argv[]) {
         }
 
         // Create texture
+        std::vector<uint32_t> textureData(pageWidth * pageHeight, 0);
         {
-            std::unique_ptr<uint32_t[]> textureData = std::make_unique<uint32_t[]>(pageWidth * pageHeight);
-
             auto reldir = fs::path(inputPath).parent_path();
             for (auto xTile = xTileSet->FirstChildElement("tile"); xTile;
                  xTile = xTile->NextSiblingElement("tile")) {
@@ -119,10 +118,10 @@ int main(int argc, char* argv[]) {
             }
 
             std::ofstream ofs(outAtlasName+".raw" , std::ios::out | std::ios::binary);
-            ofs.write((char*)textureData.get(), pageWidth * pageHeight * 4);
+            ofs.write((char*)textureData.data(), pageWidth * pageHeight * 4);
 
             stbi_flip_vertically_on_write(1);
-            stbi_write_png(outTexName.c_str(), pageWidth, pageHeight, 4, textureData.get(), pageWidth * sizeof(uint32_t));
+            stbi_write_png(outTexName.c_str(), pageWidth, pageHeight, 4, textureData.data(), pageWidth * sizeof(uint32_t));
         }
 
         // Write binary output
@@ -134,10 +133,9 @@ int main(int argc, char* argv[]) {
             auto texPathRel = fs::relative(outTexName, fs::path(outAtlasName).parent_path());
             auto texName = std::string(tilesetName) + "_texture";
             auto texNameOffset = builder.CreateString(texName);
-            auto texoffset = builder.CreateString((outTexName).c_str());
+            auto texoffset = gear::assets::CreateTextureDirect(builder, pageWidth, pageHeight, &textureData);
 
-            entries.push_back(gear::assets::CreateAssetEntryDirect(builder, texName.c_str(), gear::assets::Asset_texture, texoffset.Union()));
-
+            entries.push_back(gear::assets::CreateAssetEntryDirect(builder, texName.c_str(), gear::assets::Asset_Texture, texoffset.Union()));
 
             for (auto xTile = xTileSet->FirstChildElement("tile"); xTile;
                  xTile = xTile->NextSiblingElement("tile")) {

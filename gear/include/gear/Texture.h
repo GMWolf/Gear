@@ -51,11 +51,12 @@ namespace gear {
 
     namespace assets {
         class Sprite;
+        class Texture;
     }
 
     class TextureLoader {
     public:
-        static Texture load(const std::string& name, AssetRegistry& registry);
+        static Texture load(const assets::Texture* texDef, AssetRegistry& registry);
     };
 
     class SpriteLoader {

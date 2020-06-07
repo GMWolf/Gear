@@ -3,10 +3,8 @@
 //
 
 #include <gear/map/TileMap.h>
-#include <tinyxml2.h>
 #include <tuple>
 #include <algorithm>
-#include <base64.h>
 #include <filesystem>
 
 const unsigned FLIPPED_HORIZONTALLY_FLAG = 0x80000000;

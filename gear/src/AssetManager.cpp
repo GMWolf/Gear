@@ -20,9 +20,8 @@ void gear::AssetRegistry::loadBundle(const gear::assets::Bundle *bundle) {
         switch(asset->asset_type()) {
             case assets::Asset_NONE:
                 break;
-            case assets::Asset_texture: {
-                auto path = asset->asset_as_texture()->str();
-                getTexture(name).ptr->store.emplace(TextureLoader::load(path, *this));
+            case assets::Asset_Texture: {
+                getTexture(name).ptr->store.emplace(TextureLoader::load(asset->asset_as_Texture(), *this));
             } break;
             case assets::Asset_Sprite: {
                 getSprite(name).ptr->store.emplace(SpriteLoader::load(asset->asset_as_Sprite(), *this));

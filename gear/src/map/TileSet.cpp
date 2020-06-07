@@ -3,7 +3,6 @@
 //
 
 #include <gear/map/TileSet.h>
-#include <tinyxml2.h>
 #include <filesystem>
 #include <gear/AssetManager.h>
 #include <generated/tileset_generated.h>
