@@ -5,8 +5,6 @@
 #ifndef GEAR_UTIL_H
 #define GEAR_UTIL_H
 
-#include <gear/ECS/Core.h>
-
 namespace gear {
 
     template<class T>

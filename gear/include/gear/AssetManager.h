@@ -17,8 +17,6 @@
 
 namespace gear {
 
-
-
     template<class T>
     struct AssetEntry {
         std::optional<const T> store {};
@@ -54,8 +52,6 @@ namespace gear {
         }
 
     };
-
-
 
     class Texture;
     class TextureAtlas;

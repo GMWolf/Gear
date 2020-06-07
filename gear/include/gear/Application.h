@@ -6,7 +6,6 @@
 #define GEAR_APPLICATION_H
 
 #include <string>
-#include "ApplicationAdapter.h"
 #include "KeyboardKeys.h"
 
 struct GLFWwindow;
@@ -16,6 +15,8 @@ namespace gear {
         int width = 640, height = 480;
         std::string title = "";
     };
+
+    class ApplicationAdapter;
 
     class Application {
     public:

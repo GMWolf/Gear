@@ -6,10 +6,9 @@
 #define GEAR_SPRITEBATCH_H
 
 #include <glad/glad.h>
-#include <glm/glm.hpp>
 #include <memory>
-#include "BitmapFont.h"
-
+#include <glm/vec2.hpp>
+#include <glm/vec4.hpp>
 
 namespace gear {
 
@@ -18,12 +17,6 @@ namespace gear {
     class Sprite;
 
     class SpriteBatch {
-
-        struct Vertex {
-            glm::vec2 pos;
-            glm::vec2 uv;
-        };
-
 
     public:
         explicit SpriteBatch(size_t size);

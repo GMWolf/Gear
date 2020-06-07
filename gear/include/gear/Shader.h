@@ -7,7 +7,6 @@
 
 #include <glad/glad.h>
 #include <string>
-#include "AssetManager.h"
 
 namespace gear {
 
@@ -34,6 +33,7 @@ namespace gear {
         class Shader;
     }
 
+    class AssetRegistry;
     class ShaderLoader {
     public:
         static Shader load(const assets::Shader* shaderDef, AssetRegistry& registry);

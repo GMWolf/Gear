@@ -5,6 +5,13 @@
 #include <gear/SpriteBatch.h>
 #include <gear/Texture.h>
 
+#include <glm/vec2.hpp>
+
+struct Vertex {
+    glm::vec2 pos;
+    glm::vec2 uv;
+};
+
 void gear::SpriteBatch::flush() {
 
     if (count > 0) {

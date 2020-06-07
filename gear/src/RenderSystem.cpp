@@ -10,6 +10,9 @@
 #include <gear/SpriteBatch.h>
 #include <gear/PrimDraw.h>
 #include <gear/Shader.h>
+#include <gear/CollisionShape.h>
+#include <gear/Texture.h>
+
 
 void gear::renderSprites(gear::ecs::Registry &ecs, gear::SpriteBatch &batch, const gear::Shader &shader) {
 

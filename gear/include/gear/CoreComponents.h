@@ -6,9 +6,12 @@
 #define GEAR_CORECOMPONENTS_H
 
 #include <glm/vec2.hpp>
-#include "gear/ECS/Core.h"
 
 namespace gear {
+
+    namespace ecs {
+        class Entity;
+    }
 
     struct Transform {
         glm::vec2 pos;

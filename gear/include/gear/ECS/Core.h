@@ -18,7 +18,6 @@
 #include "Config.h"
 #include "Component.h"
 #include "Archetype.h"
-#include <gear/Allocators.h>
 #include <gear/Util.h>
 #include <array>
 
