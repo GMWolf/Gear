@@ -20,6 +20,7 @@ targets.subfile("tools/map_pack/map_pack.lua");
 targets.subfile("tools/tileset_pack/tileset_pack.lua")
 
 targets.subfile("examples/shmup/shmup.lua");
+targets.subfile("examples/breakout/breakout.lua");
 
 ninja.close();
 

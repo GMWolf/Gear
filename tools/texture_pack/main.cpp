@@ -134,7 +134,7 @@ int main(int argc, char* argv[]) {
             auto texPathRel = fs::relative(outTexName, fs::path(outAtlasName).parent_path());
             auto texName = std::string(tilesetName) + "_texture";
             auto texNameOffset = builder.CreateString(texName);
-            auto texoffset = builder.CreateString(texPathRel.c_str());
+            auto texoffset = builder.CreateString((outTexName).c_str());
 
             entries.push_back(gear::assets::CreateAssetEntryDirect(builder, texName.c_str(), gear::assets::Asset_texture, texoffset.Union()));
 

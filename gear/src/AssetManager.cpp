@@ -43,7 +43,7 @@ void gear::AssetRegistry::loadBundle(const std::string & fileName) {
                 getShader(name).ptr->store.emplace(ShaderLoader::load(asset->asset_as_Shader(), *this));
             } break;
             case assets::Asset_TileSet:
-                getTileSet(name).ptr->store.emplace()
+                //getTileSet(name).ptr->store.emplace()
                 break;
             case assets::Asset_Map:
                 break;

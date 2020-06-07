@@ -8,6 +8,7 @@
 #include <gear/AssetManager.h>
 #include <generated/tileset_generated.h>
 
+/*
 gear::TileSet gear::TileSetLoader::load(const std::string &fileName, AssetRegistry& registry) {
 
     using namespace tinyxml2;
@@ -49,7 +50,7 @@ gear::TileSet gear::TileSetLoader::load(const std::string &fileName, AssetRegist
     return ts;
 }
 
-
+*/
 glm::vec4 gear::TileSet::getTileUVs(int tileIndex, bool hflip, bool vflip, bool dflip) const{
     auto tileX = (tileIndex - 1) % columnCount;
     auto tileY = (tileIndex - 1) / columnCount;

@@ -29,6 +29,8 @@ namespace gear {
         std::unique_ptr<Tile[]> tileData;
         int width;
         int height;
+        int tileWidth;
+        int tileHeight;
     };
 
 }

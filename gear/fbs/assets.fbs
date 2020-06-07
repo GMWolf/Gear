@@ -6,7 +6,6 @@ include "map.fbs";
 
 namespace gear.assets;
 
-
 union Asset {
     texture: string,
     Sprite,
