@@ -5,15 +5,18 @@
 #ifndef TBTG_RENDERSYSTEM_H
 #define TBTG_RENDERSYSTEM_H
 
-#include <gear/ECS/ECS.h>
-#include <gear/SpriteBatch.h>
-#include <gear/Shader.h>
-#include <gear/View.h>
-#include <gear/CoreComponents.h>
-
 namespace gear {
 
+    class SpriteBatch;
+    class PrimDraw;
+    class Shader;
+    namespace ecs {
+        class Registry;
+    }
+
     void renderSprites(gear::ecs::Registry &ecs, gear::SpriteBatch &batch, const gear::Shader &shader);
+
+    void renderDebugShapes(gear::ecs::Registry &evs, gear::PrimDraw& primDraw, const gear::Shader &shader);
 
 }
 #endif //TBTG_RENDERSYSTEM_H

@@ -15,8 +15,10 @@ void gear::SpriteBatch::flush() {
         glUnmapBuffer(GL_ARRAY_BUFFER);
         map = nullptr;
 
+        //Set tex
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, batchTex);
+
         //Issue draw call
         glBindVertexArray(vao);
         glDrawElements(GL_TRIANGLES, count * 6, GL_UNSIGNED_SHORT, (void*)(first * 6 * sizeof(GLushort)));

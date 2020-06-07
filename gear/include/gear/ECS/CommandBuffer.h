@@ -75,12 +75,12 @@ namespace gear::ecs {
 
     template<class T>
     struct CopyProvider {
-            explicit CopyProvider(T& t);
+            explicit CopyProvider(const T& t);
             const T& t;
     };
 
     template<class T>
-    CopyProvider<T>::CopyProvider(T &t) : t(t){
+    CopyProvider<T>::CopyProvider(const T &t) : t(t){
     }
 
     template<class T>
@@ -90,13 +90,13 @@ namespace gear::ecs {
     };
 
     template<class T>
-    Archetype ComponentProvider<CopyProvider<T>>::archetype(const CopyProvider<T>& cpy) {
-        return Archetype::create<T>();
+    void ComponentProvider<CopyProvider<T>>::writeComponents(CopyProvider<T> &cpy, CommandEncoder &encoder) {
+        encoder.writeComponentCopy(Component<T>::ID(), &cpy.t);
     }
 
     template<class T>
-    void ComponentProvider<CopyProvider<T>>::writeComponents(CopyProvider<T>& cpy, CommandEncoder& encoder){
-        encoder.writeComponentCopy(Component<T>::ID(), &cpy.t);
+    Archetype ComponentProvider<CopyProvider<T>>::archetype(const CopyProvider<T>& cpy) {
+        return Archetype::create<T>();
     }
 
     template<class T>
@@ -119,8 +119,8 @@ namespace gear::ecs {
         Entity* entity = cmd.entityPool.getFreeEntity();
         write(CommandType::CreateEntity);
         write(entity);
-        write((ComponentProvider<std::remove_reference_t<T>>::archetype(t) | ...));
-        (ComponentProvider<std::remove_reference_t<T>>::writeComponents(t, *this), ...);
+        write((ComponentProvider<std::remove_reference_t<std::remove_const_t<T>>>::archetype(t) | ...));
+        (ComponentProvider<std::remove_reference_t<std::remove_const_t<T>>>::writeComponents(t, *this), ...);
         cmd.commandCount++;
         return EntityRef{
             entity,
