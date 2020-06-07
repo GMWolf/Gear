@@ -379,7 +379,7 @@ public:
         assetManager.loadBundle("src/shaders/font.yaml.bin");
         assetManager.loadBundle("src/shaders/prim.yaml.bin");
         assetManager.loadBundle("src/shaders/textured.yaml.bin");
-        assetManager.loadBundle("assets/maps/map1.tmx.bin");
+        //assetManager.loadBundle("assets/maps/map1.tmx.bin");
         //assetManager.load<gear::TileMap>("../../../../examples/shmup/assets/maps/map1.tmx");
 
         di.invoke(createStage);
