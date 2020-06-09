@@ -15,6 +15,7 @@
 #include <stb_rect_pack.h>
 #include <stb_image.h>
 #include <stb_image_write.h>
+#include <lz4hc.h>
 
 namespace fs = std::filesystem;
 namespace xml = tinyxml2;
@@ -92,8 +93,9 @@ int main(int argc, char* argv[]) {
         }
 
         // Create texture
-        std::vector<uint32_t> textureData(pageWidth * pageHeight, 0);
+        std::vector<uint8_t> compressedData(LZ4_compressBound(pageWidth * pageHeight * 4), 0);
         {
+            std::vector<uint32_t> textureData(pageWidth * pageHeight, 0);
             auto reldir = fs::path(inputPath).parent_path();
             for (auto xTile = xTileSet->FirstChildElement("tile"); xTile;
                  xTile = xTile->NextSiblingElement("tile")) {
@@ -117,11 +119,14 @@ int main(int argc, char* argv[]) {
                 stbi_image_free(imageData);
             }
 
-            std::ofstream ofs(outAtlasName+".raw" , std::ios::out | std::ios::binary);
-            ofs.write((char*)textureData.data(), pageWidth * pageHeight * 4);
-
+            //Write out png (for debug) data
             stbi_flip_vertically_on_write(1);
             stbi_write_png(outTexName.c_str(), pageWidth, pageHeight, 4, textureData.data(), pageWidth * sizeof(uint32_t));
+
+            //compress data
+            auto compressedSize = LZ4_compress_HC(reinterpret_cast<const char *>(textureData.data()),
+                            reinterpret_cast<char *>(compressedData.data()), textureData.size() * 4, compressedData.size(), LZ4HC_CLEVEL_MAX);
+            compressedData.resize(compressedSize);
         }
 
         // Write binary output
@@ -133,7 +138,7 @@ int main(int argc, char* argv[]) {
             auto texPathRel = fs::relative(outTexName, fs::path(outAtlasName).parent_path());
             auto texName = std::string(tilesetName) + "_texture";
             auto texNameOffset = builder.CreateString(texName);
-            auto texoffset = gear::assets::CreateTextureDirect(builder, pageWidth, pageHeight, &textureData);
+            auto texoffset = gear::assets::CreateTextureDirect(builder, pageWidth, pageHeight, gear::assets::PixelFormat::PixelFormat_RGBA8, &compressedData);
 
             entries.push_back(gear::assets::CreateAssetEntryDirect(builder, texName.c_str(), gear::assets::Asset_Texture, texoffset.Union()));
 

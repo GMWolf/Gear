@@ -1,5 +1,5 @@
 add_executable(texture_packer main.cpp)
-target_link_libraries(texture_packer PUBLIC tinyxml2 stb yaml-cpp bfg_lyra)
+target_link_libraries(texture_packer PUBLIC tinyxml2 stb yaml-cpp bfg_lyra lz4_static)
 target_include_directories(texture_packer PUBLIC ../..)
 
 

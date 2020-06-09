@@ -1,8 +1,16 @@
 namespace gear.assets;
+
+enum PixelFormat : ubyte{
+    R8,
+    RGB8,
+    RGBA8,
+}
+
 table Texture {
     width: short;
     height: short;
-    data: [uint];
+    format: PixelFormat;
+    data: [ubyte];
 }
 
 root_type Texture;

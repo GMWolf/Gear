@@ -78,7 +78,4 @@ glm::vec4 gear::TileSet::getTileUVs(int tileIndex, bool hflip, bool vflip, bool 
 
 gear::TileSet loadTileSet(const gear::assets::TileSet* tileSetDef, gear::AssetRegistry& registry) {
 
-
-
-
 }

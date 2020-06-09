@@ -15,6 +15,7 @@
 #include <filesystem>
 #include <fstream>
 #include <gear/fbs/generated/assets_generated.h>
+#include <lz4hc.h>
 
 namespace fs = std::filesystem;
 
@@ -68,17 +69,41 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    std::vector<uint32_t> bitmap(bitmapWidth * bitmapHeight, 0);
 
+    std::vector<uint8_t> compressedBitmap(LZ4_compressBound(bitmapWidth * bitmapHeight));
     stbtt_packedchar pdata[256];
-    memset(pdata, 0, sizeof(pdata));
-    stbtt_pack_context spc;
-    stbtt_PackBegin(&spc, (unsigned char*)bitmap.data(), bitmapWidth, bitmapHeight, 0, 1, nullptr);
-    stbtt_PackSetOversampling(&spc, 1, 1);
-    stbtt_PackFontRange(&spc, ttf_data, 0, lineHeight, rangeStart, rangeCount, pdata);
-    stbtt_PackEnd(&spc);
+    {
+        std::vector<unsigned char> bitmap(bitmapWidth * bitmapHeight, 0);
+        memset(pdata, 0, sizeof(pdata));
+        stbtt_pack_context spc;
+        stbtt_PackBegin(&spc, bitmap.data(), bitmapWidth, bitmapHeight, 0, 1, nullptr);
+        stbtt_PackSetOversampling(&spc, 1, 1);
+        stbtt_PackFontRange(&spc, ttf_data, 0, lineHeight, rangeStart, rangeCount, pdata);
+        stbtt_PackEnd(&spc);
 
-    stbi_write_png(bitmapOut.c_str(), bitmapWidth, bitmapHeight, 1, bitmap.data(), 0);
+
+
+        stbi_write_png(bitmapOut.c_str(), bitmapWidth, bitmapHeight, 1, bitmap.data(), 0);
+
+        //flip vertically (for use in opengl)
+        {
+            std::vector<unsigned char> rowBuffer(bitmapWidth);
+
+            for(int i = 0; i < bitmapHeight / 2; i++) {
+                auto row1 = bitmap.data() + (i * bitmapWidth);
+                auto row2 = bitmap.data() + ((bitmapHeight - i) * bitmapWidth);
+                memcpy(rowBuffer.data(), row1, bitmapWidth);
+                memcpy(row1, row2, bitmapWidth);
+                memcpy(row2, rowBuffer.data(), bitmapWidth);
+            }
+        }
+
+        //compress data
+        auto compressedSize = LZ4_compress_HC(reinterpret_cast<const char *>(bitmap.data()),
+                                              reinterpret_cast<char *>(compressedBitmap.data()), bitmap.size(),
+                                              compressedBitmap.size(), LZ4HC_CLEVEL_MAX);
+        compressedBitmap.resize(compressedSize);
+    }
 
     flatbuffers::FlatBufferBuilder builder(2048);
     {
@@ -99,7 +124,7 @@ int main(int argc, char* argv[]) {
             glyphs.push_back(glyph);
         }
         auto bitmapPathRelative = fs::relative(bitmapOut, fs::path(binOut).parent_path());
-        auto tex = gear::assets::CreateTextureDirect(builder, bitmapWidth, bitmapHeight, &bitmap);
+        auto tex = gear::assets::CreateTextureDirect(builder, bitmapWidth, bitmapHeight, gear::assets::PixelFormat::PixelFormat_R8, &compressedBitmap);
         auto texName = name + "_texture";
 
         auto font = gear::assets::CreateFontDirect(builder, texName.c_str(), rangeStart, rangeCount, &glyphs);

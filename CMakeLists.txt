@@ -30,6 +30,8 @@ set(JSON_Install OFF CACHE BOOL "" FORCE)
 set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
 add_subdirectory(deps/json)
 
+add_subdirectory(deps/lz4/contrib/cmake_unofficial)
+
 add_subdirectory(gear)
 
 add_subdirectory(tools)

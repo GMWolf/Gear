@@ -59,4 +59,4 @@ target_sources(gear PRIVATE ${GEAR_ECS_SOURCES})
 
 target_include_directories(gear PUBLIC include fbs)
 
-target_link_libraries(gear PUBLIC glad imgui imgui_glfw imgui_ogl3 glm glfw flatbuffers)
+target_link_libraries(gear PUBLIC glad imgui imgui_glfw imgui_ogl3 glm glfw flatbuffers lz4_static)

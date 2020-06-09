@@ -6,6 +6,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <generated/sprite_generated.h>
 #include <generated/texture_generated.h>
+#include <lz4.h>
 
 gear::Texture::Texture(gear::Texture && o) noexcept : size(o.size), tex(o.tex) {
     o.size = {0,0};
@@ -52,7 +53,32 @@ gear::Texture gear::TextureLoader::load(const gear::assets::Texture* texDef, gea
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 1);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, texDef->width(), texDef->height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, texDef->data()->data());
+
+    std::vector<char> buffer(texDef->width() * texDef->height() * 4);
+    LZ4_decompress_safe(reinterpret_cast<const char *>(texDef->data()->data()), buffer.data(), texDef->data()->size(), buffer.size());
+
+    auto internalFormat = 0;
+    auto format = 0;
+    auto type = 0;
+    switch(texDef->format()) {
+        case assets::PixelFormat_R8:
+            internalFormat = GL_R8;
+            format = GL_RED;
+            type = GL_UNSIGNED_BYTE;
+            break;
+        case assets::PixelFormat_RGB8:
+            internalFormat = GL_RGB8;
+            format = GL_RGB;
+            type = GL_UNSIGNED_BYTE;
+            break;
+        case assets::PixelFormat_RGBA8:
+            internalFormat = GL_RGBA8;
+            format = GL_RGBA;
+            type = GL_UNSIGNED_BYTE;
+            break;
+    }
+
+    glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, texDef->width(), texDef->height(), 0, format, type, buffer.data());
 
     glBindTexture(GL_TEXTURE_2D, 0);
 
