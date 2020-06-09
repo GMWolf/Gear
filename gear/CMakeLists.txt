@@ -1,6 +1,4 @@
 
-
-
 set(GEAR_ECS_SOURCES
         include/gear/ECS/Core.h
         src/ECS/Core.cpp
