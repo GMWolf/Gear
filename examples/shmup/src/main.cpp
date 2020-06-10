@@ -324,7 +324,7 @@ public:
 
         if (--spawnTimer <= 0) {
             spawnEnemy(enemyPrefab, *assets, cmdEncoder);
-            spawnTimer = 20;
+            spawnTimer = 24;
         }
 
         gear::ui::begin();

@@ -5,56 +5,31 @@
 #ifndef GEAR_ASSETMANAGER_H
 #define GEAR_ASSETMANAGER_H
 
-#include <unordered_map>
-#include <memory>
-#include <string>
-#include <typeindex>
-#include <future>
-#include <optional>
-#include <variant>
-#include <any>
 
+#include <memory>
+#include <optional>
+#include <string>
 
 namespace gear {
 
     template<class T>
-    struct AssetEntry {
-        std::optional<const T> store {};
-
-        bool pending() {
-            return !store.has_value();
-        };
-
-        T& get() {
-            return *store; //TODO: deal with pending cast
-        }
-
-    };
-
+    class AssetEntry;
 
     template<class T>
     struct AssetReference {
         std::shared_ptr<AssetEntry<T>> ptr;
 
-        bool pending() {
-            return ptr ? ptr->pending() : false;
-        }
+        bool pending();
 
-        const T& get() const{
-            return ptr->store.value(); //TODO: deal with pending case
-        }
+        const T& get() const;
 
-        const T* operator->() const {
-            return &ptr->store.value();
-        }
-        const T& operator*() const {
-            return ptr->store.value();
-        }
+        const T* operator->() const;
+        const T& operator*() const;
 
     };
 
+
     class Texture;
-    class TextureAtlas;
     class BitmapFont;
     class Shader;
     class Sprite;
@@ -65,27 +40,23 @@ namespace gear {
     }
 
     class AssetRegistry {
+        class Impl;
+        std::unique_ptr<Impl> impl;
     public:
-        AssetRegistry() = default;
+        AssetRegistry();
         AssetRegistry(const AssetRegistry&) = delete;
         AssetRegistry& operator=(const AssetRegistry&) = delete;
+        ~AssetRegistry();
 
         AssetReference<Texture> getTexture(const std::string& name);
         AssetReference<Sprite> getSprite(const std::string& name);
         AssetReference<BitmapFont> getFont(const std::string& name);
         AssetReference<Shader> getShader(const std::string& name);
         AssetReference<TileSet> getTileSet(const std::string& name);
-        AssetReference<Map> getMap(const std::string& map);
+        AssetReference<Map> getMap(const std::string& name);
 
         void loadBundle(const std::string& name);
         void loadBundle(const assets::Bundle* bundle);
-    private:
-        std::unordered_map<std::string, std::shared_ptr<AssetEntry<Texture>>> textures;
-        std::unordered_map<std::string, std::shared_ptr<AssetEntry<Sprite>>> sprites;
-        std::unordered_map<std::string, std::shared_ptr<AssetEntry<BitmapFont>>> fonts;
-        std::unordered_map<std::string, std::shared_ptr<AssetEntry<Shader>>> shaders;
-        std::unordered_map<std::string, std::shared_ptr<AssetEntry<TileSet>>> tileSets;
-        std::unordered_map<std::string, std::shared_ptr<AssetEntry<Map>>> maps;
     };
 
 

@@ -30,7 +30,6 @@ namespace gear {
 
         operator bool();
 
-
         int width, height;
         bool initialized = false;
         GLFWwindow *window{};

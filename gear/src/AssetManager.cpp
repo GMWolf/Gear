@@ -12,7 +12,90 @@
 #include <gear/map/TileSet.h>
 #include <gear/map/TileMap.h>
 #include <gear/map/Map.h>
+#include <unordered_map>
 
+
+template<class T>
+struct gear::AssetEntry {
+    std::optional<const T> store {};
+
+    bool pending();;
+
+    T& get();
+};
+
+template<class T>
+T &gear::AssetEntry<T>::get() {
+    return *store; //TODO: deal with pending cast
+}
+
+template<class T>
+bool gear::AssetEntry<T>::pending() {
+    return !store.has_value();
+}
+
+template<class T>
+bool gear::AssetReference<T>::pending() {
+    return ptr ? ptr->pending() : false;
+}
+
+template<class T>
+const T &gear::AssetReference<T>::get() const {
+    return ptr->store.value(); //TODO: deal with pending case
+}
+
+template<class T>
+const T *gear::AssetReference<T>::operator->() const {
+    return &ptr->store.value();
+}
+
+template<class T>
+const T &gear::AssetReference<T>::operator*() const {
+    return ptr->store.value();
+}
+
+
+
+template class gear::AssetReference<gear::Texture>;
+template class gear::AssetReference<gear::Sprite>;
+template class gear::AssetReference<gear::Shader>;
+template class gear::AssetReference<gear::BitmapFont>;
+template class gear::AssetReference<gear::TileSet>;
+template class gear::AssetReference<gear::TileMap>;
+
+class gear::AssetRegistry::Impl {
+public:
+    template<class T>
+    class Store {
+    public:
+        std::unordered_map<std::string, std::shared_ptr<AssetEntry<T>>> map;
+        gear::AssetReference<T> get(const std::string& s);
+    };
+
+
+    Store<Texture> textures;
+    Store<Sprite> sprites;
+    Store<BitmapFont> fonts;
+    Store<Shader> shaders;
+    Store<TileSet> tileSets;
+    Store<Map> maps;
+};
+
+template<class T>
+gear::AssetReference<T> gear::AssetRegistry::Impl::Store<T>::get(const std::string &s) {
+    auto it = map.find(s);
+    if (it == map.end()) {
+        auto d = std::make_shared<AssetEntry<T>>();
+        it = map.insert({s, d}).first;
+    }
+    return {it->second};
+}
+
+
+gear::AssetRegistry::AssetRegistry() : impl(std::make_unique<Impl>())
+{}
+
+gear::AssetRegistry::~AssetRegistry() = default;
 
 void gear::AssetRegistry::loadBundle(const gear::assets::Bundle *bundle) {
     for(auto asset : *bundle->assets()) {
@@ -62,52 +145,27 @@ void gear::AssetRegistry::loadBundle(const std::string & fileName) {
 }
 
 gear::AssetReference<gear::Texture> gear::AssetRegistry::getTexture(const std::string &name) {
-    auto it = textures.find(name);
-    if (it == textures.end()) {
-        auto d = std::make_shared<AssetEntry<Texture>>();
-        it = textures.insert({name, d}).first;
-    }
-    return {it->second};
+    return impl->textures.get(name);
 }
 
 gear::AssetReference<gear::Sprite> gear::AssetRegistry::getSprite(const std::string &name) {
-    auto it = sprites.find(name);
-    if (it == sprites.end()) {
-        auto d = std::make_shared<AssetEntry<Sprite>>();
-        it = sprites.insert({name, d}).first;
-    }
-    return {it->second};
+    return impl->sprites.get(name);
 }
 
 gear::AssetReference<gear::BitmapFont> gear::AssetRegistry::getFont(const std::string &name) {
-    auto it = fonts.find(name);
-    if (it == fonts.end()) {
-        auto d = std::make_shared<AssetEntry<BitmapFont>>();
-        it = fonts.insert({name, d}).first;
-    }
-    return {it->second};
+    return impl->fonts.get(name);
 }
 
 gear::AssetReference<gear::Shader> gear::AssetRegistry::getShader(const std::string &name) {
-    auto it = shaders.find(name);
-    if (it == shaders.end()) {
-        auto d = std::make_shared<AssetEntry<Shader>>();
-        it = shaders.insert({name, d}).first;
-    }
-    return {it->second};
+    return impl->shaders.get(name);
 }
 
 gear::AssetReference<gear::TileSet> gear::AssetRegistry::getTileSet(const std::string &name) {
-    auto it = tileSets.find(name);
-    if (it == tileSets.end()) {
-        auto d = std::make_shared<AssetEntry<TileSet>>();
-        it = tileSets.insert({name, d}).first;
-    }
-    return {it->second};
+    return impl->tileSets.get(name);
 }
 
-gear::AssetReference<gear::Map> gear::AssetRegistry::getMap(const std::string &map) {
-    return gear::AssetReference<gear::Map>();
+gear::AssetReference<gear::Map> gear::AssetRegistry::getMap(const std::string &name) {
+    return impl->maps.get(name);
 }
 
 
