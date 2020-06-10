@@ -7,12 +7,14 @@
 
 #include <string>
 #include <memory>
-#include "Texture.h"
 #include <glm/vec4.hpp>
+#include <glm/vec2.hpp>
 #include <vector>
 #include "AssetManager.h"
 
 namespace gear {
+
+    class Texture;
 
     class BitmapFont {
     public:

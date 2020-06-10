@@ -7,10 +7,8 @@
 
 #include <glm/vec2.hpp>
 #include "CollisionShape.h"
-#include <optional>
 
 namespace gear {
-
 
     bool collide(CollisionShape a, glm::vec2 pa, CollisionShape b, glm::vec2 pb);
 

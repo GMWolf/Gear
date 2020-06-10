@@ -6,7 +6,6 @@
 #define GEAR_SHADER_H
 
 #include <glad/glad.h>
-#include <string>
 
 namespace gear {
 
@@ -17,7 +16,7 @@ namespace gear {
         Shader& operator=(const Shader&) = delete;
         Shader(Shader&& o) noexcept;
         Shader& operator=(Shader&& o) noexcept;
-        Shader(const std::string& vs, const std::string& fs);
+        Shader(const char* vs, const char* fs);
 
         ~Shader();
         void use() const;

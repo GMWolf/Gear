@@ -10,10 +10,8 @@
 #include <iostream>
 #include <generated/shader_generated.h>
 
-gear::Shader::Shader(const std::string &vs, const std::string &fs){
-    const char* vsPtr = vs.c_str();
-    const char* fsPtr = fs.c_str();
-    init(&vsPtr, 1, &fsPtr, 1);
+gear::Shader::Shader(const char* vs, const char* fs){
+    init(&vs, 1, &fs, 1);
 }
 
 static bool checkShaderCompilation(GLuint shader) {

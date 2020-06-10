@@ -6,6 +6,7 @@
 #include <fstream>
 #include <gear/SpriteBatch.h>
 #include <generated/font_generated.h>
+#include <gear/Texture.h>
 
 gear::BitmapFont::Glyph gear::BitmapFont::operator[](char c) const {
     return glyphs[c - rangeStart];
