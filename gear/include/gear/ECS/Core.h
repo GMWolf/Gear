@@ -42,8 +42,8 @@ namespace gear::ecs {
     };
 
     struct EntityRef {
-        Entity* entity;
-        uint32_t version;
+        Entity* entity = nullptr;
+        uint32_t version = 0;
         bool alive() const;
 
         template<class... T>
