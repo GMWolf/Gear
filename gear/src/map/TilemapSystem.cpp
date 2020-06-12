@@ -7,7 +7,7 @@
 #include <gear/ECS/ECS.h>
 #include <glad/glad.h>
 #include <glm/vec2.hpp>
-#include <gear/CoreComponents.h>
+#include <gear/Transform.h>
 #include <gear/View.h>
 #include <gear/Shader.h>
 #include <glm/gtc/type_ptr.hpp>

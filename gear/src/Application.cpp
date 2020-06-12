@@ -115,6 +115,16 @@ gear::Application::~Application() {
     glfwTerminate();
 }
 
-bool gear::Application::keyPressed(KEYS key) {
+bool gear::Application::keyPressed(KEYS key) const {
     return glfwGetKey(window, (int)key) == GLFW_PRESS;
+}
+
+bool gear::Application::mousePressed(int mouseButton) const {
+    return glfwGetMouseButton(window, mouseButton) == GLFW_PRESS;
+}
+
+glm::vec2 gear::Application::mousePosition() const {
+    double x, y;
+    glfwGetCursorPos(window, &x, &y);
+    return {x, height - y};
 }

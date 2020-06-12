@@ -9,7 +9,7 @@
 #include <gear/View.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <gear/ECS/ECS.h>
-#include <gear/CoreComponents.h>
+#include <gear/Transform.h>
 #include <gear/Texture.h>
 #include <gear/BitmapFont.h>
 #include <gear/AssetManager.h>
@@ -96,22 +96,16 @@ static void movePlayer(gear::Application* app, gear::ecs::Registry& ecs, gear::e
         auto chunk = gear::ecs::ChunkView<gecs::EntityRef, Player, gear::Transform>(*c);
 
         for(auto [entity, player, transform] : chunk) {
-            if (app->keyPressed(gear::KEYS::RIGHT)) {
-                transform.pos.x += player.moveSpeed;
+            auto d = app->mousePosition() - transform.pos;
+            if (glm::length(d) > player.moveSpeed) {
+                d = glm::normalize(d) * player.moveSpeed;
             }
-            if (app->keyPressed(gear::KEYS::LEFT)) {
-                transform.pos.x -= player.moveSpeed;
-            }
-            if (app->keyPressed(gear::KEYS::UP)) {
-                transform.pos.y += player.moveSpeed;
-            }
-            if (app->keyPressed(gear::KEYS::DOWN)) {
-                transform.pos.y -= player.moveSpeed;
-            }
+
+            transform.pos += d;
 
             if (player.shootTimer > 0) player.shootTimer--;
 
-            if (app->keyPressed(gear::KEYS::SPACE) && player.shootTimer <= 0) {
+            if (app->mousePressed(0) && player.shootTimer <= 0) {
                 cmd.createEntity( gear::Sprite(player.bulletSprite),
                                   player.bulletShape,
                                   gear::Transform{transform.pos + glm::vec2(player.shootSideOffset, 24)},

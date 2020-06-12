@@ -8,7 +8,7 @@
 #include <gear/ECS/ECS.h>
 #include <tuple>
 #include <gear/CollisionShape.h>
-#include <gear/CoreComponents.h>
+#include <gear/Transform.h>
 #include <gear/CollisionDetection.h>
 #include <optional>
 #include <gear/ECS/CommandBuffer.h>

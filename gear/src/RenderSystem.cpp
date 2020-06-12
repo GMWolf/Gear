@@ -5,7 +5,7 @@
 #include <gear/RenderSystem.h>
 #include <gear/ECS/ECS.h>
 #include <gear/View.h>
-#include <gear/CoreComponents.h>
+#include <gear/Transform.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <gear/SpriteBatch.h>
 #include <gear/PrimDraw.h>

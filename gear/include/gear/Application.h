@@ -7,6 +7,7 @@
 
 #include <string>
 #include "KeyboardKeys.h"
+#include <glm/vec2.hpp>
 
 struct GLFWwindow;
 namespace gear {
@@ -26,7 +27,11 @@ namespace gear {
 
         void run(ApplicationAdapter &adapter);
 
-        bool keyPressed(KEYS key);
+        [[nodiscard]] bool keyPressed(KEYS key) const;
+
+        [[nodiscard]] bool mousePressed(int mouseButton) const;
+
+        glm::vec2 mousePosition() const;
 
         operator bool();
 
