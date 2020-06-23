@@ -37,3 +37,4 @@ add_subdirectory(gear)
 add_subdirectory(tools)
 
 add_subdirectory(examples/shmup)
+add_subdirectory(examples/breakout)
