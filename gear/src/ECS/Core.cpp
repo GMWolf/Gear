@@ -185,8 +185,8 @@ namespace gear::ecs {
         return {outChunks, outChunks+count};
     }
 
-    Registry::View Registry::query(const Query &query) {
-        return { Iterator{query,archetypeChunks}, Iterator{ archetypeChunks } };
+    Registry::QueryBuilder Registry::query(const Query& q) {
+        return Registry::QueryBuilder{q, archetypeChunks};
     }
 
     void *Chunk::getData(ComponentId id) {
@@ -239,4 +239,5 @@ namespace gear::ecs {
     Registry::Iterator::Iterator(Registry::Store &s) :query({}), mapit(s.end()), mapend(s.end()), vecit({}) {
     }
 
+    Registry::QueryBuilder::QueryBuilder(const Query& q, Registry::Store &store) : query(q), store(store){}
 }

@@ -76,32 +76,8 @@ namespace gear::ecs {
         Store archetypeChunks;
 
     public:
-        class Iterator {
-            Query query;
-            Store::iterator mapit;
-            Store::iterator mapend;
-            ChunkVec::iterator vecit;
-
-        public:
-            Iterator(const Query& q, Store& s);
-            explicit Iterator(Store& s);
-            Iterator& operator++();
-            bool operator==(const Iterator& o) const;
-            bool operator!=(const Iterator& o) const;
-            Chunk* operator*() const;
-        };
-
-        class View {
-        public:
-            Iterator _begin;
-            Iterator _end;
-            [[nodiscard]] inline Iterator begin() const {
-                return _begin;
-            }
-            [[nodiscard]] inline Iterator end() const {
-                return _end;
-            }
-        };
+        class Iterator;
+        class QueryBuilder;
 
         Registry() = default;
         Registry(const Registry&) = delete;
@@ -113,11 +89,58 @@ namespace gear::ecs {
         void destroyEntity(Entity* entity);
 
         ArrayRange<Chunk*> queryChunks(const Query& query, Chunk** outChunks, size_t outArraySize);
-
-        View query(const Query& query);
+        QueryBuilder query(const Query& q = {});
 
         Chunk* createChunk(const Archetype& a);
         Chunk* getFreeChunk(const Archetype& a);
+    };
+
+
+    class Registry::Iterator {
+        Query query;
+        Store::iterator mapit;
+        Store::iterator mapend;
+        ChunkVec::iterator vecit;
+
+    public:
+        Iterator(const Query& q, Store& s);
+        explicit Iterator(Store& s);
+        Iterator& operator++();
+        bool operator==(const Iterator& o) const;
+        bool operator!=(const Iterator& o) const;
+        Chunk* operator*() const;
+    };
+
+    class Registry::QueryBuilder {
+        Query query{};
+        Registry::Store& store;
+    public:
+        QueryBuilder(const Query& query, Registry::Store& store);
+
+        [[nodiscard]] inline Iterator begin() const {
+            return Iterator{query, store};
+        }
+        [[nodiscard]] inline Iterator end() const {
+            return Iterator{store};
+        }
+
+        template<class... T>
+        QueryBuilder& all() {
+            query.all<T...>();
+            return *this;
+        }
+
+        template<class... T>
+        QueryBuilder& one() {
+            query.one<T...>();
+            return *this;
+        }
+
+        template<class... T>
+        QueryBuilder& none() {
+            query.none<T...>();
+            return *this;
+        }
     };
 
 

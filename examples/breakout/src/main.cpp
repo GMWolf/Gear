@@ -17,7 +17,7 @@ struct Ball {glm::vec2 v;};
 struct Brick {};
 
 void moveBat(gear::ecs::Registry& ecs, gear::Application* app) {
-    for(auto c : ecs.query(gear::ecs::Query().all<Bat, gear::Transform, gear::CollisionShape>())) {
+    for(auto c : ecs.query().all<Bat, gear::Transform, gear::CollisionShape>()) {
         auto chunk = gear::ecs::ChunkView<Bat, gear::Transform, gear::CollisionShape>(*c);
         for(auto [bat, transform, col] : chunk) {
 
@@ -33,11 +33,10 @@ void moveBat(gear::ecs::Registry& ecs, gear::Application* app) {
     }
 }
 
-
 bool ballCollide(gear::Transform& ballTransform, Ball& ball, gear::CollisionShape& ballShape, gear::ecs::Registry& ecs, gear::ecs::CommandEncoder& cmd, int axis)
 {
     auto ballCircle = std::get<gear::Circle>(ballShape);
-    for(auto c : ecs.query(gear::ecs::Query().all<gear::Transform, gear::CollisionShape>().none<Ball>())) {
+    for(auto c : ecs.query().all<gear::Transform, gear::CollisionShape>().none<Ball>()) {
         auto chunk = gear::ecs::ChunkView<gear::ecs::EntityRef, gear::Transform, gear::CollisionShape>(*c);
         for(auto [e, t, col] : chunk) {
             if (gear::collide(ballShape, ballTransform.pos, col, t.pos)) {
@@ -53,18 +52,15 @@ bool ballCollide(gear::Transform& ballTransform, Ball& ball, gear::CollisionShap
                 }
                 ball.v[axis] *= -1;
             }
-
-
         }
     }
     return false;
 }
 
 void moveBall(gear::ecs::Registry& ecs, gear::ecs::CommandEncoder& cmd) {
-    for(auto c : ecs.query(gear::ecs::Query().all<Ball, gear::Transform, gear::CollisionShape>())) {
+    for(auto c : ecs.query().all<Ball, gear::Transform, gear::CollisionShape>()) {
         auto chunk = gear::ecs::ChunkView<Ball, gear::Transform, gear::CollisionShape>(*c);
         for(auto [ball, transform, col] : chunk) {
-            //do vertical move
             transform.pos.y += ball.v.y;
             ballCollide(transform, ball, col, ecs, cmd, 1);
             transform.pos.x += ball.v.x;
@@ -98,14 +94,11 @@ public:
 
         assets->loadBundle("assets.bin");
 
-        {
-            auto spr = *assets->getSprite("bat");
-            cmdEncoder.createEntity(gear::Transform{{720 / 2, 30}},*spr.mask,spr,Bat{});
-        }
-        {
-            auto spr = *assets->getSprite("ball");
-            cmdEncoder.createEntity(gear::Transform{{400, 80}},*spr.mask,spr,Ball{{-1, -1}});
-        }
+        auto batSpr = *assets->getSprite("bat");
+        cmdEncoder.createEntity(gear::Transform{{720 / 2, 30}},*batSpr.mask,batSpr,Bat{});
+
+        auto ballSpr = *assets->getSprite("ball");
+        cmdEncoder.createEntity(gear::Transform{{400, 80}},*ballSpr.mask,ballSpr,Ball{{-1, -1}});
 
         cmdEncoder.createEntity(gear::View{{0, 0}, {720, 480}});
         cmdEncoder.createEntity(gear::Transform{{0,0}}, gear::CollisionShape{gear::Rectangle{glm::vec2{-10,0},glm::vec2{0, 480}}});
@@ -128,6 +121,7 @@ public:
         batch.reset();
         assets.reset();
     }
+
 private:
     gear::ecs::Registry world;
     gear::ecs::EntityPool pool;
