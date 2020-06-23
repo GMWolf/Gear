@@ -70,7 +70,39 @@ namespace gear::ecs {
     };
 
     class Registry {
+    private:
+        using ChunkVec = std::vector<std::unique_ptr<Chunk>>;
+        using Store = std::unordered_map<Archetype, ChunkVec, Archetype::Hash>;
+        Store archetypeChunks;
+
     public:
+        class Iterator {
+            Query query;
+            Store::iterator mapit;
+            Store::iterator mapend;
+            ChunkVec::iterator vecit;
+
+        public:
+            Iterator(const Query& q, Store& s);
+            explicit Iterator(Store& s);
+            Iterator& operator++();
+            bool operator==(const Iterator& o) const;
+            bool operator!=(const Iterator& o) const;
+            Chunk* operator*() const;
+        };
+
+        class View {
+        public:
+            Iterator _begin;
+            Iterator _end;
+            [[nodiscard]] inline Iterator begin() const {
+                return _begin;
+            }
+            [[nodiscard]] inline Iterator end() const {
+                return _end;
+            }
+        };
+
         Registry() = default;
         Registry(const Registry&) = delete;
         Registry& operator=(const Registry&) = delete;
@@ -82,14 +114,13 @@ namespace gear::ecs {
 
         ArrayRange<Chunk*> queryChunks(const Query& query, Chunk** outChunks, size_t outArraySize);
 
-    private:
-        using ChunkVec = std::vector<std::unique_ptr<Chunk>>;
-        using Store = std::unordered_map<Archetype, ChunkVec, Archetype::Hash>;
-        Store archetypeChunks;
+        View query(const Query& query);
 
         Chunk* createChunk(const Archetype& a);
         Chunk* getFreeChunk(const Archetype& a);
     };
+
+
 
 
 }

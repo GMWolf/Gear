@@ -185,6 +185,10 @@ namespace gear::ecs {
         return {outChunks, outChunks+count};
     }
 
+    Registry::View Registry::query(const Query &query) {
+        return { Iterator{query,archetypeChunks}, Iterator{ archetypeChunks } };
+    }
+
     void *Chunk::getData(ComponentId id) {
         return ptr[id];
     }
@@ -196,4 +200,43 @@ namespace gear::ecs {
     bool EntityRef::alive() const {
         return version == entity->version;
     }
+
+    Registry::Iterator &Registry::Iterator::operator++() {
+        vecit++;
+        if (vecit == mapit->second.end()) {
+            do {
+                mapit++;
+            } while(mapit != mapend && !testQuery(query, mapit->first));
+            vecit = mapit == mapend ? ChunkVec::iterator{} : mapit->second.begin();
+        }
+        return *this;
+    }
+
+    bool Registry::Iterator::operator==(const Registry::Iterator &o) const {
+        return o.mapit == mapit && o.vecit == vecit;
+    }
+
+    bool Registry::Iterator::operator!=(const Registry::Iterator &o) const {
+        return !(*this == o);
+    }
+
+    Chunk* Registry::Iterator::operator*() const {
+        return vecit->get();
+    }
+
+    Registry::Iterator::Iterator(const Query& q, Registry::Store& s) :
+    query(q), mapit(s.begin()), mapend(s.end()) {
+        if (mapit == mapend) {
+            vecit = {};
+        } else {
+            vecit = mapit->second.begin();
+            if (!testQuery(q, mapit->first)) {
+                ++*this;
+            }
+        }
+    }
+
+    Registry::Iterator::Iterator(Registry::Store &s) :query({}), mapit(s.end()), mapend(s.end()), vecit({}) {
+    }
+
 }

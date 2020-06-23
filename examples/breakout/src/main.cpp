@@ -17,9 +17,7 @@ struct Ball {glm::vec2 v;};
 struct Brick {};
 
 void moveBat(gear::ecs::Registry& ecs, gear::Application* app) {
-    gear::ecs::Chunk* chunkArray[256];
-    auto chunks = ecs.queryChunks(gear::ecs::Query().all<Bat, gear::Transform, gear::CollisionShape>(), chunkArray, 256);
-    for(auto c : chunks) {
+    for(auto c : ecs.query(gear::ecs::Query().all<Bat, gear::Transform, gear::CollisionShape>())) {
         auto chunk = gear::ecs::ChunkView<Bat, gear::Transform, gear::CollisionShape>(*c);
         for(auto [bat, transform, col] : chunk) {
 
@@ -39,13 +37,9 @@ void moveBat(gear::ecs::Registry& ecs, gear::Application* app) {
 bool ballCollide(gear::Transform& ballTransform, Ball& ball, gear::CollisionShape& ballShape, gear::ecs::Registry& ecs, gear::ecs::CommandEncoder& cmd, int axis)
 {
     auto ballCircle = std::get<gear::Circle>(ballShape);
-    gear::ecs::Chunk* chunkArray[256];
-    auto chunks = ecs.queryChunks(gear::ecs::Query().all<gear::Transform, gear::CollisionShape>().none<Ball>(), chunkArray, 256);
-    for(auto c : chunks) {
+    for(auto c : ecs.query(gear::ecs::Query().all<gear::Transform, gear::CollisionShape>().none<Ball>())) {
         auto chunk = gear::ecs::ChunkView<gear::ecs::EntityRef, gear::Transform, gear::CollisionShape>(*c);
         for(auto [e, t, col] : chunk) {
-
-
             if (gear::collide(ballShape, ballTransform.pos, col, t.pos)) {
                 if (c->archetype[gear::ecs::Component<Brick>::ID()]) {
                     cmd.destroyEntity(e);
@@ -67,9 +61,7 @@ bool ballCollide(gear::Transform& ballTransform, Ball& ball, gear::CollisionShap
 }
 
 void moveBall(gear::ecs::Registry& ecs, gear::ecs::CommandEncoder& cmd) {
-    gear::ecs::Chunk* chunkArray[256];
-    auto chunks = ecs.queryChunks(gear::ecs::Query().all<Ball, gear::Transform, gear::CollisionShape>(), chunkArray, 256);
-    for(auto c : chunks) {
+    for(auto c : ecs.query(gear::ecs::Query().all<Ball, gear::Transform, gear::CollisionShape>())) {
         auto chunk = gear::ecs::ChunkView<Ball, gear::Transform, gear::CollisionShape>(*c);
         for(auto [ball, transform, col] : chunk) {
             //do vertical move
