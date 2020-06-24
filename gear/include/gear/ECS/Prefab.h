@@ -16,16 +16,16 @@ namespace gear::ecs {
 
     template<>
     struct ComponentProvider<gear::ecs::Prefab> {
-        static void writeComponents(Prefab& prefab, CommandEncoder& encoder);
+        static void writeComponents(Prefab& prefab, CommandBuffer& cmd);
         static Archetype archetype(const Prefab& prefab);
     };
 
-    inline void ComponentProvider<Prefab>::writeComponents(Prefab &prefab, CommandEncoder &encoder) {
+    inline void ComponentProvider<Prefab>::writeComponents(Prefab &prefab, CommandBuffer &cmd) {
         if (prefab.entity.alive()) {
             auto a = archetype(prefab);
             for(int i = 0; i < a.bits.size(); i++) {
                 if (a[i]) {
-                    encoder.writeComponentCopy(i, prefab.entity.entity->chunk->get(i, prefab.entity.entity->index));
+                    cmd.writeComponentCopy(i, prefab.entity.entity->chunk->get(i, prefab.entity.entity->index));
                 }
             }
         }

@@ -16,7 +16,7 @@ CollisionPair::get(const gear::ecs::Archetype &a, const gear::ecs::Archetype &b)
 }
 
 
-static void checkCollisions(gear::ecs::Registry& ecs, gear::ecs::CommandEncoder& cmd, CollisionFilter filter) {
+static void checkCollisions(gear::ecs::Registry& ecs, gear::ecs::CommandBuffer& cmd, CollisionFilter filter) {
 
     gear::ecs::Chunk* chunksAArray[1024];
     auto chunksA = ecs.queryChunks(filter.entityA.all<gear::CollisionShape, gear::Transform>(), chunksAArray, 1024);
@@ -47,7 +47,7 @@ static void checkCollisions(gear::ecs::Registry& ecs, gear::ecs::CommandEncoder&
 
 }
 
-void checkCollisions(gear::ecs::Registry &ecs, gear::ecs::CommandEncoder &cmd) {
+void checkCollisions(gear::ecs::Registry &ecs, gear::ecs::CommandBuffer &cmd) {
 
     //Get all filters
     gear::ecs::Chunk* filterChunksArray[1];

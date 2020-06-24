@@ -33,7 +33,7 @@ void moveBat(gear::ecs::Registry& ecs, gear::Application* app) {
     }
 }
 
-bool ballCollide(gear::Transform& ballTransform, Ball& ball, gear::CollisionShape& ballShape, gear::ecs::Registry& ecs, gear::ecs::CommandEncoder& cmd, int axis)
+bool ballCollide(gear::Transform& ballTransform, Ball& ball, gear::CollisionShape& ballShape, gear::ecs::Registry& ecs, gear::ecs::CommandBuffer& cmd, int axis)
 {
     auto ballCircle = std::get<gear::Circle>(ballShape);
     for(auto c : ecs.query().all<gear::Transform, gear::CollisionShape>().none<Ball>()) {
@@ -57,7 +57,7 @@ bool ballCollide(gear::Transform& ballTransform, Ball& ball, gear::CollisionShap
     return false;
 }
 
-void moveBall(gear::ecs::Registry& ecs, gear::ecs::CommandEncoder& cmd) {
+void moveBall(gear::ecs::Registry& ecs, gear::ecs::CommandBuffer& cmd) {
     for(auto c : ecs.query().all<Ball, gear::Transform, gear::CollisionShape>()) {
         auto chunk = gear::ecs::ChunkView<Ball, gear::Transform, gear::CollisionShape>(*c);
         for(auto [ball, transform, col] : chunk) {
@@ -69,14 +69,7 @@ void moveBall(gear::ecs::Registry& ecs, gear::ecs::CommandEncoder& cmd) {
     }
 }
 
-void submitCommandBuffer(gear::ecs::CommandBuffer& cmd, gear::ecs::CommandEncoder& encoder, gear::ecs::Registry& ecs) {
-    gear::ecs::executeCommandBuffer(cmd, ecs);
-    gear::ecs::resetCommandBuffer(cmd);
-    encoder.reset();
-}
-
-
-void createBricks(gear::ecs::CommandEncoder& cmd, gear::AssetRegistry& assets) {
+void createBricks(gear::ecs::CommandBuffer& cmd, gear::AssetRegistry& assets) {
     gear::Sprite spr = *assets.getSprite("brick");
     for(int i = 0; i < 5; i++) {
         for(int j = 0; j < 15; j++) {
@@ -95,22 +88,22 @@ public:
         assets->loadBundle("assets.bin");
 
         auto batSpr = *assets->getSprite("bat");
-        cmdEncoder.createEntity(gear::Transform{{720 / 2, 30}},*batSpr.mask,batSpr,Bat{});
+        cmd.createEntity(gear::Transform{{720 / 2, 30}},*batSpr.mask,batSpr,Bat{});
 
         auto ballSpr = *assets->getSprite("ball");
-        cmdEncoder.createEntity(gear::Transform{{400, 80}},*ballSpr.mask,ballSpr,Ball{{-1, -1}});
+        cmd.createEntity(gear::Transform{{400, 80}},*ballSpr.mask,ballSpr,Ball{{-1, -1}});
 
-        cmdEncoder.createEntity(gear::View{{0, 0}, {720, 480}});
-        cmdEncoder.createEntity(gear::Transform{{0,0}}, gear::CollisionShape{gear::Rectangle{glm::vec2{-10,0},glm::vec2{0, 480}}});
-        cmdEncoder.createEntity(gear::Transform{{0,0}},gear::CollisionShape{gear::Rectangle{glm::vec2{720,0},glm::vec2{730, 480}}});
-        cmdEncoder.createEntity(gear::Transform{{0,0}},gear::CollisionShape{gear::Rectangle{glm::vec2{0,480},glm::vec2{720, 490}}});
-        createBricks(cmdEncoder, *assets);
+        cmd.createEntity(gear::View{{0, 0}, {720, 480}});
+        cmd.createEntity(gear::Transform{{0,0}}, gear::CollisionShape{gear::Rectangle{glm::vec2{-10,0},glm::vec2{0, 480}}});
+        cmd.createEntity(gear::Transform{{0,0}}, gear::CollisionShape{gear::Rectangle{glm::vec2{720,0},glm::vec2{730, 480}}});
+        cmd.createEntity(gear::Transform{{0,0}}, gear::CollisionShape{gear::Rectangle{glm::vec2{0,480},glm::vec2{720, 490}}});
+        createBricks(cmd, *assets);
     }
 
     void update() override {
         moveBat(world, app);
-        moveBall(world, cmdEncoder);
-        submitCommandBuffer(cmd, cmdEncoder, world);
+        moveBall(world, cmd);
+        gear::ecs::executeCommandBuffer(cmd, world);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glDisable(GL_CULL_FACE);
@@ -126,7 +119,6 @@ private:
     gear::ecs::Registry world;
     gear::ecs::EntityPool pool;
     gear::ecs::CommandBuffer cmd{pool, 256'000'000};
-    gear::ecs::CommandEncoder cmdEncoder{cmd};
     std::optional<gear::AssetRegistry> assets;
     std::optional<gear::SpriteBatch> batch;
     gear::Application* app {};

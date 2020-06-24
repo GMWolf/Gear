@@ -19,20 +19,19 @@ namespace gear::ecs {
         DestroyComponent,
     };
 
-    struct CommandBuffer {
-        explicit CommandBuffer(EntityPool& pool, size_t size);
+    class CommandBuffer {
+
+    public:
+
+        EntityPool& entityPool;
         std::byte* buffer {nullptr};
         size_t bufferSize {0};
         size_t commandCount {0};
-        EntityPool& entityPool;
-    };
-
-    class CommandEncoder {
-        CommandBuffer& cmd;
-        void *head;
-        size_t space;
 
     private:
+        void* head;
+        size_t space;
+
         void *allocate(size_t size, size_t align);
 
         template<class T>
@@ -42,7 +41,8 @@ namespace gear::ecs {
         bool write(const T& t);
 
     public:
-        explicit CommandEncoder(CommandBuffer &cmd) : cmd(cmd), head(cmd.buffer), space(cmd.bufferSize) {};
+
+        CommandBuffer(EntityPool& pool, size_t size);
 
         template<class... T>
         EntityRef createEntity(T&&... t);
@@ -59,7 +59,7 @@ namespace gear::ecs {
 
     template<class T>
     struct ComponentProvider {
-        static void writeComponents(T& t, CommandEncoder& encoder);
+        static void writeComponents(T& t, CommandBuffer& cmd);
         static Archetype archetype(const T& t);
     };
 
@@ -69,8 +69,8 @@ namespace gear::ecs {
     }
 
     template<class T>
-    void ComponentProvider<T>::writeComponents(T& t, CommandEncoder& encoder){
-        encoder.writeComponentMove(Component<T>::ID(), &t);
+    void ComponentProvider<T>::writeComponents(T& t, CommandBuffer& cmd){
+        cmd.writeComponentMove(Component<T>::ID(), &t);
     }
 
     template<class T>
@@ -85,13 +85,13 @@ namespace gear::ecs {
 
     template<class T>
     struct ComponentProvider<CopyProvider<T>> {
-        static void writeComponents(CopyProvider<T>& cpy, CommandEncoder& encoder);
+        static void writeComponents(CopyProvider<T>& cpy, CommandBuffer& cmd);
         static Archetype archetype(const CopyProvider<T>& cpy);
     };
 
     template<class T>
-    void ComponentProvider<CopyProvider<T>>::writeComponents(CopyProvider<T> &cpy, CommandEncoder &encoder) {
-        encoder.writeComponentCopy(Component<T>::ID(), &cpy.t);
+    void ComponentProvider<CopyProvider<T>>::writeComponents(CopyProvider<T> &cpy, CommandBuffer &cmd) {
+        cmd.writeComponentCopy(Component<T>::ID(), &cpy.t);
     }
 
     template<class T>
@@ -100,12 +100,12 @@ namespace gear::ecs {
     }
 
     template<class T>
-    T *CommandEncoder::allocate() {
+    T *CommandBuffer::allocate() {
         return reinterpret_cast<T *>(allocate(sizeof(T), alignof(T)));
     }
 
     template<class T>
-    bool CommandEncoder::write(const T& t) {
+    bool CommandBuffer::write(const T& t) {
         if (T* ptr = allocate<T>()) {
             *ptr = t;
             return true;
@@ -115,13 +115,13 @@ namespace gear::ecs {
     }
 
     template<class... T>
-    EntityRef CommandEncoder::createEntity(T &&... t) {
-        Entity* entity = cmd.entityPool.getFreeEntity();
+    EntityRef CommandBuffer::createEntity(T &&... t) {
+        Entity* entity = entityPool.getFreeEntity();
         write(CommandType::CreateEntity);
         write(entity);
         write((ComponentProvider<std::remove_reference_t<std::remove_const_t<T>>>::archetype(t) | ...));
         (ComponentProvider<std::remove_reference_t<std::remove_const_t<T>>>::writeComponents(t, *this), ...);
-        cmd.commandCount++;
+        commandCount++;
         return EntityRef{
             entity,
             entity->version
@@ -129,26 +129,24 @@ namespace gear::ecs {
     }
 
     template<class T>
-    void CommandEncoder::createComponent(const EntityRef &entity, T&& t) {
+    void CommandBuffer::createComponent(const EntityRef &entity, T&& t) {
         write(CommandType::CreateComponent);
         write(entity);
         writeComponentMove(Component<std::remove_reference_t<T>>::ID(), &t);
-        cmd.commandCount++;
+        commandCount++;
     }
 
     template<class T>
-    void CommandEncoder::destroyComponent(const EntityRef &entity) {
+    void CommandBuffer::destroyComponent(const EntityRef &entity) {
         write(CommandType::DestroyComponent);
         write(entity);
         write(Component<T>::ID());
-        cmd.commandCount++;
+        commandCount++;
     }
 
     class Registry;
 
     void executeCommandBuffer(CommandBuffer& cmd, Registry& world);
-
-    void resetCommandBuffer(CommandBuffer& buffer);
 
 }
 

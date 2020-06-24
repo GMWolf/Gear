@@ -9,7 +9,7 @@
 
 namespace gear::ecs {
 
-    void* CommandEncoder::allocate(size_t size, size_t align) {
+    void* CommandBuffer::allocate(size_t size, size_t align) {
         //align the pointer
         if (std::align(align, size, head, space)) {
             void *ret = head;
@@ -20,7 +20,7 @@ namespace gear::ecs {
         return nullptr;
     }
 
-    bool CommandEncoder::writeComponentMove(ComponentId id, void *cptr) {
+    bool CommandBuffer::writeComponentMove(ComponentId id, void *cptr) {
         if (!write(id))
             return false;
 
@@ -32,7 +32,7 @@ namespace gear::ecs {
         return false;
     }
 
-    bool CommandEncoder::writeComponentCopy(ComponentId id, const void *cptr) {
+    bool CommandBuffer::writeComponentCopy(ComponentId id, const void *cptr) {
         if (!write(id))
             return false;
 
@@ -44,15 +44,16 @@ namespace gear::ecs {
         return false;
     }
 
-    void CommandEncoder::destroyEntity(const EntityRef& entity) {
+    void CommandBuffer::destroyEntity(const EntityRef& entity) {
         write(CommandType::DestroyEntity);
         write(entity);
-        cmd.commandCount++;
+        commandCount++;
     }
 
-    void CommandEncoder::reset() {
-        head = cmd.buffer;
-        space = cmd.bufferSize;
+    void CommandBuffer::reset() {
+        head = buffer;
+        space = bufferSize;
+        commandCount = 0;
     }
 
 
@@ -109,6 +110,7 @@ namespace gear::ecs {
         for(int i = 0; i < componentCount; i++) {
             auto [componentId, componentPtr] = cmd.readComponent();
             registry.emplaceComponent(entity, componentId, componentPtr);
+            ComponentInfo::component[componentId].functions.destroy(componentPtr);
         }
     }
 
@@ -128,6 +130,7 @@ namespace gear::ecs {
         if (entityRef->alive() && !entityRef->entity->chunk->archetype[componentId]) {
             registry.mutateEntity(entityRef->entity, entityRef->entity->chunk->archetype | componentId);
             registry.emplaceComponent(entityRef->entity, componentId, componentPtr);
+            ComponentInfo::component[componentId].functions.destroy(componentPtr);
         }
     }
 
@@ -163,59 +166,8 @@ namespace gear::ecs {
                 }
             }
         }
+
+        buffer.reset();
     }
-
-    void resetCreate(CommandDecoder& cmd) {
-        Entity* entity = *cmd.read<Entity*>();
-        auto archetype = *cmd.read<Archetype>();
-        size_t componentCount = archetype.bits.count();
-        for(int i = 0; i < componentCount; i++) {
-            auto [componentId, componentPtr] = cmd.readComponent();
-            ComponentInfo::component[componentId].functions.destroy(componentPtr);
-        }
-    }
-
-    void resetDestroy(CommandDecoder& cmd) {
-        auto id = cmd.read<EntityRef>();
-    }
-
-    void resetCreateComponent(CommandDecoder& cmd) {
-        cmd.read<EntityRef>();
-        cmd.readComponent();
-    }
-
-    void resetDestroyComponent(CommandDecoder& cmd) {
-        cmd.read<EntityRef>();
-        cmd.read<ComponentId>();
-    }
-
-    void resetCommandBuffer(CommandBuffer& buffer) {
-        CommandDecoder cmd(buffer);
-        for (int i = 0; i < buffer.commandCount; i++) {
-
-            if (auto *c = cmd.read<CommandType>()) {
-                CommandType command = *c;
-                switch (command) {
-                    case CommandType::CreateEntity:
-                        resetCreate(cmd);
-                        break;
-                    case CommandType::DestroyEntity:
-                        resetDestroy(cmd);
-                        break;
-                    case CommandType::CreateComponent:
-                        resetCreateComponent(cmd);
-                        break;
-                    case CommandType::DestroyComponent:
-                        resetDestroyComponent(cmd);
-                        break;
-                    default:
-                        break;
-                }
-            }
-        }
-
-        buffer.commandCount = 0;
-    }
-
-    CommandBuffer::CommandBuffer(EntityPool& pool, size_t size) : entityPool(pool), buffer(static_cast<std::byte *>(malloc(size))), bufferSize(size), commandCount(0) {}
+    CommandBuffer::CommandBuffer(EntityPool& pool, size_t size) : entityPool(pool), buffer(static_cast<std::byte *>(malloc(size))), bufferSize(size), commandCount(0), head(buffer), space(size) {}
 }

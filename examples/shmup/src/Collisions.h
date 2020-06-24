@@ -28,6 +28,6 @@ struct CollisionFilter {
     gear::ecs::Query entityB;
 };
 
-void checkCollisions(gear::ecs::Registry& ecs, gear::ecs::CommandEncoder& cmd);
+void checkCollisions(gear::ecs::Registry& ecs, gear::ecs::CommandBuffer& cmd);
 
 #endif //GEAR_COLLISIONS_H

@@ -57,7 +57,7 @@ struct Velocity {
 
 static int score = 0;
 
-static void createStage(gear::AssetRegistry& assets, gear::ecs::CommandEncoder& cmd) {
+static void createStage(gear::AssetRegistry& assets, gear::ecs::CommandBuffer& cmd) {
     {
         gear::Sprite spr = *assets.getSprite("ship2");
 
@@ -86,7 +86,7 @@ static void createStage(gear::AssetRegistry& assets, gear::ecs::CommandEncoder& 
     }
 }
 
-static void movePlayer(gear::Application* app, gear::ecs::Registry& ecs, gear::ecs::CommandEncoder& cmd) {
+static void movePlayer(gear::Application* app, gear::ecs::Registry& ecs, gear::ecs::CommandBuffer& cmd) {
 
     const size_t chunkArraySize = 256;
     gear::ecs::Chunk* chunkArray[chunkArraySize];
@@ -149,7 +149,7 @@ static void movePlayer(gear::Application* app, gear::ecs::Registry& ecs, gear::e
     }
 }
 
-static void processCollisions(gear::ecs::Registry& ecs, gear::ecs::CommandEncoder& cmd, gear::AssetRegistry& assets) {
+static void processCollisions(gear::ecs::Registry& ecs, gear::ecs::CommandBuffer& cmd, gear::AssetRegistry& assets) {
     const gear::ecs::Archetype enemyArch = gear::ecs::Archetype::create<Enemy>();
     const gear::ecs::Archetype bulletArch = gear::ecs::Archetype::create<Bullet>();
 
@@ -177,7 +177,7 @@ static void processCollisions(gear::ecs::Registry& ecs, gear::ecs::CommandEncode
     };
 }
 
-static void processLifetime(gear::ecs::Registry& ecs, gear::ecs::CommandEncoder& cmd) {
+static void processLifetime(gear::ecs::Registry& ecs, gear::ecs::CommandBuffer& cmd) {
     gecs::Chunk* chunkArray[256];
     auto chunks = ecs.queryChunks(gecs::Query().all<Lifetime>(), chunkArray, 256);
     for(auto c : chunks) {
@@ -191,7 +191,7 @@ static void processLifetime(gear::ecs::Registry& ecs, gear::ecs::CommandEncoder&
     };
 }
 
-static void processAnimation(gear::ecs::Registry& ecs, gear::ecs::CommandEncoder& cmd) {
+static void processAnimation(gear::ecs::Registry& ecs, gear::ecs::CommandBuffer& cmd) {
     gecs::Chunk* chunkArray[1024];
     auto chunks = ecs.queryChunks(gecs::Query().all<gear::Sprite>(), chunkArray, 1024);
 
@@ -216,7 +216,7 @@ static void processAnimation(gear::ecs::Registry& ecs, gear::ecs::CommandEncoder
     }
 }
 
-static void spawnEnemy(gecs::Prefab prefab, gear::AssetRegistry& assets, gear::ecs::CommandEncoder& cmd) {
+static void spawnEnemy(gecs::Prefab prefab, gear::AssetRegistry& assets, gear::ecs::CommandBuffer& cmd) {
     cmd.createEntity(prefab,
             gear::Transform{{480.0f * (rand()/(float)RAND_MAX), 720}},
             Velocity{{0, -1.5 - 0.5*(rand() / (float)RAND_MAX)}});
@@ -270,15 +270,9 @@ void debugDraw(gear::PrimDraw& dd, gear::AssetRegistry& assets, gear::ecs::Regis
     gear::renderDebugShapes(ecs, dd, *assets.getShader("prim"));
 }
 
-void submitCommandBuffer(gecs::CommandBuffer& cmd, gecs::CommandEncoder& encoder, gecs::Registry& ecs) {
-    gecs::executeCommandBuffer(cmd, ecs);
-    gecs::resetCommandBuffer(cmd);
-    encoder.reset();
-}
-
-gear::ecs::Prefab createEnemyPrefab(gear::ecs::Registry& reg, gear::AssetRegistry& assets, gear::ecs::CommandEncoder& encoder) {
+gear::ecs::Prefab createEnemyPrefab(gear::ecs::Registry& reg, gear::AssetRegistry& assets, gear::ecs::CommandBuffer& cmd) {
     auto sprite = *assets.getSprite("ship1");
-    gecs::EntityRef e = encoder.createEntity(
+    gecs::EntityRef e = cmd.createEntity(
             Enemy{},
             *sprite.mask,
             sprite);
@@ -296,28 +290,28 @@ public:
 
         assets->loadBundle("assets.bin");
 
-        enemyPrefab = createEnemyPrefab(prefabs, *assets, cmdEncoder);
-        submitCommandBuffer(cmd, cmdEncoder, prefabs);
+        enemyPrefab = createEnemyPrefab(prefabs, *assets, cmd);
+        gecs::executeCommandBuffer(cmd, world);
 
-        createStage(*assets, cmdEncoder);
+        createStage(*assets, cmd);
 
         gear::ui::initialize(app->window);
     }
 
     void update() override {
 
-        movePlayer(app, world, cmdEncoder);
-        checkCollisions(world, cmdEncoder);
-        submitCommandBuffer(cmd, cmdEncoder, world);
-        processCollisions(world, cmdEncoder, *assets);
+        movePlayer(app, world, cmd);
+        checkCollisions(world, cmd);
+        gecs::executeCommandBuffer(cmd, world);
+        processCollisions(world, cmd, *assets);
         render(*batch, *assets, world);
         debugDraw(*primDraw, *assets, world);
-        processAnimation(world, cmdEncoder);
-        processLifetime(world, cmdEncoder);
-        submitCommandBuffer(cmd, cmdEncoder, world);
+        processAnimation(world, cmd);
+        processLifetime(world, cmd);
+        gecs::executeCommandBuffer(cmd, world);
 
         if (--spawnTimer <= 0) {
-            spawnEnemy(enemyPrefab, *assets, cmdEncoder);
+            spawnEnemy(enemyPrefab, *assets, cmd);
             spawnTimer = 24;
         }
 
@@ -340,7 +334,6 @@ private:
     gear::ecs::Registry prefabs;
     gear::ecs::EntityPool pool;
     gear::ecs::CommandBuffer cmd{pool, 256'000'000};
-    gear::ecs::CommandEncoder cmdEncoder{cmd};
 
     gear::ecs::Prefab enemyPrefab;
 

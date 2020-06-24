@@ -20,9 +20,7 @@ struct TilemapVertex {
     glm::vec2 uv;
 };
 
-void gear::tilemapSystemCreateSystemComponent(ecs::Registry &ecs, gecs::CommandBuffer &cmdbuffer) {
-
-    gecs::CommandEncoder cmd(cmdbuffer);
+void gear::tilemapSystemCreateSystemComponent(ecs::Registry &ecs, gecs::CommandBuffer &cmd) {
 
     gecs::Chunk *chunkArray[512];
     auto chunks = ecs.queryChunks(gecs::Query().all<TilemapComponent>().none<TilemapSystemComponent>(), chunkArray,
