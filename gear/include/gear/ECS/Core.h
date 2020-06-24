@@ -102,6 +102,7 @@ namespace gear::ecs {
         Store::iterator mapend;
         ChunkVec::iterator vecit;
 
+        void advanceArchetype();
     public:
         Iterator(const Query& q, Store& s);
         explicit Iterator(Store& s);
@@ -125,19 +126,19 @@ namespace gear::ecs {
         }
 
         template<class... T>
-        QueryBuilder& all() {
+        QueryBuilder all() {
             query.all<T...>();
             return *this;
         }
 
         template<class... T>
-        QueryBuilder& one() {
+        QueryBuilder one() {
             query.one<T...>();
             return *this;
         }
 
         template<class... T>
-        QueryBuilder& none() {
+        QueryBuilder none() {
             query.none<T...>();
             return *this;
         }

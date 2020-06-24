@@ -201,13 +201,17 @@ namespace gear::ecs {
         return version == entity->version;
     }
 
+    void Registry::Iterator::advanceArchetype() {
+        do {
+            mapit++;
+        } while(mapit != mapend && !testQuery(query, mapit->first));
+        vecit = (mapit == mapend) ? ChunkVec::iterator{} : mapit->second.begin();
+    }
+
     Registry::Iterator &Registry::Iterator::operator++() {
         vecit++;
         if (vecit == mapit->second.end()) {
-            do {
-                mapit++;
-            } while(mapit != mapend && !testQuery(query, mapit->first));
-            vecit = mapit == mapend ? ChunkVec::iterator{} : mapit->second.begin();
+            advanceArchetype();
         }
         return *this;
     }
@@ -230,12 +234,12 @@ namespace gear::ecs {
             vecit = {};
         } else {
             if (!testQuery(q, mapit->first)) {
-                vecit = std::prev(mapit->second.end());
-                ++*this;
+                advanceArchetype();
             } else {
                 vecit = mapit->second.begin();
             }
         }
+
     }
 
     Registry::Iterator::Iterator(Registry::Store &s) :query({}), mapit(s.end()), mapend(s.end()), vecit({}) {

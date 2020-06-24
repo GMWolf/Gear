@@ -87,11 +87,11 @@ public:
 
         assets->loadBundle("assets.bin");
 
-        auto batSpr = *assets->getSprite("bat");
-        cmd.createEntity(gear::Transform{{720 / 2, 30}},*batSpr.mask,batSpr,Bat{});
-
         auto ballSpr = *assets->getSprite("ball");
         cmd.createEntity(gear::Transform{{400, 80}},*ballSpr.mask,ballSpr,Ball{{-1, -1}});
+
+        auto batSpr = *assets->getSprite("bat");
+        cmd.createEntity(gear::Transform{{720 / 2, 30}},*batSpr.mask,batSpr,Bat{});
 
         cmd.createEntity(gear::View{{0, 0}, {720, 480}});
         cmd.createEntity(gear::Transform{{0,0}}, gear::CollisionShape{gear::Rectangle{glm::vec2{-10,0},glm::vec2{0, 480}}});
