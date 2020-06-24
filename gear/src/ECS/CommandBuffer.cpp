@@ -102,7 +102,7 @@ namespace gear::ecs {
 
     void executeCreate(CommandDecoder& cmd, Registry& registry) {
         Entity* entity = *cmd.read<Entity*>();
-        auto archetype = *cmd.read<Archetype>();
+        auto& archetype = *cmd.read<Archetype>();
 
         //Create entity and move components
         registry.emplaceEntity(archetype, entity);
@@ -112,6 +112,8 @@ namespace gear::ecs {
             registry.emplaceComponent(entity, componentId, componentPtr);
             ComponentInfo::component[componentId].functions.destroy(componentPtr);
         }
+
+        archetype.~Archetype();
     }
 
 

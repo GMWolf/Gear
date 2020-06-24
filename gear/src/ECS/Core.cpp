@@ -229,9 +229,11 @@ namespace gear::ecs {
         if (mapit == mapend) {
             vecit = {};
         } else {
-            vecit = mapit->second.begin();
             if (!testQuery(q, mapit->first)) {
+                vecit = std::prev(mapit->second.end());
                 ++*this;
+            } else {
+                vecit = mapit->second.begin();
             }
         }
     }
