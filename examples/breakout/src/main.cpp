@@ -11,6 +11,7 @@
 #include <gear/Texture.h>
 #include <gear/View.h>
 #include <gear/CollisionDetection.h>
+#include <gear/Input.h>
 
 struct Bat {float spd = 4;};
 struct Ball {glm::vec2 v;};
@@ -22,11 +23,11 @@ void moveBat(gear::ecs::Registry& ecs, gear::Application* app) {
         for(auto [bat, transform, col] : chunk) {
 
             auto bbox = std::get<gear::Rectangle>(col);
-            if (app->keyPressed(gear::KEYS::LEFT) && transform.pos.x + bbox.min.x > 0) {
+            if (app->getInputState()->keyDown(gear::KEYS::LEFT) && transform.pos.x + bbox.min.x > 0) {
                 transform.pos.x -= bat.spd;
             }
 
-            if (app->keyPressed(gear::KEYS::RIGHT) && transform.pos.x + bbox.max.x <= 720.0f) {
+            if (app->getInputState()->keyDown(gear::KEYS::RIGHT) && transform.pos.x + bbox.max.x <= 720.0f) {
                 transform.pos.x += bat.spd;
             }
         }
@@ -125,10 +126,12 @@ private:
 };
 
 int main() {
-    gear::AppConfig config {
+
+    gear::AppConfig config = {
             720, 480,
             "shmup",
     };
+
     Game game;
     gear::Application app(config);
     app.run(game);

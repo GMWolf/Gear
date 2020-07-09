@@ -131,6 +131,7 @@ namespace gear {
         MENU = 348,
 
         LAST = MENU,
+        COUNT,
     };
 }
 #endif //GEAR_KEYBOARDKEYS_H

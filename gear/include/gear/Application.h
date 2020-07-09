@@ -8,6 +8,7 @@
 #include <string>
 #include "KeyboardKeys.h"
 #include <glm/vec2.hpp>
+#include <memory>
 
 struct GLFWwindow;
 namespace gear {
@@ -18,8 +19,12 @@ namespace gear {
     };
 
     class ApplicationAdapter;
+    class InputState;
 
     class Application {
+
+        std::unique_ptr<InputState> inputState;
+
     public:
         explicit Application(const AppConfig &config);
 
@@ -27,11 +32,9 @@ namespace gear {
 
         void run(ApplicationAdapter &adapter);
 
-        [[nodiscard]] bool keyPressed(KEYS key) const;
-
         [[nodiscard]] bool mousePressed(int mouseButton) const;
 
-        glm::vec2 mousePosition() const;
+        [[nodiscard]] glm::vec2 mousePosition() const;
 
         operator bool();
 
@@ -39,11 +42,10 @@ namespace gear {
         bool initialized = false;
         GLFWwindow *window{};
 
+        InputState* getInputState();
+
         double frameTime = 0;
     };
-
-    void run(const AppConfig &config, ApplicationAdapter &app);
-
 }
 
 

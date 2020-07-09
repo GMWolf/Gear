@@ -7,18 +7,12 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include <gear/Input.h>
 #include <gear/ApplicationAdapter.h>
 
 static void glfw_error_callback(int error, const char* description) {
     std::cerr << "GLFW error: " << description << "\n";
 }
-
-static void glfw_key_callback(GLFWwindow* window, int key, int scancode, int action, int mode) {
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
-        glfwSetWindowShouldClose(window, GLFW_TRUE);
-    }
-}
-
 
 #ifdef GLAD_DEBUG
 void post_call_callback(const char *name, void *funcptr, int len_args, ...) {
@@ -44,6 +38,30 @@ void post_call_callback(const char *name, void *funcptr, int len_args, ...) {
 }
 #endif //GLAD_DEBUG
 
+extern int my_main();
+
+static bool initGlfw() {
+    glfwSetErrorCallback(glfw_error_callback);
+#ifdef GLAD_DEBUG
+    glad_set_post_callback(post_call_callback);
+#endif //GLAD_DEBUG
+
+    if (!glfwInit()) {
+        std::cerr << "Could not initialize glfw\n";
+        return false;
+    }
+
+    return true;
+}
+
+
+static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    auto* app = static_cast<gear::Application*>(glfwGetWindowUserPointer(window));
+    app->getInputState()->updateKey(static_cast<gear::KEYS>(key), static_cast<gear::KeyEvent>(action));
+}
+
+
 gear::Application::Application(const AppConfig& config) {
     glfwSetErrorCallback(glfw_error_callback);
 #ifdef GLAD_DEBUG
@@ -54,6 +72,8 @@ gear::Application::Application(const AppConfig& config) {
         std::cerr << "Could not initialize glfw\n";
         return;
     }
+
+    inputState = std::make_unique<InputState>();
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -70,8 +90,7 @@ gear::Application::Application(const AppConfig& config) {
     height = config.height;
 
     glfwSetWindowUserPointer(window, this);
-
-    glfwSetKeyCallback(window, glfw_key_callback);
+    glfwSetKeyCallback(window, key_callback);
 
     glfwMakeContextCurrent(window);
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
@@ -85,21 +104,28 @@ gear::Application::Application(const AppConfig& config) {
     initialized = true;
 }
 
+
+
 void gear::Application::run(gear::ApplicationAdapter& adapter) {
     if (initialized) {
         glViewport(0, 0, width, height);
 
         adapter.init(this);
 
+        int frame = 0;
         while(!glfwWindowShouldClose(window)) {
+            inputState->updateFrame(frame);
+            glfwPollEvents();
+
             double time = glfwGetTime();
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
             adapter.update();
 
             glfwSwapBuffers(window);
-            glfwPollEvents();
+
             frameTime = glfwGetTime() - time;
+            frame++;
         }
 
         adapter.end();
@@ -114,11 +140,6 @@ gear::Application::~Application() {
     glfwDestroyWindow(window);
     glfwTerminate();
 }
-
-bool gear::Application::keyPressed(KEYS key) const {
-    return glfwGetKey(window, (int)key) == GLFW_PRESS;
-}
-
 bool gear::Application::mousePressed(int mouseButton) const {
     return glfwGetMouseButton(window, mouseButton) == GLFW_PRESS;
 }
@@ -127,4 +148,8 @@ glm::vec2 gear::Application::mousePosition() const {
     double x, y;
     glfwGetCursorPos(window, &x, &y);
     return {x, height - y};
+}
+
+gear::InputState *gear::Application::getInputState() {
+    return inputState.get();
 }
