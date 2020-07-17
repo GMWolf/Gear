@@ -19,7 +19,7 @@ namespace gear {
     }
 
     flatbuffers::Offset<gear::assets::Texture>
-    buildTexture(flatbuffers::FlatBufferBuilder fbb, int width, int height, gear::assets::PixelFormat format,
+    buildTexture(flatbuffers::FlatBufferBuilder& fbb, int width, int height, gear::assets::PixelFormat format,
                  const uint8_t *data) {
 
         size_t dataSize = width * height * getFormatSize(format);

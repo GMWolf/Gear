@@ -14,8 +14,6 @@
 #include <tinyxml2.h>
 #include <stb_rect_pack.h>
 #include <stb_image.h>
-#include <stb_image_write.h>
-#include <lz4hc.h>
 #include "texture.h"
 
 namespace fs = std::filesystem;
@@ -129,7 +127,8 @@ int main(int argc, char* argv[]) {
             auto texPathRel = fs::relative(outTexName, fs::path(outAtlasName).parent_path());
             auto texName = std::string(tilesetName) + "_texture";
             auto texNameOffset = builder.CreateString(texName);
-            auto texoffset = gear::buildTexture(builder, pageWidth, pageHeight, gear::assets::PixelFormat::PixelFormat_RGBA8, textureData.data());
+            auto texoffset = gear::buildTexture(builder, pageWidth, pageHeight, gear::assets::PixelFormat::PixelFormat_RGBA8,
+                                                reinterpret_cast<const uint8_t *>(textureData.data()));
 
             entries.push_back(gear::assets::CreateAssetEntryDirect(builder, texName.c_str(), gear::assets::Asset_Texture, texoffset.Union()));
 

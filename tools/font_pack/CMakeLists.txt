@@ -1,6 +1,6 @@
 
 add_executable(font_packer main.cpp)
-target_link_libraries(font_packer PUBLIC stb yaml-cpp bfg_lyra lz4_static)
+target_link_libraries(font_packer PUBLIC stb yaml-cpp bfg_lyra gear_tools_texture)
 target_include_directories(font_packer PUBLIC ../../)
 
 function(add_font input)
