@@ -1,3 +1,4 @@
+add_subdirectory(texture)
 
 add_subdirectory(font_pack)
 add_subdirectory(shader_pack)
