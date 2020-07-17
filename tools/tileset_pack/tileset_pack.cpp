@@ -20,7 +20,6 @@ int main(int charc, char* argv[]) {
     xml::XMLDocument doc;
     doc.LoadFile(in);
 
-
     auto xTileset = doc.FirstChildElement("tileset");
 
 
