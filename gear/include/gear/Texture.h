@@ -56,7 +56,7 @@ namespace gear {
 
     class TextureLoader {
     public:
-        static Texture load(const assets::Texture* texDef, AssetRegistry& registry);
+        static Texture load(const assets::Texture* texDef, AssetRegistry& registry, const char* name = nullptr);
     };
 
     class SpriteLoader {

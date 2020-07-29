@@ -8,9 +8,12 @@
 #include <gear/fbs/generated/tileset_generated.h>
 #include <gear/fbs/generated/assets_generated.h>
 #include <ios>
-
+#include <stb_image.h>
+#include <texture.h>
+#include <filesystem>
 
 namespace xml = tinyxml2;
+namespace fs = std::filesystem;
 
 int main(int charc, char* argv[]) {
 
@@ -25,18 +28,31 @@ int main(int charc, char* argv[]) {
 
     flatbuffers::FlatBufferBuilder builder(2048);
 
-    auto textureName = builder.CreateString(xTileset->FirstChildElement("image")->Attribute("source"));
+    auto reldir = fs::path(in).parent_path();
+    auto source = xTileset->FirstChildElement("image")->Attribute("source");
 
-    gear::assets::TileSetBuilder tilesetBuilder(builder);
-    tilesetBuilder.add_texture(textureName);
-    tilesetBuilder.add_columns(xTileset->IntAttribute("columns"));
-    tilesetBuilder.add_tileCount(xTileset->IntAttribute("tileCount"));
-    tilesetBuilder.add_tileWidth(xTileset->IntAttribute("tileWidth"));
-    tilesetBuilder.add_tileHeight(xTileset->IntAttribute("tileHeight"));
-    auto tileset = tilesetBuilder.Finish();
+    int w, h, c;
+    stbi_set_flip_vertically_on_load(1);
+    auto imageData = (uint8_t*) stbi_load((reldir / source).c_str(), &w, &h, &c, 4);
+
 
     std::vector<flatbuffers::Offset<gear::assets::AssetEntry>> entries;
-    entries.push_back(gear::assets::CreateAssetEntryDirect(builder, xTileset->Attribute("name"), gear::assets::Asset_TileSet, tileset.Union()));
+
+    std::string tilesetName = xTileset->Attribute("name");
+
+    //Add texture asset
+    auto texture = gear::buildTexture(builder, w, h, gear::assets::PixelFormat_RGBA8, imageData);
+    auto textureName = tilesetName + "_texture";
+    entries.push_back(gear::assets::CreateAssetEntryDirect(builder, textureName.c_str(),gear::assets::Asset_Texture, texture.Union()));
+
+    //add tileset asset
+    auto tileset = gear::assets::CreateTileSetDirect(builder, textureName.c_str(),
+            xTileset->IntAttribute("tileWidth"),
+            xTileset->IntAttribute("tileHeight"),
+            xTileset->IntAttribute("tileCount"),
+            xTileset->IntAttribute("columns"));
+
+    entries.push_back(gear::assets::CreateAssetEntryDirect(builder, tilesetName.c_str(), gear::assets::Asset_TileSet, tileset.Union()));
     auto bundle = gear::assets::CreateBundleDirect(builder, &entries);
 
     builder.Finish(bundle);

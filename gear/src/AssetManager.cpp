@@ -72,7 +72,6 @@ public:
         gear::AssetReference<T> get(const std::string& s);
     };
 
-
     Store<Texture> textures;
     Store<Sprite> sprites;
     Store<BitmapFont> fonts;
@@ -104,7 +103,7 @@ void gear::AssetRegistry::loadBundle(const gear::assets::Bundle *bundle) {
             case assets::Asset_NONE:
                 break;
             case assets::Asset_Texture: {
-                getTexture(name).ptr->store.emplace(TextureLoader::load(asset->asset_as_Texture(), *this));
+                getTexture(name).ptr->store.emplace(TextureLoader::load(asset->asset_as_Texture(), *this, name.c_str()));
             } break;
             case assets::Asset_Sprite: {
                 getSprite(name).ptr->store.emplace(SpriteLoader::load(asset->asset_as_Sprite(), *this));
@@ -116,7 +115,7 @@ void gear::AssetRegistry::loadBundle(const gear::assets::Bundle *bundle) {
                 getShader(name).ptr->store.emplace(ShaderLoader::load(asset->asset_as_Shader(), *this));
             } break;
             case assets::Asset_TileSet:
-                //getTileSet(name).ptr->store.emplace()
+                getTileSet(name).ptr->store.emplace(loadTileSet(asset->asset_as_TileSet(), *this));
                 break;
             case assets::Asset_Map:
                 break;

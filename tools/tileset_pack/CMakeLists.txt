@@ -1,16 +1,16 @@
 
-add_executable(tileset_packer shader_packer.cpp)
-target_link_libraries(tileset_packer PUBLIC yaml-cpp stb tinyxml2)
-target_include_directories(tileset_packer PUBLIC ../../)
+add_executable(tileset_pack tileset_pack.cpp)
+target_link_libraries(tileset_pack PUBLIC stb tinyxml2 gear_tools_texture)
+target_include_directories(tileset_pack PUBLIC ../../)
 
-function(add_tileset_pack name input)
+function(add_tileset_pack input)
     add_custom_command(
             COMMAND tileset_pack ARGS ${CMAKE_CURRENT_LIST_DIR}/${input} ${input}.bin
             OUTPUT ${input}.bin
-            DEPENDS "${input}" tileset_packer
+            DEPENDS "${input}" tileset_pack
             USES_TERMINAL
     )
 
-    add_custom_target(${name}
-            DEPENDS "${input}.bin")
+    set(ADD_TILESET_OUT_FILES ${input}.bin PARENT_SCOPE)
+    set(ADD_TILESET_BUNDLES ${input}.bin PARENT_SCOPE)
 endfunction()

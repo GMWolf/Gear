@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <gear/Texture.h>
 #include <glm/vec4.hpp>
+#include <gear/AssetManager.h>
 
 namespace gear {
 
@@ -16,6 +17,7 @@ namespace gear {
         std::string name;
         AssetReference<Texture> texture;
 
+        TileSet() = default;
         TileSet(TileSet&&) = default;
         TileSet& operator=(TileSet&&) = default;
 

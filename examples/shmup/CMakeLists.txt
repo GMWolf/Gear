@@ -6,6 +6,8 @@ add_assets(shmup_assets
         FILE assets.bin
         ATLAS
             assets/sprites/Sprites.tsx
+        TILESET
+            assets/maps/tile01.tsx
         SHADER
             src/shaders/textured.yaml
             src/shaders/font.yaml

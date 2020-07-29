@@ -46,13 +46,15 @@ gear::Texture::Texture(GLuint tex, glm::ivec2 size) : tex(tex), size(size){
 }
 
 
-gear::Texture gear::TextureLoader::load(const gear::assets::Texture* texDef, gear::AssetRegistry &registry) {
+gear::Texture gear::TextureLoader::load(const gear::assets::Texture* texDef, gear::AssetRegistry &registry, const char* name) {
     GLuint tex;
     glGenTextures(1, &tex);
     glBindTexture(GL_TEXTURE_2D, tex);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 1);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    if (name)
+        glObjectLabel(GL_TEXTURE, tex, -1, name);
 
     std::vector<char> buffer(texDef->width() * texDef->height() * 4);
     LZ4_decompress_safe(reinterpret_cast<const char *>(texDef->data()->data()), buffer.data(), texDef->data()->size(), buffer.size());
