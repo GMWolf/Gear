@@ -3,7 +3,7 @@
 //
 
 #include "texture.h"
-#include <lz4hc.h>
+#include <zstd.h>
 
 namespace gear {
 
@@ -24,11 +24,10 @@ namespace gear {
 
         size_t dataSize = width * height * getFormatSize(format);
 
-        std::vector<uint8_t> compressedData(LZ4_compressBound(dataSize));
+        std::vector<uint8_t> compressedData(ZSTD_compressBound(dataSize));
 
-        auto compressedSize = LZ4_compress_HC(reinterpret_cast<const char *>(data),
-                                              reinterpret_cast<char *>(compressedData.data()), dataSize,
-                                              compressedData.size(), LZ4HC_CLEVEL_MAX);
+        auto compressedSize = ZSTD_compress(compressedData.data(), compressedData.size(),
+                                              data, dataSize, ZSTD_maxCLevel());
         compressedData.resize(compressedSize);
 
         return gear::assets::CreateTextureDirect(fbb, width, height, format, &compressedData);

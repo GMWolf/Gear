@@ -32,6 +32,8 @@ add_subdirectory(deps/json)
 
 add_subdirectory(deps/lz4/contrib/cmake_unofficial)
 
+add_subdirectory(deps/zstd/build/cmake)
+
 add_subdirectory(gear)
 
 add_subdirectory(tools)

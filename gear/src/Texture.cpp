@@ -6,7 +6,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <generated/sprite_generated.h>
 #include <generated/texture_generated.h>
-#include <lz4.h>
+#include <zstd.h>
 
 gear::Texture::Texture(gear::Texture && o) noexcept : size(o.size), tex(o.tex) {
     o.size = {0,0};
@@ -56,8 +56,8 @@ gear::Texture gear::TextureLoader::load(const gear::assets::Texture* texDef, gea
     if (name)
         glObjectLabel(GL_TEXTURE, tex, -1, name);
 
-    std::vector<char> buffer(texDef->width() * texDef->height() * 4);
-    LZ4_decompress_safe(reinterpret_cast<const char *>(texDef->data()->data()), buffer.data(), texDef->data()->size(), buffer.size());
+    std::vector<char> buffer(ZSTD_getFrameContentSize(texDef->data()->data(), texDef->data()->size()));
+    ZSTD_decompress(buffer.data(), buffer.size(), texDef->data()->data(), texDef->data()->size());
 
     auto internalFormat = 0;
     auto format = 0;
