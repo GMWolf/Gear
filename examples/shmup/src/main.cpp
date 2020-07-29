@@ -88,62 +88,68 @@ static void createStage(gear::AssetRegistry& assets, gear::ecs::CommandBuffer& c
 
 static void movePlayer(gear::Application* app, gear::ecs::Registry& ecs, gear::ecs::CommandBuffer& cmd) {
 
-    const size_t chunkArraySize = 256;
-    gear::ecs::Chunk* chunkArray[chunkArraySize];
-    auto chunks = ecs.queryChunks(gear::ecs::Query().all<Player, gear::Transform>(), chunkArray, chunkArraySize);
+    {
+        auto chunks = ecs.query(gear::ecs::Query().all<Player, gear::Transform>());
 
-    for(auto c : chunks) {
-        auto chunk = gear::ecs::ChunkView<gecs::EntityRef, Player, gear::Transform>(*c);
+        for (auto c : chunks) {
+            auto chunk = gear::ecs::ChunkView<gecs::EntityRef, Player, gear::Transform>(*c);
 
-        for(auto [entity, player, transform] : chunk) {
-            auto d = app->mousePosition() - transform.pos;
-            if (glm::length(d) > player.moveSpeed) {
-                d = glm::normalize(d) * player.moveSpeed;
+            for (auto[entity, player, transform] : chunk) {
+                auto d = app->mousePosition() - transform.pos;
+                if (glm::length(d) > player.moveSpeed) {
+                    d = glm::normalize(d) * player.moveSpeed;
+                }
+
+                transform.pos += d;
+
+                if (player.shootTimer > 0) player.shootTimer--;
+
+                if (app->mousePressed(0) && player.shootTimer <= 0) {
+                    cmd.createEntity(gear::Sprite(player.bulletSprite),
+                                     player.bulletShape,
+                                     gear::Transform{transform.pos + glm::vec2(player.shootSideOffset, 24)},
+                                     Bullet{{0, 2}}
+                    );
+                    player.shootSideOffset *= -1;
+
+                    player.shootTimer = 12;
+                }
             }
 
-            transform.pos += d;
-
-            if (player.shootTimer > 0) player.shootTimer--;
-
-            if (app->mousePressed(0) && player.shootTimer <= 0) {
-                cmd.createEntity( gear::Sprite(player.bulletSprite),
-                                  player.bulletShape,
-                                  gear::Transform{transform.pos + glm::vec2(player.shootSideOffset, 24)},
-                                  Bullet{{0, 2}}
-                );
-                player.shootSideOffset *= -1;
-
-                player.shootTimer = 12;
-            }
-        }
-
-    }
-
-    chunks = ecs.queryChunks(gear::ecs::Query().all<gear::Transform, Bullet>(), chunkArray, chunkArraySize);
-    for(auto c : chunks) {
-        auto chunk = gear::ecs::ChunkView<gear::ecs::EntityRef, gear::Transform, Bullet>(*c);
-        for (auto[entity, transform, bullet] : chunk) {
-            transform.pos += bullet.vel;
-            if (transform.pos.y > 720) {
-                cmd.destroyEntity(entity);
-            }
         }
     }
 
-    chunks = ecs.queryChunks(gear::ecs::Query().all<Velocity, gear::Transform>(), chunkArray, chunkArraySize);
-    for(auto c: chunks) {
-        auto chunk = gear::ecs::ChunkView<Velocity, gear::Transform>(*c);
-        for (auto [velocity, transform] : chunk) {
-            transform.pos += velocity.v;
+    {
+        auto chunks = ecs.query(gear::ecs::Query().all<gear::Transform, Bullet>());
+        for (auto c : chunks) {
+            auto chunk = gear::ecs::ChunkView<gear::ecs::EntityRef, gear::Transform, Bullet>(*c);
+            for (auto[entity, transform, bullet] : chunk) {
+                transform.pos += bullet.vel;
+                if (transform.pos.y > 720) {
+                    cmd.destroyEntity(entity);
+                }
+            }
         }
     }
 
-    chunks = ecs.queryChunks(gear::ecs::Query().all<Enemy, gear::Transform>(), chunkArray, chunkArraySize);
-    for(auto c: chunks) {
-        auto chunk = gear::ecs::ChunkView<gear::ecs::EntityRef, gear::Transform>(*c);
-        for (auto [entity, transform] : chunk) {
-            if (transform.pos.y < 32) {
-                cmd.destroyEntity(entity);
+    {
+        auto chunks = ecs.query(gear::ecs::Query().all<Velocity, gear::Transform>());
+        for (auto c: chunks) {
+            auto chunk = gear::ecs::ChunkView<Velocity, gear::Transform>(*c);
+            for (auto[velocity, transform] : chunk) {
+                transform.pos += velocity.v;
+            }
+        }
+    }
+
+    {
+        auto chunks = ecs.query(gear::ecs::Query().all<Enemy, gear::Transform>());
+        for (auto c: chunks) {
+            auto chunk = gear::ecs::ChunkView<gear::ecs::EntityRef, gear::Transform>(*c);
+            for (auto[entity, transform] : chunk) {
+                if (transform.pos.y < 32) {
+                    cmd.destroyEntity(entity);
+                }
             }
         }
     }
@@ -153,8 +159,7 @@ static void processCollisions(gear::ecs::Registry& ecs, gear::ecs::CommandBuffer
     const gear::ecs::Archetype enemyArch = gear::ecs::Archetype::create<Enemy>();
     const gear::ecs::Archetype bulletArch = gear::ecs::Archetype::create<Bullet>();
 
-    gecs::Chunk* chunkArray[256];
-    auto chunks = ecs.queryChunks(gecs::Query().all<CollisionPair>(), chunkArray, 256);
+    auto chunks = ecs.query(gecs::Query().all<CollisionPair>());
     for(auto c : chunks) {
         auto chunk = gecs::ChunkView<gecs::EntityRef, CollisionPair>(*c);
         for (auto[collisionEntity, collision] : chunk) {
@@ -178,8 +183,7 @@ static void processCollisions(gear::ecs::Registry& ecs, gear::ecs::CommandBuffer
 }
 
 static void processLifetime(gear::ecs::Registry& ecs, gear::ecs::CommandBuffer& cmd) {
-    gecs::Chunk* chunkArray[256];
-    auto chunks = ecs.queryChunks(gecs::Query().all<Lifetime>(), chunkArray, 256);
+    auto chunks = ecs.query(gecs::Query().all<Lifetime>());
     for(auto c : chunks) {
         auto chunk = gecs::ChunkView<gecs::EntityRef, Lifetime>(*c);
         for (auto[entity, lifetime] : chunk) {
@@ -192,25 +196,29 @@ static void processLifetime(gear::ecs::Registry& ecs, gear::ecs::CommandBuffer& 
 }
 
 static void processAnimation(gear::ecs::Registry& ecs, gear::ecs::CommandBuffer& cmd) {
-    gecs::Chunk* chunkArray[1024];
-    auto chunks = ecs.queryChunks(gecs::Query().all<gear::Sprite>(), chunkArray, 1024);
 
-    for(auto c : chunks) {
-        auto chunk = gecs::ChunkView<gear::Sprite>(*c);
-        for (auto[sprite] : chunk) {
-            sprite.imageIndex++;
-            if (sprite.imageIndex >= sprite.texRegions.size()) {
-                sprite.imageIndex = 0;
+    {
+        auto chunks = ecs.query(gecs::Query().all<gear::Sprite>());
+
+        for (auto c : chunks) {
+            auto chunk = gecs::ChunkView<gear::Sprite>(*c);
+            for (auto[sprite] : chunk) {
+                sprite.imageIndex++;
+                if (sprite.imageIndex >= sprite.texRegions.size()) {
+                    sprite.imageIndex = 0;
+                }
             }
         }
     }
 
-    chunks = ecs.queryChunks(gecs::Query().all<gear::Sprite, DestroyOnAnimationEnd>(), chunkArray, 1024);
-    for(auto c: chunks) {
-        auto chunk = gecs::ChunkView<gecs::EntityRef, gear::Sprite>(*c);
-        for (auto[entity, sprite] : chunk) {
-            if (sprite.imageIndex == 0) {
-                cmd.destroyEntity(entity);
+    {
+        auto chunks = ecs.query(gecs::Query().all<gear::Sprite, DestroyOnAnimationEnd>());
+        for (auto c: chunks) {
+            auto chunk = gecs::ChunkView<gecs::EntityRef, gear::Sprite>(*c);
+            for (auto[entity, sprite] : chunk) {
+                if (sprite.imageIndex == 0) {
+                    cmd.destroyEntity(entity);
+                }
             }
         }
     }
@@ -226,9 +234,6 @@ void render(gear::SpriteBatch& batch, gear::AssetRegistry& assets, gear::ecs::Re
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glDisable(GL_CULL_FACE);
-
-    const size_t chunkArraySize = 1024;
-    gecs::Chunk* chunkArray[chunkArraySize];
 
     gear::View view {{0,0}, {480, 720}};
 
@@ -251,7 +256,7 @@ void render(gear::SpriteBatch& batch, gear::AssetRegistry& assets, gear::ecs::Re
         auto vm = view.matrix();
         glUniformMatrix4fv(shd->uniformLocation("view"), 1, GL_FALSE, glm::value_ptr(vm));
 
-        auto chunks = ecs.queryChunks(gecs::Query().all<Text, gear::Transform>(), chunkArray, chunkArraySize);
+        auto chunks = ecs.query(gecs::Query().all<Text, gear::Transform>());
         for(auto c : chunks){
             auto chunk = gecs::ChunkView<gear::Transform, Text>(*c);
             for (auto[transform, text] : chunk) {
