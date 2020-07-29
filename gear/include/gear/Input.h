@@ -28,15 +28,15 @@ namespace gear {
         void updateFrame(int frame);
         void updateKey(KEYS key, KeyEvent event);
 
-        [[nodiscard]] glm::vec2 mousePosition();
+        [[nodiscard]] glm::vec2 mousePosition() const;
 
-        [[nodiscard]] int keyGetFramePressed(KEYS key);
-        [[nodiscard]] int keyGetFrameReleased(KEYS key);
-        [[nodiscard]] int keyFetHeldDuration(KEYS key);
-        [[nodiscard]] bool keyDown(KEYS key);
-        [[nodiscard]] bool keyUp(KEYS key);
-        [[nodiscard]] bool keyPressed(KEYS key);
-        [[nodiscard]] bool keyReleased(KEYS key);
+        [[nodiscard]] int keyGetFramePressed(KEYS key) const;
+        [[nodiscard]] int keyGetFrameReleased(KEYS key) const;
+        [[nodiscard]] int keyFetHeldDuration(KEYS key) const;
+        [[nodiscard]] bool keyDown(KEYS key) const;
+        [[nodiscard]] bool keyUp(KEYS key) const;
+        [[nodiscard]] bool keyPressed(KEYS key) const;
+        [[nodiscard]] bool keyReleased(KEYS key) const;
     };
 
 

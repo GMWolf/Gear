@@ -42,7 +42,7 @@ namespace gear {
         bool initialized = false;
         GLFWwindow *window{};
 
-        InputState* getInputState();
+        InputState& getInputState();
 
         double frameTime = 0;
     };

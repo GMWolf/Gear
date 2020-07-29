@@ -58,7 +58,7 @@ static bool initGlfw() {
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
     auto* app = static_cast<gear::Application*>(glfwGetWindowUserPointer(window));
-    app->getInputState()->updateKey(static_cast<gear::KEYS>(key), static_cast<gear::KeyEvent>(action));
+    app->getInputState().updateKey(static_cast<gear::KEYS>(key), static_cast<gear::KeyEvent>(action));
 }
 
 
@@ -150,6 +150,6 @@ glm::vec2 gear::Application::mousePosition() const {
     return {x, height - y};
 }
 
-gear::InputState *gear::Application::getInputState() {
-    return inputState.get();
+gear::InputState& gear::Application::getInputState() {
+    return *inputState;
 }

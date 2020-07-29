@@ -21,18 +21,18 @@ void gear::InputState::updateFrame(int f) {
     frame = f;
 }
 
-bool gear::InputState::keyDown(KEYS key) {
+bool gear::InputState::keyDown(KEYS key) const {
     return keyReleasedFrame[static_cast<int>(key)] < keyPressedFrame[static_cast<int>(key)];
 }
 
-bool gear::InputState::keyUp(KEYS key) {
+bool gear::InputState::keyUp(KEYS key) const {
     return !keyDown(key);
 }
 
-int gear::InputState::keyGetFramePressed(gear::KEYS key) {
+int gear::InputState::keyGetFramePressed(gear::KEYS key) const {
     return keyPressedFrame[static_cast<int>(key)];
 }
 
-int gear::InputState::keyGetFrameReleased(gear::KEYS key) {
+int gear::InputState::keyGetFrameReleased(gear::KEYS key) const {
     return keyReleasedFrame[static_cast<int>(key)];
 }

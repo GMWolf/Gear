@@ -23,11 +23,11 @@ void moveBat(gear::ecs::Registry& ecs, gear::Application* app) {
         for(auto [bat, transform, col] : chunk) {
 
             auto bbox = std::get<gear::Rectangle>(col);
-            if (app->getInputState()->keyDown(gear::KEYS::LEFT) && transform.pos.x + bbox.min.x > 0) {
+            if (app->getInputState().keyDown(gear::KEYS::LEFT) && transform.pos.x + bbox.min.x > 0) {
                 transform.pos.x -= bat.spd;
             }
 
-            if (app->getInputState()->keyDown(gear::KEYS::RIGHT) && transform.pos.x + bbox.max.x <= 720.0f) {
+            if (app->getInputState().keyDown(gear::KEYS::RIGHT) && transform.pos.x + bbox.max.x <= 720.0f) {
                 transform.pos.x += bat.spd;
             }
         }

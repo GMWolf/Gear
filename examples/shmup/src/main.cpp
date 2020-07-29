@@ -18,6 +18,7 @@
 #include <gear/map/TilemapSystem.h>
 #include <gear/RenderSystem.h>
 #include <gear/PrimDraw.h>
+#include <gear/Input.h>
 
 #include "Collisions.h"
 
@@ -86,7 +87,8 @@ static void createStage(gear::AssetRegistry& assets, gear::ecs::CommandBuffer& c
     }
 }
 
-static void movePlayer(gear::Application* app, gear::ecs::Registry& ecs, gear::ecs::CommandBuffer& cmd) {
+static void movePlayer(const gear::InputState& input, gear::ecs::Registry& ecs, gear::ecs::CommandBuffer& cmd) {
+
 
     {
         auto chunks = ecs.query(gear::ecs::Query().all<Player, gear::Transform>());
@@ -95,16 +97,23 @@ static void movePlayer(gear::Application* app, gear::ecs::Registry& ecs, gear::e
             auto chunk = gear::ecs::ChunkView<gecs::EntityRef, Player, gear::Transform>(*c);
 
             for (auto[entity, player, transform] : chunk) {
-                auto d = app->mousePosition() - transform.pos;
-                if (glm::length(d) > player.moveSpeed) {
-                    d = glm::normalize(d) * player.moveSpeed;
-                }
 
-                transform.pos += d;
+                if (input.keyDown(gear::KEYS::LEFT)) {
+                    transform.pos.x -= player.moveSpeed;
+                }
+                if (input.keyDown(gear::KEYS::RIGHT)) {
+                    transform.pos.x += player.moveSpeed;
+                }
+                if (input.keyDown(gear::KEYS::UP)) {
+                    transform.pos.y += player.moveSpeed;
+                }
+                if (input.keyDown(gear::KEYS::DOWN)) {
+                    transform.pos.y -= player.moveSpeed;
+                }
 
                 if (player.shootTimer > 0) player.shootTimer--;
 
-                if (app->mousePressed(0) && player.shootTimer <= 0) {
+                if (input.keyDown(gear::KEYS::SPACE) && player.shootTimer <= 0) {
                     cmd.createEntity(gear::Sprite(player.bulletSprite),
                                      player.bulletShape,
                                      gear::Transform{transform.pos + glm::vec2(player.shootSideOffset, 24)},
@@ -192,7 +201,7 @@ static void processLifetime(gear::ecs::Registry& ecs, gear::ecs::CommandBuffer& 
                 cmd.destroyEntity(entity);
             }
         }
-    };
+    }
 }
 
 static void processAnimation(gear::ecs::Registry& ecs, gear::ecs::CommandBuffer& cmd) {
@@ -305,7 +314,7 @@ public:
 
     void update() override {
 
-        movePlayer(app, world, cmd);
+        movePlayer(app->getInputState(), world, cmd);
         checkCollisions(world, cmd);
         gecs::executeCommandBuffer(cmd, world);
         processCollisions(world, cmd, *assets);
