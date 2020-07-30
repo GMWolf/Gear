@@ -73,14 +73,6 @@ static void createStage(gear::AssetRegistry& assets, gear::ecs::CommandBuffer& c
 
     }
 
-    //collision filters
-    {
-        cmd.createEntity(CollisionFilter{
-            gear::ecs::Query().all<Enemy>(),
-            gear::ecs::Query().all<Bullet>()
-        });
-    }
-
     //view
     {
         cmd.createEntity(gear::View{{0,0}, {480, 720}});
@@ -164,31 +156,20 @@ static void movePlayer(const gear::InputState& input, gear::ecs::Registry& ecs, 
     }
 }
 
-static void processCollisions(gear::ecs::Registry& ecs, gear::ecs::CommandBuffer& cmd, gear::AssetRegistry& assets) {
-    const gear::ecs::Archetype enemyArch = gear::ecs::Archetype::create<Enemy>();
-    const gear::ecs::Archetype bulletArch = gear::ecs::Archetype::create<Bullet>();
+static void processCollisions(CollisionFilter& filter, gear::ecs::CommandBuffer& cmd, gear::AssetRegistry& assets) {
+    for (auto& pair : filter.collisionPairs) {
+        auto[enemy, t] = pair.entity[0].get<Enemy, gear::Transform>();
 
-    auto chunks = ecs.query(gecs::Query().all<CollisionPair>());
-    for(auto c : chunks) {
-        auto chunk = gecs::ChunkView<gecs::EntityRef, CollisionPair>(*c);
-        for (auto[collisionEntity, collision] : chunk) {
-            if (auto entities = collision.get(enemyArch, bulletArch)) {
-                auto[enemy, t] = entities->first.get<Enemy, gear::Transform>();
-
-                if (--enemy.health <= 0) {
-                    score += 100;
-                    cmd.destroyEntity(entities->first);
-                    cmd.createEntity(t, gear::ecs::CopyProvider{*assets.getSprite("explosion_0")}, DestroyOnAnimationEnd{});
-                    cmd.createEntity(gear::Transform{t.pos + glm::vec2(-25, 25)},
-                                     Text{"100", assets.getFont("default")},
-                                     Lifetime{1});
-                }
-                cmd.destroyEntity(entities->second);
-
-            }
-            cmd.destroyEntity(collisionEntity);
+        if (--enemy.health <= 0) {
+            score += 100;
+            cmd.destroyEntity(pair.entity[0]);
+            cmd.createEntity(t, gear::ecs::CopyProvider{*assets.getSprite("explosion_0")}, DestroyOnAnimationEnd{});
+            cmd.createEntity(gear::Transform{t.pos + glm::vec2(-25, 25)},
+                             Text{"100", assets.getFont("default")},
+                             Lifetime{1});
         }
-    };
+        cmd.destroyEntity(pair.entity[1]);
+    }
 }
 
 static void processLifetime(gear::ecs::Registry& ecs, gear::ecs::CommandBuffer& cmd) {
@@ -309,15 +290,21 @@ public:
 
         createStage(*assets, cmd);
 
+        enemyBulletFilter.entityA = gear::ecs::Query().all<Enemy>();
+        enemyBulletFilter.entityB = gear::ecs::Query().all<Bullet>();
+
         gear::ui::initialize(app->window);
     }
 
     void update() override {
 
         movePlayer(app->getInputState(), world, cmd);
-        checkCollisions(world, cmd);
+
+        enemyBulletFilter.collisionPairs.clear();
+        checkCollisions(world, enemyBulletFilter);
+
         gecs::executeCommandBuffer(cmd, world);
-        processCollisions(world, cmd, *assets);
+        processCollisions(enemyBulletFilter, cmd, *assets);
         render(*batch, *assets, world);
         debugDraw(*primDraw, *assets, world);
         processAnimation(world, cmd);
@@ -350,6 +337,8 @@ private:
     gear::ecs::CommandBuffer cmd{pool, 256'000'000};
 
     gear::ecs::Prefab enemyPrefab;
+
+    CollisionFilter enemyBulletFilter;
 
     std::optional<gear::AssetRegistry> assets;
     std::optional<gear::SpriteBatch> batch;

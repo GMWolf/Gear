@@ -16,12 +16,10 @@ CollisionPair::get(const gear::ecs::Archetype &a, const gear::ecs::Archetype &b)
 }
 
 
-static void checkCollisions(gear::ecs::Registry& ecs, gear::ecs::CommandBuffer& cmd, CollisionFilter filter) {
+void checkCollisions(gear::ecs::Registry& ecs, CollisionFilter& filter) {
 
-    gear::ecs::Chunk* chunksAArray[1024];
-    auto chunksA = ecs.queryChunks(filter.entityA.all<gear::CollisionShape, gear::Transform>(), chunksAArray, 1024);
-    gear::ecs::Chunk* chunksBArray[1024];
-    auto chunksB = ecs.queryChunks(filter.entityB.all<gear::CollisionShape, gear::Transform>(), chunksBArray, 1024);
+    auto chunksA = ecs.query(filter.entityA).all<gear::CollisionShape, gear::Transform>();
+    auto chunksB = ecs.query(filter.entityB).all<gear::CollisionShape, gear::Transform>();
 
     for(auto ca : chunksA) {
         auto chunkA = gear::ecs::ChunkView<gear::ecs::EntityRef, gear::CollisionShape, gear::Transform>(*ca);
@@ -37,29 +35,11 @@ static void checkCollisions(gear::ecs::Registry& ecs, gear::ecs::CommandBuffer& 
                     auto [entityB, shapeB, transformB] = *eb;
 
                     if (gear::collide(shapeA, transformA.pos, shapeB, transformB.pos)) {
-                        cmd.createEntity(CollisionPair{entityA, entityB});
+                        filter.collisionPairs.emplace_back(CollisionPair{entityA, entityB});
                     }
                 }
             }
 
         }
     }
-
-}
-
-void checkCollisions(gear::ecs::Registry &ecs, gear::ecs::CommandBuffer &cmd) {
-
-    //Get all filters
-    gear::ecs::Chunk* filterChunksArray[1];
-    auto filterChunks = ecs.queryChunks(gear::ecs::Query().all<CollisionFilter>(), filterChunksArray, 1);
-    for(auto c : filterChunks) {
-        auto chunk = gear::ecs::ChunkView<CollisionFilter>(*c);
-
-        for(auto [filter] : chunk) {
-            checkCollisions(ecs, cmd, filter);
-        }
-    }
-
-
-
 }

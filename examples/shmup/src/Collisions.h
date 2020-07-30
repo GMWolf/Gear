@@ -26,8 +26,9 @@ struct CollisionPair {
 struct CollisionFilter {
     gear::ecs::Query entityA;
     gear::ecs::Query entityB;
+    std::vector<CollisionPair> collisionPairs;
 };
 
-void checkCollisions(gear::ecs::Registry& ecs, gear::ecs::CommandBuffer& cmd);
+void checkCollisions(gear::ecs::Registry& ecs, CollisionFilter& filter);
 
 #endif //GEAR_COLLISIONS_H
