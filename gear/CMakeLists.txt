@@ -51,7 +51,7 @@ add_library(gear
         src/map/Map.cpp
         include/gear/PrimDraw.h
         src/PrimDraw.cpp
-        include/gear/Input.h src/Input.cpp)
+        include/gear/Input.h src/Input.cpp include/gear/Job.h)
 
 target_sources(gear PRIVATE ${GEAR_ECS_SOURCES})
 

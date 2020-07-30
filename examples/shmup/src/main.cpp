@@ -70,7 +70,6 @@ static void createStage(gear::AssetRegistry& assets, gear::ecs::CommandBuffer& c
                 gear::Transform{{480 / 2, 32}},
                 *spr.mask,
                 player);
-
     }
 
     //view
