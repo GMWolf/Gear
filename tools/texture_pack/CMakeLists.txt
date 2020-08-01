@@ -6,7 +6,7 @@ target_include_directories(texture_packer PUBLIC ../..)
 function(add_atlas input)
     add_custom_command(
             COMMAND texture_packer ARGS -o ${input} ${CMAKE_CURRENT_LIST_DIR}/${input}
-            OUTPUT ${input}.bin ${input}.png
+            OUTPUT ${input}.bin
             DEPENDS "${input}" texture_packer
             USES_TERMINAL
     )

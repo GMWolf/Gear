@@ -14,6 +14,8 @@ add_assets(shmup_assets
             src/shaders/prim.yaml
         FONT
             assets/fonts/defaultFont.yaml
+        MAP
+            assets/maps/map1.tmx
         )
 
 add_dependencies(shmup shmup_assets)

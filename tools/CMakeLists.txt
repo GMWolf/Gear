@@ -4,12 +4,13 @@ add_subdirectory(font_pack)
 add_subdirectory(shader_pack)
 add_subdirectory(texture_pack)
 add_subdirectory(tileset_pack)
+add_subdirectory(map_pack)
 add_subdirectory(bundler)
 
 
 function(add_assets target)
     set(oneValueArgs FILE)
-    set(multiValueArgs ATLAS SHADER FONT TILESET)
+    set(multiValueArgs ATLAS SHADER FONT TILESET MAP)
     cmake_parse_arguments(PARSE_ARGV 1 ADD_ASSETS "" "${oneValueArgs}" "${multiValueArgs}")
 
     foreach(file ${ADD_ASSETS_ATLAS})
@@ -34,6 +35,12 @@ function(add_assets target)
         add_tileset_pack(${file})
         list(APPEND ASSETS ${ADD_TILESET_OUT_FILES})
         list(APPEND BUNDLES ${ADD_TILESET_BUNDLES})
+    endforeach()
+
+    foreach(file ${ADD_ASSETS_MAP})
+        add_map(${file})
+        list(APPEND ASSETS ${ADD_MAP_OUT_FILES})
+        list(APPEND BUNDLES ${ADD_MAP_BUNDLES})
     endforeach()
 
     add_custom_target(${target}_ASSETS DEPENDS ${ASSETS})

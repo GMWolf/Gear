@@ -6,7 +6,7 @@ target_include_directories(font_packer PUBLIC ../../)
 function(add_font input)
     add_custom_command(
             COMMAND font_packer ARGS -o ${input} ${CMAKE_CURRENT_LIST_DIR}/${input}
-            OUTPUT ${input}.bin ${input}.png
+            OUTPUT ${input}.bin
             DEPENDS "${input}" font_packer
             USES_TERMINAL
     )

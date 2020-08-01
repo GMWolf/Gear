@@ -8,9 +8,9 @@
 #include <base64.h>
 #include <cctype>
 #include <flatbuffers/flatbuffers.h>
+#include <zstd.h>
 #include <gear/fbs/generated/assets_generated.h>
 #include <fstream>
-#include <lyra/lyra.hpp>
 
 namespace fs = std::filesystem;
 namespace xml = tinyxml2;
@@ -38,32 +38,10 @@ int findTileset(int tile, const std::vector<int>& firstIds) {
 
 int main(int argc, char* argv[]) {
 
-    std::string inputPath;
-    std::string outFileName = "out";
-    bool showHelp = false;
-    bool printInputs = false;
-    auto cli = lyra::cli_parser()
-               | lyra::arg(inputPath, "input file")
-                       ("input files").cardinality(1, std::numeric_limits<size_t>::max())
-               | lyra::opt(outFileName, "output file name").required(1)
-               ["-o"]["--output"]
-               ("output file name")
-               | lyra::help(showHelp);
-
-    auto result = cli.parse({argc, argv});
-    if (!result){
-        std::cerr << result.errorMessage() << "\n";
-        return 1;
-    }
-
-    if (showHelp)
-    {
-        std::cout << cli << std::endl;
-        return 0;
-    }
+    std::string inputPath = argv[1];
+    std::string outFileName = argv[2];
 
     auto relpath = fs::path(inputPath).parent_path();
-
 
     flatbuffers::FlatBufferBuilder builder(2048);
     std::vector<flatbuffers::Offset<gear::assets::Layer>> layers;
@@ -81,7 +59,6 @@ int main(int argc, char* argv[]) {
         xTileset = xTileset->NextSiblingElement("tileset")) {
             int firstId = xTileset->IntAttribute("firstgid");
             auto source = relpath / xTileset->Attribute("source");
-
             xml::XMLDocument tilesetDoc;
             tilesetDoc.LoadFile(source.c_str());
             auto name = tilesetDoc.FirstChildElement("tileset")->Attribute("name");
@@ -113,7 +90,11 @@ int main(int argc, char* argv[]) {
                 tiles.push_back(id);
             }
 
-            auto layer = gear::assets::CreateLayerDirect(builder, tilesets[tilesetId].c_str(), &tiles);
+            auto layerName = xLayer->Attribute("name");
+            auto layerWidth = xLayer->IntAttribute("width");
+            auto layerHeight = xLayer->IntAttribute("height");
+
+            auto layer = gear::assets::CreateLayerDirect(builder, layerName, tilesets[tilesetId].c_str(),layerWidth, layerHeight, &tiles);
             layers.push_back(layer);
         }
 
