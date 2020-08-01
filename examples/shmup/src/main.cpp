@@ -22,6 +22,9 @@
 
 #include "Collisions.h"
 
+#include <gear/Job.h>
+#include <iostream>
+
 namespace gecs = gear::ecs;
 
 struct Player {
@@ -293,6 +296,13 @@ public:
         enemyBulletFilter.entityB = gear::ecs::Query().all<Bullet>();
 
         gear::ui::initialize(app->window);
+
+        gear::Scheduler scheduler;
+        scheduler.addJob([]() {
+            std::cout << "yo!";
+        });
+        scheduler.resume();
+
     }
 
     void update() override {

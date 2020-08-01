@@ -51,10 +51,13 @@ add_library(gear
         src/map/Map.cpp
         include/gear/PrimDraw.h
         src/PrimDraw.cpp
-        include/gear/Input.h src/Input.cpp include/gear/Job.h)
+        include/gear/Input.h
+        src/Input.cpp
+        include/gear/Job.h
+        src/Job.cpp)
 
 target_sources(gear PRIVATE ${GEAR_ECS_SOURCES})
 
 target_include_directories(gear PUBLIC include fbs)
 
-target_link_libraries(gear PUBLIC glad imgui imgui_glfw imgui_ogl3 glm glfw flatbuffers libzstd_static)
+target_link_libraries(gear PUBLIC glad imgui imgui_glfw imgui_ogl3 glm glfw flatbuffers libzstd_static Boost::context)
