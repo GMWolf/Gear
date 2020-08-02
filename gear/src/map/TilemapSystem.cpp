@@ -11,6 +11,7 @@
 #include <gear/View.h>
 #include <gear/Shader.h>
 #include <glm/gtc/type_ptr.hpp>
+#include <iostream>
 
 namespace gecs = gear::ecs;
 
@@ -31,7 +32,8 @@ void gear::tilemapSystemCreateSystemComponent(ecs::Registry &ecs, gecs::CommandB
         auto chunk = gecs::ChunkView<gecs::EntityRef, TilemapComponent>(*c);
 
         for (auto[entity, tilemapComponent] : chunk) {
-            auto &tilemap = tilemapComponent.tilemap.get();
+
+            auto &tilemap = tilemapComponent.tilemap;
             size_t vertexCount = tilemap.width * tilemap.height * 4;
             size_t elementCount = tilemap.width * tilemap.height * 6;
 
@@ -124,7 +126,7 @@ void gear::tilemapSystemRender(ecs::Registry &ecs, const gear::Shader &shader) {
                     glUniformMatrix4fv(shader.uniformLocation("view"), 1, GL_FALSE, glm::value_ptr(vm));
 
                     glActiveTexture(GL_TEXTURE0);
-                    glBindTexture(GL_TEXTURE_2D, tc.tilemap->tileset->texture->tex);
+                    glBindTexture(GL_TEXTURE_2D, tc.tilemap.tileset->texture->tex);
                     glBindVertexArray(tsc.vertexArray);
                     glDrawElements(GL_TRIANGLES, tsc.count, GL_UNSIGNED_SHORT, nullptr);
                 }

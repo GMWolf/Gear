@@ -2,6 +2,8 @@ namespace gear.assets;
 
 table TileSet {
     texture: string;
+    textureWidth : short;
+    textureHeight : short;
     tileWidth: short;
     tileHeight: short;
     tileCount: short;

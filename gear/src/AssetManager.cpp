@@ -13,6 +13,7 @@
 #include <gear/map/TileMap.h>
 #include <gear/map/Map.h>
 #include <unordered_map>
+#include <iostream>
 
 
 template<class T>
@@ -36,7 +37,7 @@ bool gear::AssetEntry<T>::pending() {
 
 template<class T>
 bool gear::AssetReference<T>::pending() {
-    return ptr ? ptr->pending() : false;
+    return ptr && ptr->pending();
 }
 
 template<class T>
@@ -54,14 +55,13 @@ const T &gear::AssetReference<T>::operator*() const {
     return ptr->store.value();
 }
 
-
-
 template class gear::AssetReference<gear::Texture>;
 template class gear::AssetReference<gear::Sprite>;
 template class gear::AssetReference<gear::Shader>;
 template class gear::AssetReference<gear::BitmapFont>;
 template class gear::AssetReference<gear::TileSet>;
 template class gear::AssetReference<gear::TileMap>;
+template class gear::AssetReference<gear::Map>;
 
 class gear::AssetRegistry::Impl {
 public:
@@ -118,6 +118,8 @@ void gear::AssetRegistry::loadBundle(const gear::assets::Bundle *bundle) {
                 getTileSet(name).ptr->store.emplace(loadTileSet(asset->asset_as_TileSet(), *this));
                 break;
             case assets::Asset_Map:
+                std::cout << name << std::endl;
+                getMap(name).ptr->store.emplace(loadMap(asset->asset_as_Map(), *this));
                 break;
             case assets::Asset_NestedBundle:
                 loadBundle(asset->asset_as_NestedBundle()->bundle_nested_root());

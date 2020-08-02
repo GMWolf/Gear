@@ -22,7 +22,7 @@ namespace gear {
         };
 
         struct TileLayer {
-            TileMap tileMap;
+            gear::TileMap tileMap;
         };
 
         struct ObjectLayer {

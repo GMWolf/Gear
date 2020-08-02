@@ -23,7 +23,9 @@ gear::Map gear::loadMap(const assets::Map *mapDef, AssetRegistry &registry) {
         tileLayer.tileMap.tileset = registry.getTileSet(layerDef->tileSet()->str());
         tileLayer.tileMap.width = layerDef->width();
         tileLayer.tileMap.height = layerDef->height();
-        tileLayer.tileMap.tileData = std::make_unique<TileMap::Tile[]>(tileLayer.tileMap.width * tileLayer.tileMap.height);
+        tileLayer.tileMap.tileWidth = tileLayer.tileMap.tileset->tileWidth;
+        tileLayer.tileMap.tileHeight = tileLayer.tileMap.tileset->tileHeight;
+        tileLayer.tileMap.tileData.resize(tileLayer.tileMap.width * tileLayer.tileMap.height);
 
         for(int i = 0; i < tileLayer.tileMap.width * tileLayer.tileMap.height; i++) {
             auto tileBlob = layerDef->data()->Get(i);

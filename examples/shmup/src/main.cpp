@@ -79,6 +79,12 @@ static void createStage(gear::AssetRegistry& assets, gear::ecs::CommandBuffer& c
     {
         cmd.createEntity(gear::View{{0,0}, {480, 720}});
     }
+
+    {
+        gear::TileMap map = std::get<gear::Map::TileLayer>((*assets.getMap("map")).layers.front().variant).tileMap;
+        cmd.createEntity(gear::Transform{{0,0}},
+                         gear::TilemapComponent{map});
+    }
 }
 
 static void movePlayer(const gear::InputState& input, gear::ecs::Registry& ecs, gear::ecs::CommandBuffer& cmd) {
@@ -306,6 +312,8 @@ public:
     }
 
     void update() override {
+
+        gear::tilemapSystemCreateSystemComponent(world, cmd);
 
         movePlayer(app->getInputState(), world, cmd);
 

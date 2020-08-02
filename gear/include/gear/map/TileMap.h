@@ -6,8 +6,6 @@
 #define GEAR_TILEMAP_H
 
 #include "TileSet.h"
-#include "TilemapSystem.h"
-
 
 #include <memory>
 #include <gear/AssetManager.h>
@@ -26,7 +24,7 @@ namespace gear {
 
         std::string name;
         AssetReference <TileSet> tileset;
-        std::unique_ptr<Tile[]> tileData;
+        std::vector<Tile> tileData;
         int width;
         int height;
         int tileWidth;

@@ -14,7 +14,6 @@
 namespace gear {
 
     struct TileSet {
-        std::string name;
         AssetReference<Texture> texture;
 
         TileSet() = default;

@@ -29,10 +29,11 @@ int main(int charc, char* argv[]) {
     flatbuffers::FlatBufferBuilder builder(2048);
 
     auto reldir = fs::path(in).parent_path();
-    auto source = xTileset->FirstChildElement("image")->Attribute("source");
+    auto xImage = xTileset->FirstChildElement("image");
+    auto source = xImage->Attribute("source");
 
     int w, h, c;
-    stbi_set_flip_vertically_on_load(1);
+    //stbi_set_flip_vertically_on_load(1);
     auto imageData = (uint8_t*) stbi_load((reldir / source).c_str(), &w, &h, &c, 4);
 
 
@@ -47,9 +48,11 @@ int main(int charc, char* argv[]) {
 
     //add tileset asset
     auto tileset = gear::assets::CreateTileSetDirect(builder, textureName.c_str(),
-            xTileset->IntAttribute("tileWidth"),
-            xTileset->IntAttribute("tileHeight"),
-            xTileset->IntAttribute("tileCount"),
+            xImage->IntAttribute("width"),
+            xImage->IntAttribute("height"),
+            xTileset->IntAttribute("tilewidth"),
+            xTileset->IntAttribute("tileheight"),
+            xTileset->IntAttribute("tilecount"),
             xTileset->IntAttribute("columns"));
 
     entries.push_back(gear::assets::CreateAssetEntryDirect(builder, tilesetName.c_str(), gear::assets::Asset_TileSet, tileset.Union()));

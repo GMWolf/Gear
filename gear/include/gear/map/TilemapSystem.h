@@ -8,12 +8,12 @@
 #include <gear/AssetManager.h>
 #include <cstdint>
 #include <glad/glad.h>
+#include <gear/map/Map.h>
 
 namespace gear {
 
-    class TileMap;
     struct TilemapComponent {
-        AssetReference<TileMap> tilemap;
+        TileMap tilemap;
     };
 
     struct TilemapSystemComponent {

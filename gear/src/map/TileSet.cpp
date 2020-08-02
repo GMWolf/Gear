@@ -14,13 +14,15 @@ gear::TileSet gear::loadTileSet(const assets::TileSet *tileSetDef, AssetRegistry
     ts.tileCount = tileSetDef->tileCount();
     ts.columnCount = tileSetDef->columns();
     ts.texture = registry.getTexture(tileSetDef->texture()->c_str());
+    ts.imageWidth = tileSetDef->textureWidth();
+    ts.imageHeight = tileSetDef->textureHeight();
     return ts;
 }
 
 
 glm::vec4 gear::TileSet::getTileUVs(int tileIndex, bool hflip, bool vflip, bool dflip) const{
-    auto tileX = (tileIndex - 1) % columnCount;
-    auto tileY = (tileIndex - 1) / columnCount;
+    auto tileX = (tileIndex) % columnCount;
+    auto tileY = (tileIndex) / columnCount;
     glm::vec4 uvs {
             (float)tileX * (float)tileWidth / (float)imageWidth,
             (float)tileY * (float)tileHeight / (float)imageHeight,
