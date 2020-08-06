@@ -20,7 +20,7 @@ namespace gear {
     struct AssetReference {
         std::shared_ptr<AssetEntry<T>> ptr;
 
-        bool pending();
+        bool pending() const;
 
         const T& get() const;
 
@@ -41,8 +41,8 @@ namespace gear {
     }
 
     class AssetRegistry {
-        class Impl;
-        std::unique_ptr<Impl> impl;
+        class Store;
+        std::unique_ptr<Store> store;
     public:
         AssetRegistry();
         AssetRegistry(const AssetRegistry&) = delete;

@@ -129,7 +129,7 @@ void gear::SpriteBatch::draw(const Texture& tex, const TexRegion& texRegion, glm
 
 void gear::SpriteBatch::draw(const gear::Sprite &sprite, glm::vec2 pos, glm::vec2 size) {
 
-    draw(sprite.tex.get(), sprite.texRegions[sprite.imageIndex], pos - sprite.origin, size);
+    draw(sprite.tex.pending() ? *nulltex : sprite.tex.get() , sprite.texRegions[sprite.imageIndex], pos - sprite.origin, size);
 }
 
 void gear::SpriteBatch::draw(const gear::Sprite &sprite, glm::vec2 pos) {

@@ -42,7 +42,7 @@ gear::Texture::Texture(glm::vec4 color) {
     size = {1,1};
 }
 
-gear::Texture::Texture(GLuint tex, glm::ivec2 size) : tex(tex), size(size){
+gear::Texture::Texture(GLuint tex, glm::ivec2 size) : tex(tex), size(size) {
 }
 
 

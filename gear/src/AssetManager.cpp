@@ -36,7 +36,7 @@ bool gear::AssetEntry<T>::pending() {
 }
 
 template<class T>
-bool gear::AssetReference<T>::pending() {
+bool gear::AssetReference<T>::pending() const {
     return ptr && ptr->pending();
 }
 
@@ -63,25 +63,27 @@ template class gear::AssetReference<gear::TileSet>;
 template class gear::AssetReference<gear::TileMap>;
 template class gear::AssetReference<gear::Map>;
 
-class gear::AssetRegistry::Impl {
+class gear::AssetRegistry::Store {
 public:
     template<class T>
-    class Store {
+    class ResourceStore {
     public:
         std::unordered_map<std::string, std::shared_ptr<AssetEntry<T>>> map;
         gear::AssetReference<T> get(const std::string& s);
     };
 
-    Store<Texture> textures;
-    Store<Sprite> sprites;
-    Store<BitmapFont> fonts;
-    Store<Shader> shaders;
-    Store<TileSet> tileSets;
-    Store<Map> maps;
+    ResourceStore<Texture> textures;
+    ResourceStore<Sprite> sprites;
+    ResourceStore<BitmapFont> fonts;
+    ResourceStore<Shader> shaders;
+    ResourceStore<TileSet> tileSets;
+    ResourceStore<Map> maps;
+
+    std::unordered_map<std::string, std::unique_ptr<char[]>> bundles;
 };
 
 template<class T>
-gear::AssetReference<T> gear::AssetRegistry::Impl::Store<T>::get(const std::string &s) {
+gear::AssetReference<T> gear::AssetRegistry::Store::ResourceStore<T>::get(const std::string &s) {
     auto it = map.find(s);
     if (it == map.end()) {
         auto d = std::make_shared<AssetEntry<T>>();
@@ -91,7 +93,7 @@ gear::AssetReference<T> gear::AssetRegistry::Impl::Store<T>::get(const std::stri
 }
 
 
-gear::AssetRegistry::AssetRegistry() : impl(std::make_unique<Impl>())
+gear::AssetRegistry::AssetRegistry() : store(std::make_unique<Store>())
 {}
 
 gear::AssetRegistry::~AssetRegistry() = default;
@@ -135,38 +137,37 @@ void gear::AssetRegistry::loadBundle(const std::string & fileName) {
     in.seekg(0, std::ios::end);
     size_t bufferSize = in.tellg();
     in.seekg(0, std::ios::beg);
-    auto buffer = (char*)malloc(bufferSize);
-    in.read(buffer, bufferSize);
 
-    auto bundle = gear::assets::GetBundle(buffer);
-
+    auto buffer = std::make_unique<char[]>(bufferSize);
+    in.read(buffer.get(), bufferSize);
+    auto bundle = gear::assets::GetBundle(buffer.get());
     loadBundle(bundle);
 
-    free(buffer);
+    store->bundles.insert({fileName, std::move(buffer)});
 }
 
 gear::AssetReference<gear::Texture> gear::AssetRegistry::getTexture(const std::string &name) {
-    return impl->textures.get(name);
+    return store->textures.get(name);
 }
 
 gear::AssetReference<gear::Sprite> gear::AssetRegistry::getSprite(const std::string &name) {
-    return impl->sprites.get(name);
+    return store->sprites.get(name);
 }
 
 gear::AssetReference<gear::BitmapFont> gear::AssetRegistry::getFont(const std::string &name) {
-    return impl->fonts.get(name);
+    return store->fonts.get(name);
 }
 
 gear::AssetReference<gear::Shader> gear::AssetRegistry::getShader(const std::string &name) {
-    return impl->shaders.get(name);
+    return store->shaders.get(name);
 }
 
 gear::AssetReference<gear::TileSet> gear::AssetRegistry::getTileSet(const std::string &name) {
-    return impl->tileSets.get(name);
+    return store->tileSets.get(name);
 }
 
 gear::AssetReference<gear::Map> gear::AssetRegistry::getMap(const std::string &name) {
-    return impl->maps.get(name);
+    return store->maps.get(name);
 }
 
 
