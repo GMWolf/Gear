@@ -3,10 +3,9 @@
 
 add_subdirectory(utils)
 add_subdirectory(ecs)
+add_subdirectory(app)
 
 add_library(gear
-        include/gear/Application.h
-        src/Application.cpp
         include/gear/SpriteBatch.h
         src/SpriteBatch.cpp
         include/gear/Texture.h
@@ -37,12 +36,10 @@ add_library(gear
         src/map/Map.cpp
         include/gear/PrimDraw.h
         src/PrimDraw.cpp
-        include/gear/Input.h
-        src/Input.cpp
         include/gear/Job.h
         src/Job.cpp)
 
 target_include_directories(gear PUBLIC include fbs)
 
-target_link_libraries(gear PUBLIC glad imgui imgui_glfw imgui_ogl3 glm glfw flatbuffers libzstd_static Boost::context)
-target_link_libraries(gear PUBLIC gear-utils gear-ecs)
+target_link_libraries(gear PUBLIC glad imgui imgui_glfw imgui_ogl3 glm flatbuffers libzstd_static Boost::context)
+target_link_libraries(gear PUBLIC gear-utils gear-ecs gear-app)

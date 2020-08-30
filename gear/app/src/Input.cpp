@@ -2,7 +2,7 @@
 // Created by felix on 09/07/2020.
 //
 
-#include <gear/Input.h>
+#include <Input.h>
 
 void gear::InputState::updateKey(gear::KEYS key, KeyEvent event) {
     switch (event) {

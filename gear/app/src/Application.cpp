@@ -2,13 +2,13 @@
 // Created by felix on 03/01/2020.
 //
 
-#include <gear/Application.h>
+#include <Application.h>
 #include <iostream>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#include <gear/Input.h>
-#include <gear/ApplicationAdapter.h>
+#include <Input.h>
+#include <ApplicationAdapter.h>
 
 static void glfw_error_callback(int error, const char* description) {
     std::cerr << "GLFW error: " << description << "\n";
@@ -37,23 +37,6 @@ void post_call_callback(const char *name, void *funcptr, int len_args, ...) {
 
 }
 #endif //GLAD_DEBUG
-
-extern int my_main();
-
-static bool initGlfw() {
-    glfwSetErrorCallback(glfw_error_callback);
-#ifdef GLAD_DEBUG
-    glad_set_post_callback(post_call_callback);
-#endif //GLAD_DEBUG
-
-    if (!glfwInit()) {
-        std::cerr << "Could not initialize glfw\n";
-        return false;
-    }
-
-    return true;
-}
-
 
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
@@ -130,10 +113,6 @@ void gear::Application::run(gear::ApplicationAdapter& adapter) {
 
         adapter.end();
     }
-}
-
-gear::Application::operator bool() {
-    return initialized;
 }
 
 gear::Application::~Application() {

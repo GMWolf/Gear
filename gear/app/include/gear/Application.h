@@ -15,7 +15,7 @@ namespace gear {
 
     struct AppConfig {
         int width = 640, height = 480;
-        std::string title = "";
+        std::string title;
     };
 
     class ApplicationAdapter;
@@ -35,8 +35,6 @@ namespace gear {
         [[nodiscard]] bool mousePressed(int mouseButton) const;
 
         [[nodiscard]] glm::vec2 mousePosition() const;
-
-        operator bool();
 
         int width, height;
         bool initialized = false;
