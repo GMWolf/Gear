@@ -2,7 +2,7 @@
 // Created by felix on 08/02/2020.
 //
 
-#include <gear/ECS/Archetype.h>
+#include <Archetype.h>
 
 namespace gear::ecs {
 

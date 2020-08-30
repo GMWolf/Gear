@@ -2,9 +2,9 @@
 // Created by felix on 28/03/2020.
 //
 
-#include <gear/ECS/CommandBuffer.h>
-#include <gear/ECS/Component.h>
-#include <gear/ECS/Core.h>
+#include <CommandBuffer.h>
+#include <Component.h>
+#include <Core.h>
 #include <memory>
 
 namespace gear::ecs {

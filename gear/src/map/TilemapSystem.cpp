@@ -4,7 +4,7 @@
 
 #include <gear/map/TilemapSystem.h>
 #include <gear/map/TileMap.h>
-#include <gear/ECS/ECS.h>
+#include <gear/ecs/ECS.h>
 #include <glad/glad.h>
 #include <glm/vec2.hpp>
 #include <gear/Transform.h>

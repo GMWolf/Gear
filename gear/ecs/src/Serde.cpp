@@ -2,7 +2,7 @@
 // Created by felix on 11/06/2020.
 //
 
-#include <gear/ECS/Serde.h>
+#include <Serde.h>
 #include <unordered_map>
 
 class gear::ecs::serde::SerdeRegistry::Impl {

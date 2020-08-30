@@ -5,13 +5,12 @@
 #ifndef GEAR_COLLISIONS_H
 #define GEAR_COLLISIONS_H
 
-#include <gear/ECS/ECS.h>
+#include <gear/ecs/ECS.h>
 #include <tuple>
 #include <gear/CollisionShape.h>
 #include <gear/Transform.h>
 #include <gear/CollisionDetection.h>
 #include <optional>
-#include <gear/ECS/CommandBuffer.h>
 
 struct CollisionPair {
     gear::ecs::EntityRef entity[2];

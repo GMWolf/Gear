@@ -1,22 +1,8 @@
 
-set(GEAR_ECS_SOURCES
-        include/gear/ECS/Core.h
-        src/ECS/Core.cpp
-        include/gear/ECS/Archetype.h
-        src/ECS/Archetype.cpp
-        include/gear/ECS/CommandBuffer.h
-        src/ECS/CommandBuffer.cpp
-        include/gear/ECS/Component.h
-        src/ECS/Component.cpp
-        include/gear/ECS/Config.h
-        include/gear/ECS/ECS.h
-        include/gear/ECS/ChunkView.h
-        include/gear/ECS/System.h
-        include/gear/ECS/Prefab.h
-        src/ECS/Prefab.cpp
-        )
 
 
+add_subdirectory(utils)
+add_subdirectory(ecs)
 
 add_library(gear
         include/gear/Application.h
@@ -56,8 +42,7 @@ add_library(gear
         include/gear/Job.h
         src/Job.cpp)
 
-target_sources(gear PRIVATE ${GEAR_ECS_SOURCES})
-
 target_include_directories(gear PUBLIC include fbs)
 
 target_link_libraries(gear PUBLIC glad imgui imgui_glfw imgui_ogl3 glm glfw flatbuffers libzstd_static Boost::context)
+target_link_libraries(gear PUBLIC gear-utils gear-ecs)

@@ -8,7 +8,7 @@
 #include <gear/Shader.h>
 #include <gear/View.h>
 #include <glm/gtc/type_ptr.hpp>
-#include <gear/ECS/ECS.h>
+#include <gear/ecs/ECS.h>
 #include <gear/Transform.h>
 #include <gear/Texture.h>
 #include <gear/BitmapFont.h>

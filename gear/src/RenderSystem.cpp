@@ -3,7 +3,7 @@
 //
 
 #include <gear/RenderSystem.h>
-#include <gear/ECS/ECS.h>
+#include <gear/ecs/ECS.h>
 #include <gear/View.h>
 #include <gear/Transform.h>
 #include <glm/gtc/type_ptr.hpp>

@@ -2,8 +2,8 @@
 // Created by felix on 08/02/2020.
 //
 
-#include <gear/ECS/Core.h>
-#include <gear/ECS/Component.h>
+#include <Core.h>
+#include <Component.h>
 #include <iostream>
 #include <cassert>
 
