@@ -2,8 +2,8 @@
 // Created by felix on 05/01/2020.
 //
 
-#include <gear/SpriteBatch.h>
-#include <gear/Texture.h>
+#include <SpriteBatch.h>
+#include <Texture.h>
 
 #include <glm/vec2.hpp>
 

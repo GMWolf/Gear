@@ -8,7 +8,6 @@
 #include "TileSet.h"
 
 #include <memory>
-#include <gear/Assets.h>
 #include <string>
 
 namespace gear {

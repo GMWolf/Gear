@@ -5,7 +5,7 @@
 #ifndef TBTG_TEXTURE_H
 #define TBTG_TEXTURE_H
 
-#include <gear/fbs/generated/texture_generated.h>
+#include <gear/texture_generated.h>
 #include <vector>
 
 namespace gear {

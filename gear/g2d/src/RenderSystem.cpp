@@ -2,17 +2,17 @@
 // Created by felix on 01/04/2020.
 //
 
-#include <gear/RenderSystem.h>
+#include <RenderSystem.h>
 #include <gear/ecs/ECS.h>
 #include <gear/View.h>
 #include <gear/Transform.h>
 #include <glm/gtc/type_ptr.hpp>
-#include <gear/SpriteBatch.h>
-#include <gear/PrimDraw.h>
-#include <gear/Shader.h>
+#include <SpriteBatch.h>
+#include <PrimDraw.h>
+#include <Shader.h>
 #include <gear/CollisionShape.h>
-#include <gear/Texture.h>
-#include <generated/sprite_generated.h>
+#include <Texture.h>
+#include <gear/sprite_generated.h>
 
 
 void gear::renderSprites(gear::ecs::Registry &ecs, gear::SpriteBatch &batch, const gear::Shader &shader, TextureStore& textureStore) {

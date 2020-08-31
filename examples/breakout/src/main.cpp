@@ -5,10 +5,11 @@
 #include <gear/Application.h>
 #include <gear/ecs/ECS.h>
 #include <gear/Assets.h>
-#include <gear/SpriteBatch.h>
-#include <gear/RenderSystem.h>
+#include <gear/g2d/SpriteBatch.h>
+#include <gear/g2d/RenderSystem.h>
+#include <gear/g2d/Shader.h>
 #include <gear/Transform.h>
-#include <gear/Texture.h>
+#include <gear/g2d/Texture.h>
 #include <gear/View.h>
 #include <gear/CollisionDetection.h>
 #include <gear/Input.h>
@@ -70,8 +71,8 @@ void moveBall(gear::ecs::Registry& ecs, gear::ecs::CommandBuffer& cmd) {
     }
 }
 
-void createBricks(gear::ecs::CommandBuffer& cmd, gear::AssetRegistry& assets) {
-    gear::Sprite spr = *assets.getSprite("brick");
+void createBricks(gear::ecs::CommandBuffer& cmd, gear::AssetRegistry& assets, gear::TextureStore& texStore) {
+    gear::Sprite spr = gear::createSprite(assets.getSprite("brick"), texStore);
     for(int i = 0; i < 5; i++) {
         for(int j = 0; j < 15; j++) {
             cmd.createEntity(gear::Transform{{20 + j * 48,480 - (32 + i * 24)}},gear::ecs::CopyProvider{spr},gear::ecs::CopyProvider{*spr.mask},Brick{});
@@ -85,20 +86,22 @@ public:
         app = _app;
         batch.emplace(100);
         assets.emplace();
+        texStore.emplace();
+        shdStore.emplace();
 
         assets->loadBundle("assets.bin");
 
-        auto ballSpr = *assets->getSprite("ball");
+        auto ballSpr = gear::createSprite(assets->getSprite("ball"), *texStore);
         cmd.createEntity(gear::Transform{{400, 80}},*ballSpr.mask,ballSpr,Ball{{-1, -1}});
 
-        auto batSpr = *assets->getSprite("bat");
+        auto batSpr = gear::createSprite(assets->getSprite("bat"), *texStore);
         cmd.createEntity(gear::Transform{{720 / 2, 30}},*batSpr.mask,batSpr,Bat{});
 
         cmd.createEntity(gear::View{{0, 0}, {720, 480}});
         cmd.createEntity(gear::Transform{{0,0}}, gear::CollisionShape{gear::Rectangle{glm::vec2{-10,0},glm::vec2{0, 480}}});
         cmd.createEntity(gear::Transform{{0,0}}, gear::CollisionShape{gear::Rectangle{glm::vec2{720,0},glm::vec2{730, 480}}});
         cmd.createEntity(gear::Transform{{0,0}}, gear::CollisionShape{gear::Rectangle{glm::vec2{0,480},glm::vec2{720, 490}}});
-        createBricks(cmd, *assets);
+        createBricks(cmd, *assets, *texStore);
     }
 
     void update() override {
@@ -108,12 +111,15 @@ public:
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glDisable(GL_CULL_FACE);
-        gear::renderSprites(world, *batch, *assets->getShader("textured"));
+        auto shd = shdStore->getShader(assets->getShader("textured"));
+        gear::renderSprites(world, *batch, *shd, *texStore);
     }
 
     void end() override {
         batch.reset();
         assets.reset();
+        texStore.reset();
+        shdStore.reset();
     }
 
 private:
@@ -122,6 +128,8 @@ private:
     gear::ecs::CommandBuffer cmd{pool, 256'000'000};
     std::optional<gear::AssetRegistry> assets;
     std::optional<gear::SpriteBatch> batch;
+    std::optional<gear::TextureStore> texStore;
+    std::optional<gear::ShaderStore> shdStore;
     gear::Application* app {};
 };
 

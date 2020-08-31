@@ -4,6 +4,7 @@
 
 #include "texture.h"
 #include <zstd.h>
+#include <flatbuffers/flatbuffers.h>
 
 namespace gear {
 

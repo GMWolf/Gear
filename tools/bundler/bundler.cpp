@@ -3,7 +3,7 @@
 //
 #include <iostream>
 #include <fstream>
-#include <gear/fbs/generated/assets_generated.h>
+#include <gear/assets_generated.h>
 #include <flatbuffers/hash.h>
 
 using namespace gear::assets;

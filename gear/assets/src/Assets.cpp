@@ -2,8 +2,8 @@
 // Created by felix on 29/02/2020.
 //
 
-#include <gear/Assets.h>
-#include <generated/assets_generated.h>
+#include <Assets.h>
+#include <gear/assets_generated.h>
 #include <fstream>
 #include <ios>
 #include <iostream>

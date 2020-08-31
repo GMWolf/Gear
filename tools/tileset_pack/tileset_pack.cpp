@@ -5,14 +5,14 @@
 #include <flatbuffers/flatbuffers.h>
 #include <fstream>
 #include <tinyxml2.h>
-#include <gear/fbs/generated/tileset_generated.h>
-#include <gear/fbs/generated/assets_generated.h>
+#include <gear/tileset_generated.h>
+#include <gear/assets_generated.h>
 #include <ios>
 #include <stb_image.h>
 #include <texture.h>
 #include <filesystem>
 #include <flatbuffers/hash.h>
-#include <gear/fbs/generated/common_generated.h>
+#include <gear/common_generated.h>
 
 namespace xml = tinyxml2;
 namespace fs = std::filesystem;

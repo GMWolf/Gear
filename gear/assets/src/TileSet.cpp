@@ -2,8 +2,8 @@
 // Created by felix on 04/04/2020.
 //
 
-#include <gear/map/TileSet.h>
-#include <generated/tileset_generated.h>
+#include <TileSet.h>
+#include <gear/tileset_generated.h>
 
 glm::vec4 gear::getTileUVs(const assets::TileSet* tileSet, int tileIndex, bool hflip, bool vflip, bool dflip) {
     auto tileX = (tileIndex) % tileSet->columns();

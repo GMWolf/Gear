@@ -1,6 +1,6 @@
 
 add_executable(map_packer map_packer.cpp)
-target_link_libraries(map_packer PUBLIC tinyxml2 cpp-base64 libzstd_static)
+target_link_libraries(map_packer PUBLIC tinyxml2 cpp-base64 libzstd_static gear-assets-fbs)
 target_include_directories(map_packer PUBLIC ../../)
 
 function(add_map input)

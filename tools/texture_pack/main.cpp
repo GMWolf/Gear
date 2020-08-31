@@ -10,7 +10,7 @@
 #include <filesystem>
 #include <fstream>
 #include <ios>
-#include <gear/fbs/generated/assets_generated.h>
+#include <gear/assets_generated.h>
 #include <tinyxml2.h>
 #include <stb_rect_pack.h>
 #include <stb_image.h>

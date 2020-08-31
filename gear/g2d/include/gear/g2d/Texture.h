@@ -11,8 +11,8 @@
 #include <glm/vec4.hpp>
 #include <memory>
 #include <vector>
-#include "Assets.h"
-#include "CollisionShape.h"
+#include <gear/Assets.h>
+#include <gear/CollisionShape.h>
 #include <unordered_map>
 
 namespace gear {

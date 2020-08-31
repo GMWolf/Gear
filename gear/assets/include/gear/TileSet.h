@@ -7,7 +7,6 @@
 
 #include <string>
 #include <cstdint>
-#include <gear/Texture.h>
 #include <glm/vec4.hpp>
 #include <gear/Assets.h>
 

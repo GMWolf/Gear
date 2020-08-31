@@ -2,18 +2,18 @@
 // Created by felix on 07/04/2020.
 //
 
-#include <gear/map/TilemapSystem.h>
-#include <gear/map/TileMap.h>
+#include <TilemapSystem.h>
+#include <gear/TileMap.h>
 #include <gear/ecs/ECS.h>
 #include <glad/glad.h>
 #include <glm/vec2.hpp>
 #include <gear/Transform.h>
 #include <gear/View.h>
-#include <gear/Shader.h>
+#include <Shader.h>
 #include <glm/gtc/type_ptr.hpp>
-#include <iostream>
-#include <generated/texture_generated.h>
-#include <generated/tileset_generated.h>
+#include <gear/texture_generated.h>
+#include <gear/tileset_generated.h>
+#include <Texture.h>
 
 namespace gecs = gear::ecs;
 

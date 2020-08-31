@@ -7,7 +7,7 @@
 #include <string>
 #include <fstream>
 #include <flatbuffers/flatbuffers.h>
-#include <gear/fbs/generated/assets_generated.h>
+#include <gear/assets_generated.h>
 #include <iostream>
 #include <filesystem>
 #include <flatbuffers/hash.h>

@@ -3,23 +3,21 @@
 //
 #include <gear/Application.h>
 #include <gear/ApplicationAdapter.h>
-#include <gear/SpriteBatch.h>
+#include <gear/g2d/SpriteBatch.h>
 #include <gear/CollisionShape.h>
-#include <gear/Shader.h>
+#include <gear/g2d/Shader.h>
 #include <gear/View.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <gear/ecs/ECS.h>
 #include <gear/Transform.h>
-#include <gear/Texture.h>
-#include <gear/Text.h>
+#include <gear/g2d/Texture.h>
+#include <gear/g2d/Text.h>
 #include <gear/Assets.h>
-#include <gear/DebugUI.h>
-#include <gear/map/TileMap.h>
-#include <gear/map/TilemapSystem.h>
-#include <gear/RenderSystem.h>
-#include <gear/PrimDraw.h>
+#include <gear/g2d/DebugUI.h>
+#include <gear/g2d/TilemapSystem.h>
+#include <gear/g2d/RenderSystem.h>
+#include <gear/g2d/PrimDraw.h>
 #include <gear/Input.h>
-#include <generated/map_generated.h>
 
 #include "Collisions.h"
 

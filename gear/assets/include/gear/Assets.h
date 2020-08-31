@@ -6,7 +6,6 @@
 #define GEAR_ASSETS_H
 
 #include <memory>
-
 #include <flatbuffers/hash.h>
 
 namespace gear {

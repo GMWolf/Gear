@@ -2,13 +2,10 @@
 // Created by felix on 05/01/2020.
 //
 
-#include <gear/Shader.h>
-#include <string>
-#include <fstream>
-#include <streambuf>
+#include <Shader.h>
 #include <vector>
 #include <iostream>
-#include <generated/shader_generated.h>
+#include <gear/shader_generated.h>
 
 gear::Shader::Shader(const char* vs, const char* fs){
     init(&vs, 1, &fs, 1);

@@ -4,9 +4,9 @@ project(Gear)
 
 set(CMAKE_CXX_STANDARD 17)
 
-include(glfw.cmake)
-include(stb.cmake)
-include(imgui.cmake)
+include(cmake/glfw.cmake)
+include(cmake/stb.cmake)
+include(cmake/imgui.cmake)
 
 add_subdirectory(deps/glad)
 add_subdirectory(deps/glm)

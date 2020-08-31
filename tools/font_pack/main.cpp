@@ -13,7 +13,7 @@
 #include <yaml-cpp/yaml.h>
 #include <filesystem>
 #include <fstream>
-#include <gear/fbs/generated/assets_generated.h>
+#include <gear/assets_generated.h>
 #include <texture.h>
 #include <flatbuffers/hash.h>
 

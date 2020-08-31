@@ -9,7 +9,7 @@
 #include <cctype>
 #include <flatbuffers/flatbuffers.h>
 #include <zstd.h>
-#include <gear/fbs/generated/assets_generated.h>
+#include <gear/assets_generated.h>
 #include <fstream>
 #include <flatbuffers/hash.h>
 

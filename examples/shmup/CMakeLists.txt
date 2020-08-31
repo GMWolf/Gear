@@ -1,6 +1,6 @@
 
 add_executable(shmup src/main.cpp src/Collisions.h src/Collisions.cpp)
-target_link_libraries(shmup PUBLIC gear)
+target_link_libraries(shmup PUBLIC gear-core gear-app gear-g2d)
 
 add_assets(shmup_assets
         FILE assets.bin

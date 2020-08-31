@@ -1,5 +1,5 @@
 add_executable(bundler bundler.cpp)
-target_include_directories(bundler PUBLIC ../../)
+target_link_libraries(bundler PUBLIC gear-assets-fbs)
 
 
 function(add_bundle output deptarget)

@@ -2,10 +2,10 @@
 // Created by felix on 24/02/2020.
 //
 
-#include <gear/Text.h>
-#include <gear/SpriteBatch.h>
-#include <generated/font_generated.h>
-#include <gear/Texture.h>
+#include <Text.h>
+#include <SpriteBatch.h>
+#include <gear/font_generated.h>
+#include <Texture.h>
 
 
 void gear::renderText(const std::string &text, const gear::assets::Font* font, glm::vec2 pos, SpriteBatch &batch, TextureStore& textureStore) {

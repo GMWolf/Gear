@@ -2,10 +2,10 @@
 // Created by felix on 05/01/2020.
 //
 
-#include <gear/Texture.h>
+#include <Texture.h>
 #include <glm/gtc/type_ptr.hpp>
-#include <generated/sprite_generated.h>
-#include <generated/texture_generated.h>
+#include <gear/sprite_generated.h>
+#include <gear/texture_generated.h>
 #include <zstd.h>
 
 gear::Texture::Texture(gear::Texture && o) noexcept : size(o.size), tex(o.tex) {
