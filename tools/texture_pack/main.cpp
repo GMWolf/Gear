@@ -130,7 +130,7 @@ int main(int argc, char* argv[]) {
             auto texNameHash = flatbuffers::HashFnv1<uint64_t>(texName.c_str());
             auto texoffset = gear::buildTexture(builder, pageWidth, pageHeight, gear::assets::PixelFormat::PixelFormat_RGBA8,
                                                 reinterpret_cast<const uint8_t *>(textureData.data()));
-
+            auto texRef = gear::assets::CreateTextureRef(builder, texNameHash, texoffset);
             entries.push_back(gear::assets::CreateAssetEntry(builder, flatbuffers::HashFnv1<uint64_t>(texName.c_str()), gear::assets::Asset_Texture, texoffset.Union()));
 
             for (auto xTile = xTileSet->FirstChildElement("tile"); xTile;
@@ -202,10 +202,10 @@ int main(int argc, char* argv[]) {
                         (float)xImage->IntAttribute("height")
                 };
 
-
                 auto objectsOffset = builder.CreateVector(objects);
                 auto uvsOffset = builder.CreateVectorOfStructs(uvs);
-                auto sprite = gear::assets::CreateSprite(builder, texNameHash, &size, uvsOffset, objectsOffset);
+
+                auto sprite = gear::assets::CreateSprite(builder, texRef, &size, uvsOffset, objectsOffset);
                 entries.push_back(gear::assets::CreateAssetEntry(builder, flatbuffers::HashFnv1<uint64_t>(name.c_str()), gear::assets::Asset_Sprite, sprite.Union()));
             }
 

@@ -61,12 +61,12 @@ struct Velocity {
 
 static int score = 0;
 
-static void createStage(gear::AssetRegistry& assets, gear::ecs::CommandBuffer& cmd) {
+static void createStage(gear::AssetRegistry& assets, gear::ecs::CommandBuffer& cmd, gear::TextureStore& texStore) {
     {
-        gear::Sprite spr = *assets.getSprite("ship2");
+        auto spr = gear::createSprite(assets.getSprite("ship2"), texStore);
 
         Player player;
-        player.bulletSprite = *assets.getSprite("bullet_blue1");
+        player.bulletSprite = gear::createSprite(assets.getSprite("bullet_blue1"), texStore);
         player.bulletShape = *player.bulletSprite.mask;
 
         cmd.createEntity( spr,
@@ -164,14 +164,14 @@ static void movePlayer(const gear::InputState& input, gear::ecs::Registry& ecs, 
     }
 }
 
-static void processCollisions(CollisionFilter& filter, gear::ecs::CommandBuffer& cmd, gear::AssetRegistry& assets) {
+static void processCollisions(CollisionFilter& filter, gear::ecs::CommandBuffer& cmd, gear::AssetRegistry& assets, gear::TextureStore& texStore) {
     for (auto& pair : filter.collisionPairs) {
         auto[enemy, t] = pair.entity[0].get<Enemy, gear::Transform>();
 
         if (--enemy.health <= 0) {
             score += 100;
             cmd.destroyEntity(pair.entity[0]);
-            cmd.createEntity(t, gear::ecs::CopyProvider{*assets.getSprite("explosion_0")}, DestroyOnAnimationEnd{});
+            cmd.createEntity(t, gear::ecs::CopyProvider{gear::createSprite(assets.getSprite("explosion_0"), texStore)}, DestroyOnAnimationEnd{});
             cmd.createEntity(gear::Transform{t.pos + glm::vec2(-25, 25)},
                              Text{"100", assets.getFont("default")},
                              Lifetime{1});
@@ -273,8 +273,8 @@ void debugDraw(gear::PrimDraw& dd, gear::AssetRegistry& assets, gear::ecs::Regis
     gear::renderDebugShapes(ecs, dd, *assets.getShader("prim"));
 }
 
-gear::ecs::Prefab createEnemyPrefab(gear::ecs::Registry& reg, gear::AssetRegistry& assets, gear::ecs::CommandBuffer& cmd) {
-    auto sprite = *assets.getSprite("ship1");
+gear::ecs::Prefab createEnemyPrefab(gear::ecs::Registry& reg, gear::AssetRegistry& assets, gear::ecs::CommandBuffer& cmd, gear::TextureStore& texStore) {
+    auto sprite = gear::createSprite(assets.getSprite("ship1"), texStore);
     gecs::EntityRef e = cmd.createEntity(
             Enemy{},
             *sprite.mask,
@@ -294,10 +294,10 @@ public:
 
         assets->loadBundle("assets.bin");
 
-        enemyPrefab = createEnemyPrefab(prefabs, *assets, cmd);
+        enemyPrefab = createEnemyPrefab(prefabs, *assets, cmd, *textureStore);
         gecs::executeCommandBuffer(cmd, world);
 
-        createStage(*assets, cmd);
+        createStage(*assets, cmd, *textureStore);
 
         enemyBulletFilter.entityA = gear::ecs::Query().all<Enemy>();
         enemyBulletFilter.entityB = gear::ecs::Query().all<Bullet>();
@@ -326,7 +326,7 @@ public:
         checkCollisions(world, enemyBulletFilter);
 
         gecs::executeCommandBuffer(cmd, world);
-        processCollisions(enemyBulletFilter, cmd, *assets);
+        processCollisions(enemyBulletFilter, cmd, *assets, *textureStore);
         render(*batch, *assets, world, *textureStore);
         debugDraw(*primDraw, *assets, world);
         processAnimation(world, cmd);

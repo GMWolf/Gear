@@ -12,6 +12,7 @@
 #include <gear/Shader.h>
 #include <gear/CollisionShape.h>
 #include <gear/Texture.h>
+#include <generated/sprite_generated.h>
 
 
 void gear::renderSprites(gear::ecs::Registry &ecs, gear::SpriteBatch &batch, const gear::Shader &shader, TextureStore& textureStore) {
@@ -39,8 +40,7 @@ void gear::renderSprites(gear::ecs::Registry &ecs, gear::SpriteBatch &batch, con
 
             for(auto c : spriteChunks) {
                 for(auto [sprite, transform] : ecs::ChunkView<Sprite, Transform>(*c)) {
-                    auto tex = textureStore.getTexture(sprite.tex);
-                    batch.draw(*tex, sprite.texRegions[sprite.imageIndex], transform.pos - sprite.origin, sprite.size);
+                    batch.draw(*sprite.tex, sprite.texRegions[sprite.imageIndex], transform.pos - sprite.origin, sprite.size);
                 }
             }
 
@@ -82,3 +82,4 @@ void gear::renderDebugShapes(gear::ecs::Registry &ecs, gear::PrimDraw& primDraw,
 
     primDraw.flush();
 }
+

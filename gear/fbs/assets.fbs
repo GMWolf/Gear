@@ -11,7 +11,6 @@ table NestedBundle {
     bundle: [ubyte] (nested_flatbuffer: "Bundle");
 }
 
-
 union Asset {
     Texture,
     Sprite,

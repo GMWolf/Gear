@@ -39,6 +39,7 @@ namespace gear {
     namespace assets{
         class Bundle;
         class Texture;
+        class Sprite;
     }
 
     class AssetRegistry {
@@ -52,8 +53,8 @@ namespace gear {
 
         const assets::Texture* getTexture(uint64_t name);
         const assets::Texture* getTexture(const char* name);
-        AssetReference<Sprite> getSprite(uint64_t name);
-        AssetReference<Sprite> getSprite(const char* name);
+        const assets::Sprite* getSprite(uint64_t name);
+        const assets::Sprite* getSprite(const char* name);
         AssetReference<BitmapFont> getFont(uint64_t name);
         AssetReference<BitmapFont> getFont(const char* name);
         AssetReference<Shader> getShader(uint64_t name);
@@ -62,6 +63,8 @@ namespace gear {
         AssetReference<TileSet> getTileSet(const char* name);
         AssetReference<Map> getMap(uint64_t name);
         AssetReference<Map> getMap(const char* name);
+
+
 
         void loadBundle(const std::string& name);
         void loadBundle(uint64_t name, const assets::Bundle* bundle);

@@ -74,18 +74,26 @@ public:
         gear::AssetReference<T> get(uint64_t s);
     };
 
-    ResourceStore<Texture> textures;
-    ResourceStore<Sprite> sprites;
+
     ResourceStore<BitmapFont> fonts;
     ResourceStore<Shader> shaders;
     ResourceStore<TileSet> tileSets;
     ResourceStore<Map> maps;
 
-
-
     std::unordered_map<std::string, std::unique_ptr<char[]>> fileData;
     std::unordered_map<uint64_t, const assets::Bundle*> bundles;
+
+    const assets::AssetEntry* getAssetEntry(uint64_t name) const;
 };
+
+const gear::assets::AssetEntry *gear::AssetRegistry::Store::getAssetEntry(uint64_t name) const {
+    for(auto& p : bundles) {
+        if (auto ptr = p.second->assets()->LookupByKey(name)) {
+            return ptr;
+        }
+    }
+    return nullptr;
+}
 
 template<class T>
 gear::AssetReference<T> gear::AssetRegistry::Store::ResourceStore<T>::get(const uint64_t s) {
@@ -117,7 +125,7 @@ void gear::AssetRegistry::loadBundle(uint64_t name, const gear::assets::Bundle *
                 //getTexture(name).ptr->store.emplace(TextureLoader::load(asset->asset_as_Texture(), *this, name.c_str()));
             } break;
             case assets::Asset_Sprite: {
-                getSprite(assetName).ptr->store.emplace(SpriteLoader::load(asset->asset_as_Sprite(), *this));
+                //getSprite(assetName).ptr->store.emplace(SpriteLoader::load(asset->asset_as_Sprite(), *this));
             } break;
             case assets::Asset_Font: {
                 getFont(assetName).ptr->store.emplace(BitmapFontLoader::load(asset->asset_as_Font(), *this));
@@ -156,18 +164,13 @@ void gear::AssetRegistry::loadBundle(const std::string & fileName) {
 }
 
 const gear::assets::Texture* gear::AssetRegistry::getTexture(uint64_t name) {
-    //return store->textures.get(name);
-    for(auto& p : store->bundles) {
-        if (auto ptr = p.second->assets()->LookupByKey(name)) {
-            return ptr->asset_as_Texture();
-        }
-    }
-
-    return nullptr;
+    auto entry = store->getAssetEntry(name);
+    return entry ? entry->asset_as_Texture() : nullptr;
 }
 
-gear::AssetReference<gear::Sprite> gear::AssetRegistry::getSprite(const uint64_t name) {
-    return store->sprites.get(name);
+const gear::assets::Sprite* gear::AssetRegistry::getSprite(uint64_t name) {
+    auto entry = store->getAssetEntry(name);
+    return entry ? entry->asset_as_Sprite() : nullptr;
 }
 
 gear::AssetReference<gear::BitmapFont> gear::AssetRegistry::getFont(const uint64_t name) {
@@ -190,7 +193,7 @@ const gear::assets::Texture *gear::AssetRegistry::getTexture(const char* name) {
     return getTexture(flatbuffers::HashFnv1<uint64_t>(name));
 }
 
-gear::AssetReference<gear::Sprite> gear::AssetRegistry::getSprite(const char *name) {
+const gear::assets::Sprite* gear::AssetRegistry::getSprite(const char *name) {
     return getSprite(flatbuffers::HashFnv1<uint64_t>(name));
 }
 

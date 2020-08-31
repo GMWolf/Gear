@@ -39,17 +39,6 @@ namespace gear {
         glm::vec4 crop; //left, top, right, bottom
     };
 
-    //TODO split sprite into sprite component and sprite resource
-    struct Sprite {
-        glm::vec2 size {};
-        glm::vec2 origin {};
-        std::vector<TexRegion> texRegions {}; //TODO get rid of this allocation
-        const assets::Texture* tex;
-        uint16_t imageIndex {0};
-
-        std::optional<CollisionShape> mask;
-    };
-
 
     namespace assets {
         class Sprite;
@@ -67,10 +56,23 @@ namespace gear {
         static Texture load(const assets::Texture* texDef, const char* name = nullptr);
     };
 
-    class SpriteLoader {
+    struct Sprite {
+        glm::vec2 size {};
+        glm::vec2 origin {};
+        std::vector<TexRegion> texRegions {}; //TODO get rid of this allocation
+        const Texture* tex;
+        uint16_t imageIndex {0};
+
+        std::optional<CollisionShape> mask;
+    };
+
+    /*class SpriteLoader {
     public:
         static Sprite load(const assets::Sprite* spriteDef, AssetRegistry& registry);
-    };
+    };*/
+
+    Sprite createSprite(const assets::Sprite* spriteDef, TextureStore& textureStore);
+
 }
 
 

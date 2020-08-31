@@ -17,4 +17,4 @@ local schemas = {
 }
 
 
-os.execute("flatc --cpp --gen-object-api -o generated "..table.concat(schemas, " "));
+os.execute("flatc --cpp  -o generated "..table.concat(schemas, " "));

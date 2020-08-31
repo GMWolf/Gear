@@ -6,33 +6,33 @@
 #include <gear/fbs/generated/assets_generated.h>
 #include <flatbuffers/hash.h>
 
+using namespace gear::assets;
+
 int main(int argc, char* argv[]) {
 
-    flatbuffers::FlatBufferBuilder builder(2048);
-    {
-        std::vector<flatbuffers::Offset<gear::assets::AssetEntry>> entries;
 
-        for(int i = 0; i < argc - 2; i++) {
-            char* fileName = argv[i + 2];
+    flatbuffers::FlatBufferBuilder builder(4096);
+    std::vector<flatbuffers::Offset<AssetEntry>> assetEntries;
+    {
+        for(int i = 2; i < argc; i++) {
+            char *fileName = argv[i];
             std::ifstream in(fileName, std::ios::binary);
             in.seekg(0, std::ios::end);
             size_t bufferSize = in.tellg();
+            uint8_t * buffer;
+            auto vec = builder.CreateUninitializedVector(bufferSize, &buffer);
             in.seekg(0, std::ios::beg);
-            auto buffer = (char*)malloc(bufferSize);
-            in.read(buffer, bufferSize);
-            auto vec = builder.CreateVector((uint8_t*)buffer, bufferSize);
-            free(buffer);
-            auto nb = gear::assets::CreateNestedBundle(builder, vec);
-            auto hashName = flatbuffers::HashFnv1<uint64_t>(fileName);
-            auto entry = gear::assets::CreateAssetEntry(builder, hashName, gear::assets::Asset_NestedBundle, nb.Union());
-            entries.push_back(entry);
+            in.read((char*)buffer, bufferSize);
+            
+            auto nb = CreateNestedBundle(builder, vec);
+            auto name = flatbuffers::HashFnv1<uint64_t>(fileName);
+            auto entry = CreateAssetEntry(builder, name, gear::assets::Asset_NestedBundle, nb.Union());
+            assetEntries.push_back(entry);
         }
-
-        auto assetVec = builder.CreateVectorOfSortedTables(&entries);
-        auto bundle = gear::assets::CreateBundle(builder, assetVec);
-
-        builder.Finish(bundle);
     }
+
+    auto bundle = CreateBundleDirect(builder, &assetEntries);
+    builder.Finish(bundle);
 
     {
         auto buf = builder.GetBufferPointer();

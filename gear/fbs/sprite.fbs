@@ -39,7 +39,7 @@ table Object {
 }
 
 table Sprite {
-    texture: uint64 (hash: "fnv1_64", cpp_type: "Texture");
+    texture: TextureRef;
     size: fvec2;
     images: [UVs];
     objects: [Object];
