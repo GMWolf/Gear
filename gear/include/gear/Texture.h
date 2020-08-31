@@ -11,7 +11,7 @@
 #include <glm/vec4.hpp>
 #include <memory>
 #include <vector>
-#include "AssetManager.h"
+#include "Assets.h"
 #include "CollisionShape.h"
 #include <unordered_map>
 
@@ -39,7 +39,6 @@ namespace gear {
         glm::vec4 crop; //left, top, right, bottom
     };
 
-
     namespace assets {
         class Sprite;
         class Texture;
@@ -51,10 +50,7 @@ namespace gear {
         Texture* getTexture(const assets::Texture*);
     };
 
-    class TextureLoader {
-    public:
-        static Texture load(const assets::Texture* texDef, const char* name = nullptr);
-    };
+    Texture createTexture(const assets::Texture* texDef, const char* name = nullptr);
 
     struct Sprite {
         glm::vec2 size {};
@@ -66,13 +62,7 @@ namespace gear {
         std::optional<CollisionShape> mask;
     };
 
-    /*class SpriteLoader {
-    public:
-        static Sprite load(const assets::Sprite* spriteDef, AssetRegistry& registry);
-    };*/
-
     Sprite createSprite(const assets::Sprite* spriteDef, TextureStore& textureStore);
-
 }
 
 

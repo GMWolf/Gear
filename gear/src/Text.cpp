@@ -2,7 +2,7 @@
 // Created by felix on 24/02/2020.
 //
 
-#include <gear/BitmapFont.h>
+#include <gear/Text.h>
 #include <gear/SpriteBatch.h>
 #include <generated/font_generated.h>
 #include <gear/Texture.h>

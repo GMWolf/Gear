@@ -2,12 +2,11 @@
 // Created by felix on 29/02/2020.
 //
 
-#include <gear/AssetManager.h>
+#include <gear/Assets.h>
 #include <generated/assets_generated.h>
 #include <fstream>
 #include <ios>
 #include <iostream>
-#include <flatbuffers/hash.h>
 
 
 class gear::AssetRegistry::Store {
@@ -113,30 +112,5 @@ const gear::assets::Map* gear::AssetRegistry::getMap(const uint64_t name) {
     auto entry = store->getAssetEntry(name);
     return entry ? entry->asset_as_Map() : nullptr;
 }
-
-const gear::assets::Texture *gear::AssetRegistry::getTexture(const char* name) {
-    return getTexture(flatbuffers::HashFnv1<uint64_t>(name));
-}
-
-const gear::assets::Sprite* gear::AssetRegistry::getSprite(const char *name) {
-    return getSprite(flatbuffers::HashFnv1<uint64_t>(name));
-}
-
-const gear::assets::Font* gear::AssetRegistry::getFont(const char *name) {
-    return getFont(flatbuffers::HashFnv1<uint64_t>(name));
-}
-
-const gear::assets::Shader* gear::AssetRegistry::getShader(const char *name) {
-    return getShader(flatbuffers::HashFnv1<uint64_t>(name));
-}
-
-const gear::assets::TileSet* gear::AssetRegistry::getTileSet(const char *name) {
-    return getTileSet(flatbuffers::HashFnv1<uint64_t>(name));
-}
-
-const gear::assets::Map* gear::AssetRegistry::getMap(const char *name) {
-    return getMap(flatbuffers::HashFnv1<uint64_t>(name));
-}
-
 
 

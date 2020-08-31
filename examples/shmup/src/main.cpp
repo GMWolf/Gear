@@ -11,8 +11,8 @@
 #include <gear/ecs/ECS.h>
 #include <gear/Transform.h>
 #include <gear/Texture.h>
-#include <gear/BitmapFont.h>
-#include <gear/AssetManager.h>
+#include <gear/Text.h>
+#include <gear/Assets.h>
 #include <gear/DebugUI.h>
 #include <gear/map/TileMap.h>
 #include <gear/map/TilemapSystem.h>

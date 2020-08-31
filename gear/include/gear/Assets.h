@@ -2,40 +2,15 @@
 // Created by felix on 29/02/2020.
 //
 
-#ifndef GEAR_ASSETMANAGER_H
-#define GEAR_ASSETMANAGER_H
-
+#ifndef GEAR_ASSETS_H
+#define GEAR_ASSETS_H
 
 #include <memory>
-#include <optional>
-#include <string>
 
+#include <flatbuffers/hash.h>
 
 namespace gear {
 
-    template<class T>
-    class AssetEntry;
-
-    template<class T>
-    struct AssetReference {
-        std::shared_ptr<AssetEntry<T>> ptr;
-
-        bool pending() const;
-
-        const T& get() const;
-
-        const T* operator->() const;
-        const T& operator*() const;
-
-    };
-
-
-    class Texture;
-    class BitmapFont;
-    class Shader;
-    class Sprite;
-    class TileSet;
-    class Map;
     namespace assets{
         class Bundle;
         class Texture;
@@ -75,6 +50,32 @@ namespace gear {
     };
 
 
+
+    inline const gear::assets::Texture *gear::AssetRegistry::getTexture(const char* name) {
+        return getTexture(flatbuffers::HashFnv1<uint64_t>(name));
+    }
+
+    inline const gear::assets::Sprite* gear::AssetRegistry::getSprite(const char *name) {
+        return getSprite(flatbuffers::HashFnv1<uint64_t>(name));
+    }
+
+    inline const gear::assets::Font* gear::AssetRegistry::getFont(const char *name) {
+        return getFont(flatbuffers::HashFnv1<uint64_t>(name));
+    }
+
+    inline const gear::assets::Shader* gear::AssetRegistry::getShader(const char *name) {
+        return getShader(flatbuffers::HashFnv1<uint64_t>(name));
+    }
+
+    inline const gear::assets::TileSet* gear::AssetRegistry::getTileSet(const char *name) {
+        return getTileSet(flatbuffers::HashFnv1<uint64_t>(name));
+    }
+
+    inline const gear::assets::Map* gear::AssetRegistry::getMap(const char *name) {
+        return getMap(flatbuffers::HashFnv1<uint64_t>(name));
+    }
+
+
 }
 
-#endif //GEAR_ASSETMANAGER_H
+#endif //GEAR_ASSETS_H

@@ -24,7 +24,6 @@ gear::Texture &gear::Texture::operator=(Texture&& o) noexcept {
     return *this;
 }
 
-
 gear::Texture::~Texture() {
     glDeleteTextures(1, &tex);
 }
@@ -46,7 +45,7 @@ gear::Texture::Texture(GLuint tex, glm::ivec2 size) : tex(tex), size(size) {
 }
 
 
-gear::Texture gear::TextureLoader::load(const gear::assets::Texture* texDef, const char* name) {
+gear::Texture gear::createTexture(const gear::assets::Texture* texDef, const char* name) {
     GLuint tex;
     glGenTextures(1, &tex);
     glBindTexture(GL_TEXTURE_2D, tex);
@@ -63,17 +62,17 @@ gear::Texture gear::TextureLoader::load(const gear::assets::Texture* texDef, con
     auto format = 0;
     auto type = 0;
     switch(texDef->format()) {
-        case assets::PixelFormat::R8:
+        case gear::assets::PixelFormat::R8:
             internalFormat = GL_R8;
             format = GL_RED;
             type = GL_UNSIGNED_BYTE;
             break;
-        case assets::PixelFormat::RGB8:
+        case gear::assets::PixelFormat::RGB8:
             internalFormat = GL_RGB8;
             format = GL_RGB;
             type = GL_UNSIGNED_BYTE;
             break;
-        case assets::PixelFormat::RGBA8:
+        case gear::assets::PixelFormat::RGBA8:
             internalFormat = GL_RGBA8;
             format = GL_RGBA;
             type = GL_UNSIGNED_BYTE;
@@ -84,7 +83,7 @@ gear::Texture gear::TextureLoader::load(const gear::assets::Texture* texDef, con
 
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    return Texture(tex, {texDef->width(), texDef->height()});
+    return gear::Texture(tex, {texDef->width(), texDef->height()});
 }
 
 
@@ -159,7 +158,7 @@ gear::Sprite gear::createSprite(const gear::assets::Sprite* spriteDef, gear::Tex
 gear::Texture *gear::TextureStore::getTexture(const gear::assets::Texture * tex) {
     auto it = textures.find(tex);
     if(it == textures.end()) {
-        it = textures.insert({tex, TextureLoader::load(tex, nullptr)}).first;
+        it = textures.insert({tex, createTexture(tex, nullptr)}).first;
     }
     return &it->second;
 }

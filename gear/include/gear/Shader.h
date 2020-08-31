@@ -39,7 +39,6 @@ namespace gear {
     public:
 
         Shader* getShader(const assets::Shader* shader);
-
     };
 
 }

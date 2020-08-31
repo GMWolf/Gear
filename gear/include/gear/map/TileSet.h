@@ -9,7 +9,7 @@
 #include <cstdint>
 #include <gear/Texture.h>
 #include <glm/vec4.hpp>
-#include <gear/AssetManager.h>
+#include <gear/Assets.h>
 
 namespace gear {
 

@@ -5,7 +5,7 @@
 #ifndef GEAR_TILEMAPSYSTEM_H
 #define GEAR_TILEMAPSYSTEM_H
 
-#include <gear/AssetManager.h>
+#include <gear/Assets.h>
 #include <cstdint>
 #include <glad/glad.h>
 #include <generated/map_generated.h>

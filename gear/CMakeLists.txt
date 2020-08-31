@@ -16,10 +16,10 @@ add_library(gear
         src/CollisionDetection.cpp
         include/gear/View.h
         src/View.cpp
-        include/gear/BitmapFont.h
-        src/BitmapFont.cpp
-        include/gear/AssetManager.h
-        src/AssetManager.cpp
+        include/gear/Text.h
+        src/Text.cpp
+        include/gear/Assets.h
+        src/Assets.cpp
         include/gear/DebugUI.h
         src/DebugUI.cpp
         include/gear/Allocators.h
