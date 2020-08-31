@@ -48,7 +48,7 @@ struct DestroyOnAnimationEnd {
 
 struct Text {
     std::string text;
-    gear::AssetReference<gear::BitmapFont> font;
+    const gear::assets::Font* font;
 };
 
 struct Lifetime {
@@ -228,7 +228,7 @@ static void spawnEnemy(gecs::Prefab prefab, gear::AssetRegistry& assets, gear::e
             Velocity{{0, -1.5 - 0.5*(rand() / (float)RAND_MAX)}});
 }
 
-void render(gear::SpriteBatch& batch, gear::AssetRegistry& assets, gear::ecs::Registry& ecs, gear::TextureStore& texStore) {
+void render(gear::SpriteBatch& batch, gear::AssetRegistry& assets, gear::ecs::Registry& ecs, gear::TextureStore& texStore, gear::ShaderStore& shaderStore) {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glDisable(GL_CULL_FACE);
@@ -237,18 +237,18 @@ void render(gear::SpriteBatch& batch, gear::AssetRegistry& assets, gear::ecs::Re
 
     //tiles
     {
-        auto shd = assets.getShader("textured");
-        gear::tilemapSystemRender(ecs, shd.get());
+        auto shd = shaderStore.getShader(assets.getShader("textured"));
+        gear::tilemapSystemRender(ecs, *shd);
     }
 
     {
-        auto shd = assets.getShader("textured");
-        gear::renderSprites(ecs, batch, shd.get(), texStore);
+        auto shd = shaderStore.getShader(assets.getShader("textured"));
+        gear::renderSprites(ecs, batch, *shd, texStore);
     }
 
     {
         auto font = assets.getFont("default");
-        auto shd = assets.getShader("font");
+        auto shd = shaderStore.getShader(assets.getShader("font"));
         shd->use();
         glUniform1i(shd->uniformLocation("tex"), 0);
         auto vm = view.matrix();
@@ -258,19 +258,20 @@ void render(gear::SpriteBatch& batch, gear::AssetRegistry& assets, gear::ecs::Re
         for(auto c : chunks){
             auto chunk = gecs::ChunkView<gear::Transform, Text>(*c);
             for (auto[transform, text] : chunk) {
-                gear::renderText(text.text, *text.font, transform.pos, batch);
+                gear::renderText(text.text, text.font, transform.pos, batch, texStore);
             }
         };
 
-        gear::renderText("Score: " + std::to_string(score), *font, glm::vec2(20, 680), batch);
+        gear::renderText("Score: " + std::to_string(score), font, glm::vec2(20, 680), batch, texStore);
 
         batch.flush();
     }
 
 }
 
-void debugDraw(gear::PrimDraw& dd, gear::AssetRegistry& assets, gear::ecs::Registry& ecs) {
-    gear::renderDebugShapes(ecs, dd, *assets.getShader("prim"));
+void debugDraw(gear::PrimDraw& dd, gear::AssetRegistry& assets, gear::ecs::Registry& ecs, gear::ShaderStore& shaderStore) {
+    auto shd = shaderStore.getShader(assets.getShader("prim"));
+    gear::renderDebugShapes(ecs, dd, *shd);
 }
 
 gear::ecs::Prefab createEnemyPrefab(gear::ecs::Registry& reg, gear::AssetRegistry& assets, gear::ecs::CommandBuffer& cmd, gear::TextureStore& texStore) {
@@ -291,6 +292,7 @@ public:
         primDraw.emplace();
         assets.emplace();
         textureStore.emplace();
+        shaderStore.emplace();
 
         assets->loadBundle("assets.bin");
 
@@ -327,8 +329,8 @@ public:
 
         gecs::executeCommandBuffer(cmd, world);
         processCollisions(enemyBulletFilter, cmd, *assets, *textureStore);
-        render(*batch, *assets, world, *textureStore);
-        debugDraw(*primDraw, *assets, world);
+        render(*batch, *assets, world, *textureStore, *shaderStore);
+        debugDraw(*primDraw, *assets, world, *shaderStore);
         processAnimation(world, cmd);
         processLifetime(world, cmd);
         gecs::executeCommandBuffer(cmd, world);
@@ -350,6 +352,7 @@ public:
         primDraw.reset();
         assets.reset();
         textureStore.reset();
+        shaderStore.reset();
     }
 
 private:
@@ -367,6 +370,7 @@ private:
     std::optional<gear::SpriteBatch> batch;
     std::optional<gear::PrimDraw> primDraw;
     std::optional<gear::TextureStore> textureStore;
+    std::optional<gear::ShaderStore> shaderStore;
 
     int spawnTimer = 10;
     gear::ui::PerfData perf {};

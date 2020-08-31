@@ -1,4 +1,5 @@
 include "common.fbs";
+include "texture.fbs";
 
 namespace gear.assets;
 
@@ -17,7 +18,7 @@ struct Glyph {
 
 
 table Font {
-    texture: string;
+    texture: TextureRef;
     range_start: int;
     range_count: int;
 

@@ -114,8 +114,10 @@ int main(int argc, char* argv[]) {
         auto bitmapPathRelative = fs::relative(bitmapOut, fs::path(binOut).parent_path());
         auto tex = gear::buildTexture(builder, bitmapWidth, bitmapHeight, gear::assets::PixelFormat_R8, bitmap.data());
         auto texName = name + "_texture";
+        auto texNameHash = flatbuffers::HashFnv1<uint64_t>(texName.c_str());
+        auto texRef = gear::assets::CreateTextureRef(builder, texNameHash, tex);
 
-        auto font = gear::assets::CreateFontDirect(builder, texName.c_str(), rangeStart, rangeCount, &glyphs);
+        auto font = gear::assets::CreateFontDirect(builder, texRef, rangeStart, rangeCount, &glyphs);
 
         std::vector<flatbuffers::Offset<gear::assets::AssetEntry>> entries;
         entries.reserve(2);

@@ -3,49 +3,22 @@
 //
 
 #include <gear/BitmapFont.h>
-#include <fstream>
 #include <gear/SpriteBatch.h>
 #include <generated/font_generated.h>
 #include <gear/Texture.h>
 
-gear::BitmapFont::Glyph gear::BitmapFont::operator[](char c) const {
-    return glyphs[c - rangeStart];
-}
 
-void gear::renderText(const std::string &text, const BitmapFont &font, glm::vec2 pos, SpriteBatch &batch) {
+void gear::renderText(const std::string &text, const gear::assets::Font* font, glm::vec2 pos, SpriteBatch &batch, TextureStore& textureStore) {
+
+    auto texture = textureStore.getTexture(font->texture()->ptr());
 
     for(char c: text) {
-        auto glyph = font[c];
-        //batch.draw(*font.texture, pos + glyph.offset, glyph.size, glyph.uv);
-        pos.x += glyph.advance;
+        auto glyph = font->glyphs()->Get(c - font->range_start());
+        glm::vec2 off = {glyph->xoff(), glyph->yoff2()};
+        glm::vec2 size = {glyph->x1() - glyph->x0(), glyph->y1() - glyph->y0()};
+        glm::vec4 uvs = {glyph->x0(), glyph->y0(), glyph->x1(), glyph->y1()};
+        uvs /= glm::vec4{texture->size, texture->size};
+        batch.draw(*texture, pos + off, size, uvs);
+        pos.x += glyph->xadvance();
     }
-}
-
-gear::BitmapFont gear::BitmapFontLoader::load(const gear::assets::Font *fontDef, gear::AssetRegistry &registry) {
-    BitmapFont font;
-
-    auto texName = fontDef->texture()->str();
-    //font.texture = registry.getTexture(texName);
-
-    font.rangeStart = fontDef->range_start();
-    font.rangeCount = fontDef->range_count();
-
-    font.glyphs.reserve(font.rangeCount);
-
-    for(auto g : *fontDef->glyphs()) {
-        BitmapFont::Glyph glyph {};
-        glyph.uv.x = g->x0();
-        glyph.uv.y = g->y0();
-        glyph.uv.z = g->x1();
-        glyph.uv.w = g->y1();
-        glyph.size = {glyph.uv.z - glyph.uv.x, glyph.uv.w - glyph.uv.y};
-        //glyph.uv /= glm::vec4{font.texture->size, font.texture->size};
-        glyph.advance = g->xadvance();
-        glyph.offset.x = g->xoff();
-        glyph.offset.y = g->yoff2();
-
-        font.glyphs.push_back(glyph);
-    }
-
-    return font;
 }
