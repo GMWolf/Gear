@@ -126,7 +126,7 @@ void gear::tilemapSystemRender(ecs::Registry &ecs, const gear::Shader &shader) {
                     glUniformMatrix4fv(shader.uniformLocation("view"), 1, GL_FALSE, glm::value_ptr(vm));
 
                     glActiveTexture(GL_TEXTURE0);
-                    glBindTexture(GL_TEXTURE_2D, tc.tilemap.tileset->texture->tex);
+                    //glBindTexture(GL_TEXTURE_2D, tc.tilemap.tileset->texture->tex);
                     glBindVertexArray(tsc.vertexArray);
                     glDrawElements(GL_TRIANGLES, tsc.count, GL_UNSIGNED_SHORT, nullptr);
                 }

@@ -20,7 +20,8 @@ gear::Map gear::loadMap(const assets::Map *mapDef, AssetRegistry &registry) {
         layer.name = layerDef->name()->str();
 
         Map::TileLayer tileLayer;
-        tileLayer.tileMap.tileset = registry.getTileSet(layerDef->tileSet()->str());
+        tileLayer.tileMap.tileset = registry.getTileSet(layerDef->tileSet());
+        if (tileLayer.tileMap.tileset.pending()) return map;
         tileLayer.tileMap.width = layerDef->width();
         tileLayer.tileMap.height = layerDef->height();
         tileLayer.tileMap.tileWidth = tileLayer.tileMap.tileset->tileWidth;

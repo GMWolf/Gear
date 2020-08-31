@@ -13,6 +13,7 @@
 #include <vector>
 #include "AssetManager.h"
 #include "CollisionShape.h"
+#include <unordered_map>
 
 namespace gear {
 
@@ -28,6 +29,7 @@ namespace gear {
         Texture&operator=(Texture&&) noexcept ;
 
         ~Texture();
+
         GLuint tex {0};
         glm::ivec2 size {0,0};
     };
@@ -42,7 +44,7 @@ namespace gear {
         glm::vec2 size {};
         glm::vec2 origin {};
         std::vector<TexRegion> texRegions {}; //TODO get rid of this allocation
-        AssetReference<Texture> tex;
+        const assets::Texture* tex;
         uint16_t imageIndex {0};
 
         std::optional<CollisionShape> mask;
@@ -54,9 +56,15 @@ namespace gear {
         class Texture;
     }
 
+    class TextureStore {
+        std::unordered_map<const assets::Texture*, Texture> textures;
+    public:
+        Texture* getTexture(const assets::Texture*);
+    };
+
     class TextureLoader {
     public:
-        static Texture load(const assets::Texture* texDef, AssetRegistry& registry, const char* name = nullptr);
+        static Texture load(const assets::Texture* texDef, const char* name = nullptr);
     };
 
     class SpriteLoader {

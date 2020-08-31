@@ -14,6 +14,7 @@
 #include <gear/map/Map.h>
 #include <unordered_map>
 #include <iostream>
+#include <flatbuffers/hash.h>
 
 
 template<class T>
@@ -63,13 +64,14 @@ template class gear::AssetReference<gear::TileSet>;
 template class gear::AssetReference<gear::TileMap>;
 template class gear::AssetReference<gear::Map>;
 
+
 class gear::AssetRegistry::Store {
 public:
     template<class T>
     class ResourceStore {
     public:
-        std::unordered_map<std::string, std::shared_ptr<AssetEntry<T>>> map;
-        gear::AssetReference<T> get(const std::string& s);
+        std::unordered_map<uint64_t, std::shared_ptr<AssetEntry<T>>> map;
+        gear::AssetReference<T> get(uint64_t s);
     };
 
     ResourceStore<Texture> textures;
@@ -79,11 +81,14 @@ public:
     ResourceStore<TileSet> tileSets;
     ResourceStore<Map> maps;
 
-    std::unordered_map<std::string, std::unique_ptr<char[]>> bundles;
+
+
+    std::unordered_map<std::string, std::unique_ptr<char[]>> fileData;
+    std::unordered_map<uint64_t, const assets::Bundle*> bundles;
 };
 
 template<class T>
-gear::AssetReference<T> gear::AssetRegistry::Store::ResourceStore<T>::get(const std::string &s) {
+gear::AssetReference<T> gear::AssetRegistry::Store::ResourceStore<T>::get(const uint64_t s) {
     auto it = map.find(s);
     if (it == map.end()) {
         auto d = std::make_shared<AssetEntry<T>>();
@@ -98,33 +103,36 @@ gear::AssetRegistry::AssetRegistry() : store(std::make_unique<Store>())
 
 gear::AssetRegistry::~AssetRegistry() = default;
 
-void gear::AssetRegistry::loadBundle(const gear::assets::Bundle *bundle) {
+void gear::AssetRegistry::loadBundle(uint64_t name, const gear::assets::Bundle *bundle) {
+
+    store->bundles.insert({name, bundle});
+
     for(auto asset : *bundle->assets()) {
-        auto name = asset->name()->str();
+        auto assetName = asset->name();
+
         switch(asset->asset_type()) {
             case assets::Asset_NONE:
                 break;
             case assets::Asset_Texture: {
-                getTexture(name).ptr->store.emplace(TextureLoader::load(asset->asset_as_Texture(), *this, name.c_str()));
+                //getTexture(name).ptr->store.emplace(TextureLoader::load(asset->asset_as_Texture(), *this, name.c_str()));
             } break;
             case assets::Asset_Sprite: {
-                getSprite(name).ptr->store.emplace(SpriteLoader::load(asset->asset_as_Sprite(), *this));
+                getSprite(assetName).ptr->store.emplace(SpriteLoader::load(asset->asset_as_Sprite(), *this));
             } break;
             case assets::Asset_Font: {
-                getFont(name).ptr->store.emplace(BitmapFontLoader::load(asset->asset_as_Font(), *this));
+                getFont(assetName).ptr->store.emplace(BitmapFontLoader::load(asset->asset_as_Font(), *this));
             } break;
             case assets::Asset_Shader: {
-                getShader(name).ptr->store.emplace(ShaderLoader::load(asset->asset_as_Shader(), *this));
+                getShader(assetName).ptr->store.emplace(ShaderLoader::load(asset->asset_as_Shader(), *this));
             } break;
             case assets::Asset_TileSet:
-                getTileSet(name).ptr->store.emplace(loadTileSet(asset->asset_as_TileSet(), *this));
+                getTileSet(assetName).ptr->store.emplace(loadTileSet(asset->asset_as_TileSet(), *this));
                 break;
             case assets::Asset_Map:
-                std::cout << name << std::endl;
-                getMap(name).ptr->store.emplace(loadMap(asset->asset_as_Map(), *this));
+                getMap(assetName).ptr->store.emplace(loadMap(asset->asset_as_Map(), *this));
                 break;
             case assets::Asset_NestedBundle:
-                loadBundle(asset->asset_as_NestedBundle()->bundle_nested_root());
+                loadBundle(assetName, asset->asset_as_NestedBundle()->bundle_nested_root());
                 break;
         }
     }
@@ -141,33 +149,65 @@ void gear::AssetRegistry::loadBundle(const std::string & fileName) {
     auto buffer = std::make_unique<char[]>(bufferSize);
     in.read(buffer.get(), bufferSize);
     auto bundle = gear::assets::GetBundle(buffer.get());
-    loadBundle(bundle);
 
-    store->bundles.insert({fileName, std::move(buffer)});
+    loadBundle(flatbuffers::HashFnv1<uint64_t>(fileName.c_str()), bundle);
+
+    store->fileData.insert({fileName, std::move(buffer)});
 }
 
-gear::AssetReference<gear::Texture> gear::AssetRegistry::getTexture(const std::string &name) {
-    return store->textures.get(name);
+const gear::assets::Texture* gear::AssetRegistry::getTexture(uint64_t name) {
+    //return store->textures.get(name);
+    for(auto& p : store->bundles) {
+        if (auto ptr = p.second->assets()->LookupByKey(name)) {
+            return ptr->asset_as_Texture();
+        }
+    }
+
+    return nullptr;
 }
 
-gear::AssetReference<gear::Sprite> gear::AssetRegistry::getSprite(const std::string &name) {
+gear::AssetReference<gear::Sprite> gear::AssetRegistry::getSprite(const uint64_t name) {
     return store->sprites.get(name);
 }
 
-gear::AssetReference<gear::BitmapFont> gear::AssetRegistry::getFont(const std::string &name) {
+gear::AssetReference<gear::BitmapFont> gear::AssetRegistry::getFont(const uint64_t name) {
     return store->fonts.get(name);
 }
 
-gear::AssetReference<gear::Shader> gear::AssetRegistry::getShader(const std::string &name) {
+gear::AssetReference<gear::Shader> gear::AssetRegistry::getShader(const uint64_t name) {
     return store->shaders.get(name);
 }
 
-gear::AssetReference<gear::TileSet> gear::AssetRegistry::getTileSet(const std::string &name) {
+gear::AssetReference<gear::TileSet> gear::AssetRegistry::getTileSet(const uint64_t name) {
     return store->tileSets.get(name);
 }
 
-gear::AssetReference<gear::Map> gear::AssetRegistry::getMap(const std::string &name) {
+gear::AssetReference<gear::Map> gear::AssetRegistry::getMap(const uint64_t name) {
     return store->maps.get(name);
+}
+
+const gear::assets::Texture *gear::AssetRegistry::getTexture(const char* name) {
+    return getTexture(flatbuffers::HashFnv1<uint64_t>(name));
+}
+
+gear::AssetReference<gear::Sprite> gear::AssetRegistry::getSprite(const char *name) {
+    return getSprite(flatbuffers::HashFnv1<uint64_t>(name));
+}
+
+gear::AssetReference<gear::BitmapFont> gear::AssetRegistry::getFont(const char *name) {
+    return getFont(flatbuffers::HashFnv1<uint64_t>(name));
+}
+
+gear::AssetReference<gear::Shader> gear::AssetRegistry::getShader(const char *name) {
+    return getShader(flatbuffers::HashFnv1<uint64_t>(name));
+}
+
+gear::AssetReference<gear::TileSet> gear::AssetRegistry::getTileSet(const char *name) {
+    return getTileSet(flatbuffers::HashFnv1<uint64_t>(name));
+}
+
+gear::AssetReference<gear::Map> gear::AssetRegistry::getMap(const char *name) {
+    return getMap(flatbuffers::HashFnv1<uint64_t>(name));
 }
 
 

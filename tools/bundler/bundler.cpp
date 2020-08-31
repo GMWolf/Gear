@@ -3,7 +3,8 @@
 //
 #include <iostream>
 #include <fstream>
-#include<gear/fbs/generated/assets_generated.h>
+#include <gear/fbs/generated/assets_generated.h>
+#include <flatbuffers/hash.h>
 
 int main(int argc, char* argv[]) {
 
@@ -22,11 +23,13 @@ int main(int argc, char* argv[]) {
             auto vec = builder.CreateVector((uint8_t*)buffer, bufferSize);
             free(buffer);
             auto nb = gear::assets::CreateNestedBundle(builder, vec);
-            auto entry = gear::assets::CreateAssetEntryDirect(builder, fileName, gear::assets::Asset_NestedBundle, nb.Union());
+            auto hashName = flatbuffers::HashFnv1<uint64_t>(fileName);
+            auto entry = gear::assets::CreateAssetEntry(builder, hashName, gear::assets::Asset_NestedBundle, nb.Union());
             entries.push_back(entry);
         }
 
-        auto bundle = gear::assets::CreateBundleDirect(builder, &entries);
+        auto assetVec = builder.CreateVectorOfSortedTables(&entries);
+        auto bundle = gear::assets::CreateBundle(builder, assetVec);
 
         builder.Finish(bundle);
     }

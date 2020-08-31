@@ -27,7 +27,7 @@ namespace gear {
 
         Glyph operator[](char c) const;
 
-        AssetReference<Texture> texture;
+        Texture** texture;
     private:
         int rangeStart {0};
         int rangeCount {0};

@@ -31,9 +31,9 @@ namespace gear {
 
         void draw(const Texture& tex, const TexRegion &texRegion, glm::vec2 pos, glm::vec2 size);
 
-        void draw(const Sprite& sprite, glm::vec2 pos, glm::vec2 size);
+        //void draw(const Sprite& sprite, glm::vec2 pos, glm::vec2 size);
 
-        void draw(const Sprite& sprite, glm::vec2 pos);
+        //void draw(const Sprite& sprite, glm::vec2 pos);
 
         void flush();
 

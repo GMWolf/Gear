@@ -15,6 +15,7 @@
 #include <fstream>
 #include <gear/fbs/generated/assets_generated.h>
 #include <texture.h>
+#include <flatbuffers/hash.h>
 
 namespace fs = std::filesystem;
 
@@ -117,9 +118,11 @@ int main(int argc, char* argv[]) {
         auto font = gear::assets::CreateFontDirect(builder, texName.c_str(), rangeStart, rangeCount, &glyphs);
 
         std::vector<flatbuffers::Offset<gear::assets::AssetEntry>> entries;
-        entries.push_back(gear::assets::CreateAssetEntryDirect(builder, texName.c_str(), gear::assets::Asset_Texture, tex.Union()));
-        entries.push_back(gear::assets::CreateAssetEntryDirect(builder, name.c_str(), gear::assets::Asset_Font, font.Union()));
-        auto bundle = gear::assets::CreateBundleDirect(builder, &entries);
+        entries.reserve(2);
+        entries.push_back(gear::assets::CreateAssetEntry(builder, flatbuffers::HashFnv1<uint64_t>(texName.c_str()), gear::assets::Asset_Texture, tex.Union()));
+        entries.push_back(gear::assets::CreateAssetEntry(builder, flatbuffers::HashFnv1<uint64_t>(name.c_str()), gear::assets::Asset_Font, font.Union()));
+        auto assetVec = builder.CreateVectorOfSortedTables(&entries);
+        auto bundle = gear::assets::CreateBundle(builder, assetVec);
 
         builder.Finish(bundle);
     }

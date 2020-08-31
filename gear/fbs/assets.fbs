@@ -23,7 +23,7 @@ union Asset {
 }
 
 table AssetEntry {
-    name: string;
+    name: uint64 (key, hash: "fnv1_64");
     asset: Asset;
 }
 

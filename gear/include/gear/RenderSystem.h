@@ -10,11 +10,12 @@ namespace gear {
     class SpriteBatch;
     class PrimDraw;
     class Shader;
+    class TextureStore;
     namespace ecs {
         class Registry;
     }
 
-    void renderSprites(gear::ecs::Registry &ecs, gear::SpriteBatch &batch, const gear::Shader &shader);
+    void renderSprites(gear::ecs::Registry &ecs, gear::SpriteBatch &batch, const gear::Shader &shader, TextureStore& textureStore);
 
     void renderDebugShapes(gear::ecs::Registry &evs, gear::PrimDraw& primDraw, const gear::Shader &shader);
 

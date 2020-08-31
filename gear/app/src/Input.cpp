@@ -36,3 +36,10 @@ int gear::InputState::keyGetFramePressed(gear::KEYS key) const {
 int gear::InputState::keyGetFrameReleased(gear::KEYS key) const {
     return keyReleasedFrame[static_cast<int>(key)];
 }
+
+bool gear::InputState::keyPressed(gear::KEYS key) const {
+    return keyGetFramePressed(key) == frame;
+}
+bool gear::InputState::keyReleased(gear::KEYS key) const {
+    return keyGetFrameReleased(key) == frame;
+}

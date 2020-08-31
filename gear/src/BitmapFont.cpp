@@ -16,7 +16,7 @@ void gear::renderText(const std::string &text, const BitmapFont &font, glm::vec2
 
     for(char c: text) {
         auto glyph = font[c];
-        batch.draw(*font.texture, pos + glyph.offset, glyph.size, glyph.uv);
+        //batch.draw(*font.texture, pos + glyph.offset, glyph.size, glyph.uv);
         pos.x += glyph.advance;
     }
 }
@@ -25,7 +25,7 @@ gear::BitmapFont gear::BitmapFontLoader::load(const gear::assets::Font *fontDef,
     BitmapFont font;
 
     auto texName = fontDef->texture()->str();
-    font.texture = registry.getTexture(texName);
+    //font.texture = registry.getTexture(texName);
 
     font.rangeStart = fontDef->range_start();
     font.rangeCount = fontDef->range_count();
@@ -39,7 +39,7 @@ gear::BitmapFont gear::BitmapFontLoader::load(const gear::assets::Font *fontDef,
         glyph.uv.z = g->x1();
         glyph.uv.w = g->y1();
         glyph.size = {glyph.uv.z - glyph.uv.x, glyph.uv.w - glyph.uv.y};
-        glyph.uv /= glm::vec4{font.texture->size, font.texture->size};
+        //glyph.uv /= glm::vec4{font.texture->size, font.texture->size};
         glyph.advance = g->xadvance();
         glyph.offset.x = g->xoff();
         glyph.offset.y = g->yoff2();

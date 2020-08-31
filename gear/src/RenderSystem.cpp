@@ -14,7 +14,7 @@
 #include <gear/Texture.h>
 
 
-void gear::renderSprites(gear::ecs::Registry &ecs, gear::SpriteBatch &batch, const gear::Shader &shader) {
+void gear::renderSprites(gear::ecs::Registry &ecs, gear::SpriteBatch &batch, const gear::Shader &shader, TextureStore& textureStore) {
 
     using namespace gear;
     static const ecs::Query viewQuery = ecs::Query().all<View>();
@@ -39,7 +39,8 @@ void gear::renderSprites(gear::ecs::Registry &ecs, gear::SpriteBatch &batch, con
 
             for(auto c : spriteChunks) {
                 for(auto [sprite, transform] : ecs::ChunkView<Sprite, Transform>(*c)) {
-                    batch.draw(sprite, transform.pos);
+                    auto tex = textureStore.getTexture(sprite.tex);
+                    batch.draw(*tex, sprite.texRegions[sprite.imageIndex], transform.pos - sprite.origin, sprite.size);
                 }
             }
 

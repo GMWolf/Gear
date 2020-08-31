@@ -95,7 +95,7 @@ void gear::Application::run(gear::ApplicationAdapter& adapter) {
 
         adapter.init(this);
 
-        int frame = 0;
+        int frame = 1;
         while(!glfwWindowShouldClose(window)) {
             inputState->updateFrame(frame);
             glfwPollEvents();
@@ -131,4 +131,8 @@ glm::vec2 gear::Application::mousePosition() const {
 
 gear::InputState& gear::Application::getInputState() {
     return *inputState;
+}
+
+void gear::Application::close() {
+    glfwSetWindowShouldClose(window, GLFW_TRUE);
 }

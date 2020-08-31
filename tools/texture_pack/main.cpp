@@ -14,6 +14,7 @@
 #include <tinyxml2.h>
 #include <stb_rect_pack.h>
 #include <stb_image.h>
+#include <flatbuffers/hash.h>
 #include "texture.h"
 
 namespace fs = std::filesystem;
@@ -126,11 +127,11 @@ int main(int argc, char* argv[]) {
             auto tilesetName = xTileSet->Attribute("name");
             auto texPathRel = fs::relative(outTexName, fs::path(outAtlasName).parent_path());
             auto texName = std::string(tilesetName) + "_texture";
-            auto texNameOffset = builder.CreateString(texName);
+            auto texNameHash = flatbuffers::HashFnv1<uint64_t>(texName.c_str());
             auto texoffset = gear::buildTexture(builder, pageWidth, pageHeight, gear::assets::PixelFormat::PixelFormat_RGBA8,
                                                 reinterpret_cast<const uint8_t *>(textureData.data()));
 
-            entries.push_back(gear::assets::CreateAssetEntryDirect(builder, texName.c_str(), gear::assets::Asset_Texture, texoffset.Union()));
+            entries.push_back(gear::assets::CreateAssetEntry(builder, flatbuffers::HashFnv1<uint64_t>(texName.c_str()), gear::assets::Asset_Texture, texoffset.Union()));
 
             for (auto xTile = xTileSet->FirstChildElement("tile"); xTile;
                  xTile = xTile->NextSiblingElement("tile")) {
@@ -204,11 +205,12 @@ int main(int argc, char* argv[]) {
 
                 auto objectsOffset = builder.CreateVector(objects);
                 auto uvsOffset = builder.CreateVectorOfStructs(uvs);
-                auto sprite = gear::assets::CreateSprite(builder, texNameOffset, &size, uvsOffset, objectsOffset);
-                entries.push_back(gear::assets::CreateAssetEntryDirect(builder, name.c_str(), gear::assets::Asset_Sprite, sprite.Union()));
+                auto sprite = gear::assets::CreateSprite(builder, texNameHash, &size, uvsOffset, objectsOffset);
+                entries.push_back(gear::assets::CreateAssetEntry(builder, flatbuffers::HashFnv1<uint64_t>(name.c_str()), gear::assets::Asset_Sprite, sprite.Union()));
             }
 
-            auto bundle = gear::assets::CreateBundleDirect(builder, &entries);
+            auto assetVec = builder.CreateVectorOfSortedTables(&entries);
+            auto bundle = gear::assets::CreateBundle(builder, assetVec);
             gear::assets::FinishBundleBuffer(builder, bundle);
             builder.Finish(bundle);
 

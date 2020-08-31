@@ -127,14 +127,14 @@ void gear::SpriteBatch::draw(const Texture& tex, const TexRegion& texRegion, glm
     draw(tex, pos, size, texRegion.uvs);
 }
 
-void gear::SpriteBatch::draw(const gear::Sprite &sprite, glm::vec2 pos, glm::vec2 size) {
+//void gear::SpriteBatch::draw(const gear::Sprite &sprite, glm::vec2 pos, glm::vec2 size) {
+//
+//    draw(sprite.tex.pending() ? *nulltex : sprite.tex.get() , sprite.texRegions[sprite.imageIndex], pos - sprite.origin, size);
+//}
 
-    draw(sprite.tex.pending() ? *nulltex : sprite.tex.get() , sprite.texRegions[sprite.imageIndex], pos - sprite.origin, size);
-}
-
-void gear::SpriteBatch::draw(const gear::Sprite &sprite, glm::vec2 pos) {
-    draw(sprite, pos, sprite.size);
-}
+//void gear::SpriteBatch::draw(const gear::Sprite &sprite, glm::vec2 pos) {
+//    draw(sprite, pos, sprite.size);
+//}
 
 void gear::SpriteBatch::fillElementBuffer() {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);

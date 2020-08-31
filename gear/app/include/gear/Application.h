@@ -36,6 +36,8 @@ namespace gear {
 
         [[nodiscard]] glm::vec2 mousePosition() const;
 
+        void close();
+
         int width, height;
         bool initialized = false;
         GLFWwindow *window{};

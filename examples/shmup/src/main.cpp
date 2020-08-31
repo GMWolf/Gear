@@ -81,9 +81,9 @@ static void createStage(gear::AssetRegistry& assets, gear::ecs::CommandBuffer& c
     }
 
     {
-        gear::TileMap map = std::get<gear::Map::TileLayer>((*assets.getMap("map")).layers.front().variant).tileMap;
-        cmd.createEntity(gear::Transform{{0,0}},
-                         gear::TilemapComponent{map});
+        //gear::TileMap map = std::get<gear::Map::TileLayer>((*assets.getMap("map")).layers.front().variant).tileMap;
+        //cmd.createEntity(gear::Transform{{0,0}},
+        //                 gear::TilemapComponent{map});
     }
 }
 
@@ -228,7 +228,7 @@ static void spawnEnemy(gecs::Prefab prefab, gear::AssetRegistry& assets, gear::e
             Velocity{{0, -1.5 - 0.5*(rand() / (float)RAND_MAX)}});
 }
 
-void render(gear::SpriteBatch& batch, gear::AssetRegistry& assets, gear::ecs::Registry& ecs) {
+void render(gear::SpriteBatch& batch, gear::AssetRegistry& assets, gear::ecs::Registry& ecs, gear::TextureStore& texStore) {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glDisable(GL_CULL_FACE);
@@ -243,7 +243,7 @@ void render(gear::SpriteBatch& batch, gear::AssetRegistry& assets, gear::ecs::Re
 
     {
         auto shd = assets.getShader("textured");
-        gear::renderSprites(ecs, batch, shd.get());
+        gear::renderSprites(ecs, batch, shd.get(), texStore);
     }
 
     {
@@ -290,6 +290,7 @@ public:
         batch.emplace(100);
         primDraw.emplace();
         assets.emplace();
+        textureStore.emplace();
 
         assets->loadBundle("assets.bin");
 
@@ -313,6 +314,10 @@ public:
 
     void update() override {
 
+        if( app->getInputState().keyPressed(gear::KEYS::ESCAPE)) {
+            app->close();
+        }
+
         gear::tilemapSystemCreateSystemComponent(world, cmd);
 
         movePlayer(app->getInputState(), world, cmd);
@@ -322,7 +327,7 @@ public:
 
         gecs::executeCommandBuffer(cmd, world);
         processCollisions(enemyBulletFilter, cmd, *assets);
-        render(*batch, *assets, world);
+        render(*batch, *assets, world, *textureStore);
         debugDraw(*primDraw, *assets, world);
         processAnimation(world, cmd);
         processLifetime(world, cmd);
@@ -344,6 +349,7 @@ public:
         batch.reset();
         primDraw.reset();
         assets.reset();
+        textureStore.reset();
     }
 
 private:
@@ -360,6 +366,7 @@ private:
     std::optional<gear::AssetRegistry> assets;
     std::optional<gear::SpriteBatch> batch;
     std::optional<gear::PrimDraw> primDraw;
+    std::optional<gear::TextureStore> textureStore;
 
     int spawnTimer = 10;
     gear::ui::PerfData perf {};

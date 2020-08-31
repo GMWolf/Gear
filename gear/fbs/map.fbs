@@ -3,7 +3,7 @@ namespace gear.assets;
 
 table Layer {
     name: string;
-    tileSet: string;
+    tileSet: uint64;
     width: short;
     height: short;
     data: [uint];

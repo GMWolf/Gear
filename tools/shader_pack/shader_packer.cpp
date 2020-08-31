@@ -10,6 +10,7 @@
 #include <gear/fbs/generated/assets_generated.h>
 #include <iostream>
 #include <filesystem>
+#include <flatbuffers/hash.h>
 
 namespace fs = std::filesystem;
 
@@ -60,9 +61,9 @@ int main(int argc, char* argv[]) {
     auto shader = shaderBuilder.Finish();
 
     std::vector<flatbuffers::Offset<gear::assets::AssetEntry>> entries;
-    entries.push_back(gear::assets::CreateAssetEntryDirect(builder, name.c_str(), gear::assets::Asset_Shader, shader.Union()));
-
-    auto bundle = gear::assets::CreateBundleDirect(builder, &entries);
+    entries.push_back(gear::assets::CreateAssetEntry(builder, flatbuffers::HashFnv1<uint64_t>(name.c_str()), gear::assets::Asset_Shader, shader.Union()));
+    auto assetVec = builder.CreateVectorOfSortedTables(&entries);
+    auto bundle = gear::assets::CreateBundle(builder, assetVec);
     builder.Finish(bundle);
 
     {

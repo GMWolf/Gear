@@ -1,5 +1,5 @@
 include "common.fbs";
-
+include "texture.fbs";
 namespace gear.assets;
 
 struct UVs{
@@ -39,7 +39,7 @@ table Object {
 }
 
 table Sprite {
-    texture: string;
+    texture: uint64 (hash: "fnv1_64", cpp_type: "Texture");
     size: fvec2;
     images: [UVs];
     objects: [Object];

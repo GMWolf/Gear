@@ -11,6 +11,7 @@
 #include <zstd.h>
 #include <gear/fbs/generated/assets_generated.h>
 #include <fstream>
+#include <flatbuffers/hash.h>
 
 namespace fs = std::filesystem;
 namespace xml = tinyxml2;
@@ -94,15 +95,16 @@ int main(int argc, char* argv[]) {
             auto layerWidth = xLayer->IntAttribute("width");
             auto layerHeight = xLayer->IntAttribute("height");
 
-            auto layer = gear::assets::CreateLayerDirect(builder, layerName, tilesets[tilesetId].c_str(),layerWidth, layerHeight, &tiles);
+            auto layer = gear::assets::CreateLayerDirect(builder, layerName, flatbuffers::HashFnv1<uint64_t>(tilesets[tilesetId].c_str()),layerWidth, layerHeight, &tiles);
             layers.push_back(layer);
         }
 
         auto map = gear::assets::CreateMapDirect(builder, &layers);
 
         std::vector<flatbuffers::Offset<gear::assets::AssetEntry>> entries;
-        entries.push_back(gear::assets::CreateAssetEntryDirect(builder, "map", gear::assets::Asset_Map, map.Union()));
-        auto bundle = gear::assets::CreateBundleDirect(builder, &entries);
+        entries.push_back(gear::assets::CreateAssetEntry(builder, flatbuffers::HashFnv1<uint64_t>("map"), gear::assets::Asset_Map, map.Union()));
+        auto assetVec = builder.CreateVectorOfSortedTables(&entries);
+        auto bundle = gear::assets::CreateBundle(builder, assetVec);
         builder.Finish(bundle);
 
         auto buf = builder.GetBufferPointer();

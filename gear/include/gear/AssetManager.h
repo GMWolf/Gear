@@ -38,6 +38,7 @@ namespace gear {
     class Map;
     namespace assets{
         class Bundle;
+        class Texture;
     }
 
     class AssetRegistry {
@@ -49,15 +50,21 @@ namespace gear {
         AssetRegistry& operator=(const AssetRegistry&) = delete;
         ~AssetRegistry();
 
-        AssetReference<Texture> getTexture(const std::string& name);
-        AssetReference<Sprite> getSprite(const std::string& name);
-        AssetReference<BitmapFont> getFont(const std::string& name);
-        AssetReference<Shader> getShader(const std::string& name);
-        AssetReference<TileSet> getTileSet(const std::string& name);
-        AssetReference<Map> getMap(const std::string& name);
+        const assets::Texture* getTexture(uint64_t name);
+        const assets::Texture* getTexture(const char* name);
+        AssetReference<Sprite> getSprite(uint64_t name);
+        AssetReference<Sprite> getSprite(const char* name);
+        AssetReference<BitmapFont> getFont(uint64_t name);
+        AssetReference<BitmapFont> getFont(const char* name);
+        AssetReference<Shader> getShader(uint64_t name);
+        AssetReference<Shader> getShader(const char* name);
+        AssetReference<TileSet> getTileSet(uint64_t name);
+        AssetReference<TileSet> getTileSet(const char* name);
+        AssetReference<Map> getMap(uint64_t name);
+        AssetReference<Map> getMap(const char* name);
 
         void loadBundle(const std::string& name);
-        void loadBundle(const assets::Bundle* bundle);
+        void loadBundle(uint64_t name, const assets::Bundle* bundle);
     };
 
 

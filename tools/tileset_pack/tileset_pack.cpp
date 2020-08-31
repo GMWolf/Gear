@@ -11,6 +11,7 @@
 #include <stb_image.h>
 #include <texture.h>
 #include <filesystem>
+#include <flatbuffers/hash.h>
 
 namespace xml = tinyxml2;
 namespace fs = std::filesystem;
@@ -44,10 +45,10 @@ int main(int charc, char* argv[]) {
     //Add texture asset
     auto texture = gear::buildTexture(builder, w, h, gear::assets::PixelFormat_RGBA8, imageData);
     auto textureName = tilesetName + "_texture";
-    entries.push_back(gear::assets::CreateAssetEntryDirect(builder, textureName.c_str(),gear::assets::Asset_Texture, texture.Union()));
+    entries.push_back(gear::assets::CreateAssetEntry(builder, flatbuffers::HashFnv1<uint64_t>(textureName.c_str()),gear::assets::Asset_Texture, texture.Union()));
 
     //add tileset asset
-    auto tileset = gear::assets::CreateTileSetDirect(builder, textureName.c_str(),
+    auto tileset = gear::assets::CreateTileSet(builder, flatbuffers::HashFnv1<uint64_t>(textureName.c_str()),
             xImage->IntAttribute("width"),
             xImage->IntAttribute("height"),
             xTileset->IntAttribute("tilewidth"),
@@ -55,8 +56,9 @@ int main(int charc, char* argv[]) {
             xTileset->IntAttribute("tilecount"),
             xTileset->IntAttribute("columns"));
 
-    entries.push_back(gear::assets::CreateAssetEntryDirect(builder, tilesetName.c_str(), gear::assets::Asset_TileSet, tileset.Union()));
-    auto bundle = gear::assets::CreateBundleDirect(builder, &entries);
+    entries.push_back(gear::assets::CreateAssetEntry(builder, flatbuffers::HashFnv1<uint64_t>(tilesetName.c_str()), gear::assets::Asset_TileSet, tileset.Union()));
+    auto assetVec = builder.CreateVectorOfSortedTables(&entries);
+    auto bundle = gear::assets::CreateBundle(builder, assetVec);
 
     builder.Finish(bundle);
 

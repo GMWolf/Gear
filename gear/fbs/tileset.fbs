@@ -1,7 +1,7 @@
 namespace gear.assets;
 
 table TileSet {
-    texture: string;
+    texture: uint64;
     textureWidth : short;
     textureHeight : short;
     tileWidth: short;

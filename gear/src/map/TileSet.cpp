@@ -13,7 +13,7 @@ gear::TileSet gear::loadTileSet(const assets::TileSet *tileSetDef, AssetRegistry
     ts.tileHeight = tileSetDef->tileHeight();
     ts.tileCount = tileSetDef->tileCount();
     ts.columnCount = tileSetDef->columns();
-    ts.texture = registry.getTexture(tileSetDef->texture()->c_str());
+    ts.texture = registry.getTexture(tileSetDef->texture());
     ts.imageWidth = tileSetDef->textureWidth();
     ts.imageHeight = tileSetDef->textureHeight();
     return ts;

@@ -14,7 +14,7 @@
 namespace gear {
 
     struct TileSet {
-        AssetReference<Texture> texture;
+        const assets::Texture* texture{};
 
         TileSet() = default;
         TileSet(TileSet&&) = default;

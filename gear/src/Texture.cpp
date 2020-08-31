@@ -46,7 +46,7 @@ gear::Texture::Texture(GLuint tex, glm::ivec2 size) : tex(tex), size(size) {
 }
 
 
-gear::Texture gear::TextureLoader::load(const gear::assets::Texture* texDef, gear::AssetRegistry &registry, const char* name) {
+gear::Texture gear::TextureLoader::load(const gear::assets::Texture* texDef, const char* name) {
     GLuint tex;
     glGenTextures(1, &tex);
     glBindTexture(GL_TEXTURE_2D, tex);
@@ -89,14 +89,15 @@ gear::Texture gear::TextureLoader::load(const gear::assets::Texture* texDef, gea
 
 gear::Sprite gear::SpriteLoader::load(const gear::assets::Sprite* spriteDef, gear::AssetRegistry &registry) {
     Sprite sprite;
-    sprite.tex = registry.getTexture(spriteDef->texture()->str());
+    sprite.tex = registry.getTexture(spriteDef->texture());
     sprite.size = {};
     sprite.texRegions.reserve(spriteDef->images()->size());
     for (auto uvs : *spriteDef->images()) {
         TexRegion region{};
         region.crop = {0, 0, 0, 0};
         region.uvs = glm::vec4{uvs->x0(), uvs->y0(), uvs->x1(), uvs->y1()};
-        region.uvs /= glm::vec4{sprite.tex->size, sprite.tex->size};
+        glm::vec2 size = {sprite.tex->width(), sprite.tex->height()};
+        region.uvs /= glm::vec4{size, size};
         sprite.texRegions.push_back(region);
     }
 
@@ -151,4 +152,12 @@ gear::Sprite gear::SpriteLoader::load(const gear::assets::Sprite* spriteDef, gea
     }
 
     return sprite;
+}
+
+gear::Texture *gear::TextureStore::getTexture(const gear::assets::Texture * tex) {
+    auto it = textures.find(tex);
+    if(it == textures.end()) {
+        it = textures.insert({tex, TextureLoader::load(tex, nullptr)}).first;
+    }
+    return &it->second;
 }

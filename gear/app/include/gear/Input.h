@@ -21,7 +21,7 @@ namespace gear {
         int keyPressedFrame[static_cast<int>(KEYS::COUNT)]{0};
         int keyReleasedFrame[static_cast<int>(KEYS::COUNT)]{0};
 
-        int frame = 0;
+        int frame = 1;
 
     public:
 
