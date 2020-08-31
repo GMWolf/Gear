@@ -6,6 +6,7 @@
 #define GEAR_SHADER_H
 
 #include <glad/glad.h>
+#include <unordered_map>
 
 namespace gear {
 
@@ -23,7 +24,6 @@ namespace gear {
 
         GLuint uniformLocation(const char* name) const;
 
-
     private:
         GLuint program{};
     };
@@ -32,10 +32,13 @@ namespace gear {
         class Shader;
     }
 
-    class AssetRegistry;
-    class ShaderLoader {
+    Shader createShader(const assets::Shader* shaderDef);
+
+    class ShaderStore {
+        std::unordered_map<const assets::Shader*, Shader> store;
     public:
-        static Shader load(const assets::Shader* shaderDef, AssetRegistry& registry);
+
+        Shader* getShader(const assets::Shader* shader);
     };
 
 }

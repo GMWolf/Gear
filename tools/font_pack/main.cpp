@@ -15,6 +15,7 @@
 #include <fstream>
 #include <gear/fbs/generated/assets_generated.h>
 #include <texture.h>
+#include <flatbuffers/hash.h>
 
 namespace fs = std::filesystem;
 
@@ -93,6 +94,7 @@ int main(int argc, char* argv[]) {
     }
 
     flatbuffers::FlatBufferBuilder builder(2048);
+    std::vector<flatbuffers::Offset<gear::assets::Ref>> references;
     {
         std::vector<gear::assets::Glyph> glyphs;
         glyphs.reserve(rangeCount);
@@ -111,15 +113,20 @@ int main(int argc, char* argv[]) {
             glyphs.push_back(glyph);
         }
         auto bitmapPathRelative = fs::relative(bitmapOut, fs::path(binOut).parent_path());
-        auto tex = gear::buildTexture(builder, bitmapWidth, bitmapHeight, gear::assets::PixelFormat_R8, bitmap.data());
+        auto tex = gear::buildTexture(builder, bitmapWidth, bitmapHeight, gear::assets::PixelFormat::R8, bitmap.data());
         auto texName = name + "_texture";
-
-        auto font = gear::assets::CreateFontDirect(builder, texName.c_str(), rangeStart, rangeCount, &glyphs);
+        auto texNameHash = flatbuffers::HashFnv1<uint64_t>(texName.c_str());
+        auto texRef = gear::assets::CreateRef(builder, (uint8_t)gear::assets::Asset::Texture, texNameHash);
+        references.push_back(texRef);
+        auto font = gear::assets::CreateFontDirect(builder, texRef, rangeStart, rangeCount, &glyphs);
 
         std::vector<flatbuffers::Offset<gear::assets::AssetEntry>> entries;
-        entries.push_back(gear::assets::CreateAssetEntryDirect(builder, texName.c_str(), gear::assets::Asset_Texture, tex.Union()));
-        entries.push_back(gear::assets::CreateAssetEntryDirect(builder, name.c_str(), gear::assets::Asset_Font, font.Union()));
-        auto bundle = gear::assets::CreateBundleDirect(builder, &entries);
+        entries.reserve(2);
+        entries.push_back(gear::assets::CreateAssetEntry(builder, flatbuffers::HashFnv1<uint64_t>(texName.c_str()), gear::assets::Asset::Texture, tex.Union()));
+        entries.push_back(gear::assets::CreateAssetEntry(builder, flatbuffers::HashFnv1<uint64_t>(name.c_str()), gear::assets::Asset::Font, font.Union()));
+        auto assetVec = builder.CreateVectorOfSortedTables(&entries);
+        auto refVec = builder.CreateVector(references);
+        auto bundle = gear::assets::CreateBundle(builder, assetVec, 0, refVec);
 
         builder.Finish(bundle);
     }

@@ -14,6 +14,7 @@
 #include <tinyxml2.h>
 #include <stb_rect_pack.h>
 #include <stb_image.h>
+#include <flatbuffers/hash.h>
 #include "texture.h"
 
 namespace fs = std::filesystem;
@@ -122,15 +123,17 @@ int main(int argc, char* argv[]) {
         {
             flatbuffers::FlatBufferBuilder builder(2048);
             std::vector<flatbuffers::Offset<gear::assets::AssetEntry>> entries;
+            std::vector<flatbuffers::Offset<gear::assets::Ref>> references;
 
             auto tilesetName = xTileSet->Attribute("name");
             auto texPathRel = fs::relative(outTexName, fs::path(outAtlasName).parent_path());
             auto texName = std::string(tilesetName) + "_texture";
-            auto texNameOffset = builder.CreateString(texName);
-            auto texoffset = gear::buildTexture(builder, pageWidth, pageHeight, gear::assets::PixelFormat::PixelFormat_RGBA8,
+            auto texNameHash = flatbuffers::HashFnv1<uint64_t>(texName.c_str());
+            auto texoffset = gear::buildTexture(builder, pageWidth, pageHeight, gear::assets::PixelFormat::RGBA8,
                                                 reinterpret_cast<const uint8_t *>(textureData.data()));
-
-            entries.push_back(gear::assets::CreateAssetEntryDirect(builder, texName.c_str(), gear::assets::Asset_Texture, texoffset.Union()));
+            auto texRef = gear::assets::CreateRef(builder, (uint8_t)gear::assets::Asset::Texture, texNameHash);
+            references.push_back(texRef);
+            entries.push_back(gear::assets::CreateAssetEntry(builder, flatbuffers::HashFnv1<uint64_t>(texName.c_str()), gear::assets::Asset::Texture, texoffset.Union()));
 
             for (auto xTile = xTileSet->FirstChildElement("tile"); xTile;
                  xTile = xTile->NextSiblingElement("tile")) {
@@ -170,20 +173,20 @@ int main(int argc, char* argv[]) {
                         gear::assets::Shape shape_type;
                         flatbuffers::Offset<void> shape;
                         if (xObject->FirstChildElement("ellipse")) {
-                            shape_type = gear::assets::Shape_circle;
+                            shape_type = gear::assets::Shape::circle;
                             shape =builder.CreateStruct(gear::assets::Circle {
                                 xObject->FloatAttribute("x"),
                                 xObject->FloatAttribute("y"),
                                 xObject->FloatAttribute("width") / 2.f
                             }).Union();
                         } else if (xObject->FirstChildElement("point")) {
-                            shape_type = gear::assets::Shape_point;
+                            shape_type = gear::assets::Shape::point;
                             shape = builder.CreateStruct(gear::assets::Point {
                                     xObject->FloatAttribute("x"),
                                     xObject->FloatAttribute("y")
                             }).Union();
                         } else { // rectangle
-                            shape_type = gear::assets::Shape_rectangle;
+                            shape_type = gear::assets::Shape::rectangle;
                             shape = builder.CreateStruct(gear::assets::Rectangle {
                                     xObject->FloatAttribute("x"),
                                     xObject->FloatAttribute("y"),
@@ -201,14 +204,16 @@ int main(int argc, char* argv[]) {
                         (float)xImage->IntAttribute("height")
                 };
 
-
                 auto objectsOffset = builder.CreateVector(objects);
                 auto uvsOffset = builder.CreateVectorOfStructs(uvs);
-                auto sprite = gear::assets::CreateSprite(builder, texNameOffset, &size, uvsOffset, objectsOffset);
-                entries.push_back(gear::assets::CreateAssetEntryDirect(builder, name.c_str(), gear::assets::Asset_Sprite, sprite.Union()));
+
+                auto sprite = gear::assets::CreateSprite(builder, texRef, &size, uvsOffset, objectsOffset);
+                entries.push_back(gear::assets::CreateAssetEntry(builder, flatbuffers::HashFnv1<uint64_t>(name.c_str()), gear::assets::Asset::Sprite, sprite.Union()));
             }
 
-            auto bundle = gear::assets::CreateBundleDirect(builder, &entries);
+            auto assetVec = builder.CreateVectorOfSortedTables(&entries);
+            auto refVec = builder.CreateVector(references);
+            auto bundle = gear::assets::CreateBundle(builder, assetVec, 0, refVec);
             gear::assets::FinishBundleBuffer(builder, bundle);
             builder.Finish(bundle);
 

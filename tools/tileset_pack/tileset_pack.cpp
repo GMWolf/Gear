@@ -11,6 +11,8 @@
 #include <stb_image.h>
 #include <texture.h>
 #include <filesystem>
+#include <flatbuffers/hash.h>
+#include <gear/fbs/generated/common_generated.h>
 
 namespace xml = tinyxml2;
 namespace fs = std::filesystem;
@@ -38,16 +40,20 @@ int main(int charc, char* argv[]) {
 
 
     std::vector<flatbuffers::Offset<gear::assets::AssetEntry>> entries;
+    std::vector<flatbuffers::Offset<gear::assets::Ref>> references;
 
     std::string tilesetName = xTileset->Attribute("name");
 
     //Add texture asset
-    auto texture = gear::buildTexture(builder, w, h, gear::assets::PixelFormat_RGBA8, imageData);
+    auto texture = gear::buildTexture(builder, w, h, gear::assets::PixelFormat::RGBA8, imageData);
     auto textureName = tilesetName + "_texture";
-    entries.push_back(gear::assets::CreateAssetEntryDirect(builder, textureName.c_str(),gear::assets::Asset_Texture, texture.Union()));
+    auto textureHash = flatbuffers::HashFnv1<uint64_t>(textureName.c_str());
+    auto textureRef = gear::assets::CreateRef(builder, (uint8_t)gear::assets::Asset::Texture, textureHash);
+    references.push_back(textureRef);
+    entries.push_back(gear::assets::CreateAssetEntry(builder, flatbuffers::HashFnv1<uint64_t>(textureName.c_str()),gear::assets::Asset::Texture, texture.Union()));
 
     //add tileset asset
-    auto tileset = gear::assets::CreateTileSetDirect(builder, textureName.c_str(),
+    auto tileset = gear::assets::CreateTileSet(builder, textureRef,
             xImage->IntAttribute("width"),
             xImage->IntAttribute("height"),
             xTileset->IntAttribute("tilewidth"),
@@ -55,8 +61,10 @@ int main(int charc, char* argv[]) {
             xTileset->IntAttribute("tilecount"),
             xTileset->IntAttribute("columns"));
 
-    entries.push_back(gear::assets::CreateAssetEntryDirect(builder, tilesetName.c_str(), gear::assets::Asset_TileSet, tileset.Union()));
-    auto bundle = gear::assets::CreateBundleDirect(builder, &entries);
+    entries.push_back(gear::assets::CreateAssetEntry(builder, flatbuffers::HashFnv1<uint64_t>(tilesetName.c_str()), gear::assets::Asset::TileSet, tileset.Union()));
+    auto assetVec = builder.CreateVectorOfSortedTables(&entries);
+    auto refVec = builder.CreateVector(references);
+    auto bundle = gear::assets::CreateBundle(builder, assetVec, 0, refVec);
 
     builder.Finish(bundle);
 

@@ -11,8 +11,9 @@
 #include <glm/vec4.hpp>
 #include <memory>
 #include <vector>
-#include "AssetManager.h"
+#include "Assets.h"
 #include "CollisionShape.h"
+#include <unordered_map>
 
 namespace gear {
 
@@ -28,6 +29,7 @@ namespace gear {
         Texture&operator=(Texture&&) noexcept ;
 
         ~Texture();
+
         GLuint tex {0};
         glm::ivec2 size {0,0};
     };
@@ -37,32 +39,30 @@ namespace gear {
         glm::vec4 crop; //left, top, right, bottom
     };
 
-    //TODO split sprite into sprite component and sprite resource
-    struct Sprite {
-        glm::vec2 size {};
-        glm::vec2 origin {};
-        std::vector<TexRegion> texRegions {}; //TODO get rid of this allocation
-        AssetReference<Texture> tex;
-        uint16_t imageIndex {0};
-
-        std::optional<CollisionShape> mask;
-    };
-
-
     namespace assets {
         class Sprite;
         class Texture;
     }
 
-    class TextureLoader {
+    class TextureStore {
+        std::unordered_map<const assets::Texture*, Texture> textures;
     public:
-        static Texture load(const assets::Texture* texDef, AssetRegistry& registry, const char* name = nullptr);
+        Texture* getTexture(const assets::Texture*);
     };
 
-    class SpriteLoader {
-    public:
-        static Sprite load(const assets::Sprite* spriteDef, AssetRegistry& registry);
+    Texture createTexture(const assets::Texture* texDef, const char* name = nullptr);
+
+    struct Sprite {
+        glm::vec2 size {};
+        glm::vec2 origin {};
+        std::vector<TexRegion> texRegions {}; //TODO get rid of this allocation
+        const Texture* tex;
+        uint16_t imageIndex {0};
+
+        std::optional<CollisionShape> mask;
     };
+
+    Sprite createSprite(const assets::Sprite* spriteDef, TextureStore& textureStore);
 }
 
 

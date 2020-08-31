@@ -24,7 +24,6 @@ gear::Texture &gear::Texture::operator=(Texture&& o) noexcept {
     return *this;
 }
 
-
 gear::Texture::~Texture() {
     glDeleteTextures(1, &tex);
 }
@@ -46,7 +45,7 @@ gear::Texture::Texture(GLuint tex, glm::ivec2 size) : tex(tex), size(size) {
 }
 
 
-gear::Texture gear::TextureLoader::load(const gear::assets::Texture* texDef, gear::AssetRegistry &registry, const char* name) {
+gear::Texture gear::createTexture(const gear::assets::Texture* texDef, const char* name) {
     GLuint tex;
     glGenTextures(1, &tex);
     glBindTexture(GL_TEXTURE_2D, tex);
@@ -63,17 +62,17 @@ gear::Texture gear::TextureLoader::load(const gear::assets::Texture* texDef, gea
     auto format = 0;
     auto type = 0;
     switch(texDef->format()) {
-        case assets::PixelFormat_R8:
+        case gear::assets::PixelFormat::R8:
             internalFormat = GL_R8;
             format = GL_RED;
             type = GL_UNSIGNED_BYTE;
             break;
-        case assets::PixelFormat_RGB8:
+        case gear::assets::PixelFormat::RGB8:
             internalFormat = GL_RGB8;
             format = GL_RGB;
             type = GL_UNSIGNED_BYTE;
             break;
-        case assets::PixelFormat_RGBA8:
+        case gear::assets::PixelFormat::RGBA8:
             internalFormat = GL_RGBA8;
             format = GL_RGBA;
             type = GL_UNSIGNED_BYTE;
@@ -84,19 +83,21 @@ gear::Texture gear::TextureLoader::load(const gear::assets::Texture* texDef, gea
 
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    return Texture(tex, {texDef->width(), texDef->height()});
+    return gear::Texture(tex, {texDef->width(), texDef->height()});
 }
 
-gear::Sprite gear::SpriteLoader::load(const gear::assets::Sprite* spriteDef, gear::AssetRegistry &registry) {
-    Sprite sprite;
-    sprite.tex = registry.getTexture(spriteDef->texture()->str());
+
+gear::Sprite gear::createSprite(const gear::assets::Sprite* spriteDef, gear::TextureStore& textureStore) {
+    gear::Sprite sprite;
+    sprite.tex = textureStore.getTexture((assets::Texture*)spriteDef->texture()->ptr());
     sprite.size = {};
     sprite.texRegions.reserve(spriteDef->images()->size());
     for (auto uvs : *spriteDef->images()) {
-        TexRegion region{};
+        gear::TexRegion region{};
         region.crop = {0, 0, 0, 0};
         region.uvs = glm::vec4{uvs->x0(), uvs->y0(), uvs->x1(), uvs->y1()};
-        region.uvs /= glm::vec4{sprite.tex->size, sprite.tex->size};
+        glm::vec2 size = sprite.tex->size;
+        region.uvs /= glm::vec4{size, size};
         sprite.texRegions.push_back(region);
     }
 
@@ -136,14 +137,14 @@ gear::Sprite gear::SpriteLoader::load(const gear::assets::Sprite* spriteDef, gea
 
     if (auto col = spriteDef->objects()->LookupByKey("collision")) {
         if (auto rect = col->shape_as_rectangle()) {
-            sprite.mask = Rectangle {
+            sprite.mask = gear::Rectangle {
                     {rect->x() - sprite.origin.x, rect->y() - sprite.origin.y},
                     {rect->x() + rect->w() - sprite.origin.x, rect->y() + rect->h() - sprite.origin.y}
             };
         } else if (auto circle = col->shape_as_circle()) {
             float x = circle->x();
             float y = sprite.size.y - circle->y() - circle->r() * 2;
-            sprite.mask = Circle {
+            sprite.mask = gear::Circle {
                     {(x + circle->r()) - sprite.origin.x, (y + circle->r()) - sprite.origin.y},
                     circle->r()
             };
@@ -151,4 +152,13 @@ gear::Sprite gear::SpriteLoader::load(const gear::assets::Sprite* spriteDef, gea
     }
 
     return sprite;
+}
+
+
+gear::Texture *gear::TextureStore::getTexture(const gear::assets::Texture * tex) {
+    auto it = textures.find(tex);
+    if(it == textures.end()) {
+        it = textures.insert({tex, createTexture(tex, nullptr)}).first;
+    }
+    return &it->second;
 }

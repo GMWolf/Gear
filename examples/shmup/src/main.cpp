@@ -11,14 +11,15 @@
 #include <gear/ecs/ECS.h>
 #include <gear/Transform.h>
 #include <gear/Texture.h>
-#include <gear/BitmapFont.h>
-#include <gear/AssetManager.h>
+#include <gear/Text.h>
+#include <gear/Assets.h>
 #include <gear/DebugUI.h>
 #include <gear/map/TileMap.h>
 #include <gear/map/TilemapSystem.h>
 #include <gear/RenderSystem.h>
 #include <gear/PrimDraw.h>
 #include <gear/Input.h>
+#include <generated/map_generated.h>
 
 #include "Collisions.h"
 
@@ -48,7 +49,7 @@ struct DestroyOnAnimationEnd {
 
 struct Text {
     std::string text;
-    gear::AssetReference<gear::BitmapFont> font;
+    const gear::assets::Font* font;
 };
 
 struct Lifetime {
@@ -61,12 +62,12 @@ struct Velocity {
 
 static int score = 0;
 
-static void createStage(gear::AssetRegistry& assets, gear::ecs::CommandBuffer& cmd) {
+static void createStage(gear::AssetRegistry& assets, gear::ecs::CommandBuffer& cmd, gear::TextureStore& texStore) {
     {
-        gear::Sprite spr = *assets.getSprite("ship2");
+        auto spr = gear::createSprite(assets.getSprite("ship2"), texStore);
 
         Player player;
-        player.bulletSprite = *assets.getSprite("bullet_blue1");
+        player.bulletSprite = gear::createSprite(assets.getSprite("bullet_blue1"), texStore);
         player.bulletShape = *player.bulletSprite.mask;
 
         cmd.createEntity( spr,
@@ -81,9 +82,14 @@ static void createStage(gear::AssetRegistry& assets, gear::ecs::CommandBuffer& c
     }
 
     {
-        gear::TileMap map = std::get<gear::Map::TileLayer>((*assets.getMap("map")).layers.front().variant).tileMap;
+        auto map = assets.getMap("map");
+
         cmd.createEntity(gear::Transform{{0,0}},
-                         gear::TilemapComponent{map});
+                         gear::TilemapComponent{
+                                 (gear::assets::TileSet*)map->layers()->Get(0)->tileSet()->ptr(),
+                                 map->layers()->Get(0)->width(), map->layers()->Get(0)->height(),
+                                 map->layers()->Get(0)->data()->data()
+        });
     }
 }
 
@@ -164,14 +170,14 @@ static void movePlayer(const gear::InputState& input, gear::ecs::Registry& ecs, 
     }
 }
 
-static void processCollisions(CollisionFilter& filter, gear::ecs::CommandBuffer& cmd, gear::AssetRegistry& assets) {
+static void processCollisions(CollisionFilter& filter, gear::ecs::CommandBuffer& cmd, gear::AssetRegistry& assets, gear::TextureStore& texStore) {
     for (auto& pair : filter.collisionPairs) {
         auto[enemy, t] = pair.entity[0].get<Enemy, gear::Transform>();
 
         if (--enemy.health <= 0) {
             score += 100;
             cmd.destroyEntity(pair.entity[0]);
-            cmd.createEntity(t, gear::ecs::CopyProvider{*assets.getSprite("explosion_0")}, DestroyOnAnimationEnd{});
+            cmd.createEntity(t, gear::ecs::CopyProvider{gear::createSprite(assets.getSprite("explosion_0"), texStore)}, DestroyOnAnimationEnd{});
             cmd.createEntity(gear::Transform{t.pos + glm::vec2(-25, 25)},
                              Text{"100", assets.getFont("default")},
                              Lifetime{1});
@@ -228,7 +234,7 @@ static void spawnEnemy(gecs::Prefab prefab, gear::AssetRegistry& assets, gear::e
             Velocity{{0, -1.5 - 0.5*(rand() / (float)RAND_MAX)}});
 }
 
-void render(gear::SpriteBatch& batch, gear::AssetRegistry& assets, gear::ecs::Registry& ecs) {
+void render(gear::SpriteBatch& batch, gear::AssetRegistry& assets, gear::ecs::Registry& ecs, gear::TextureStore& texStore, gear::ShaderStore& shaderStore) {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glDisable(GL_CULL_FACE);
@@ -237,18 +243,18 @@ void render(gear::SpriteBatch& batch, gear::AssetRegistry& assets, gear::ecs::Re
 
     //tiles
     {
-        auto shd = assets.getShader("textured");
-        gear::tilemapSystemRender(ecs, shd.get());
+        auto shd = shaderStore.getShader(assets.getShader("textured"));
+        gear::tilemapSystemRender(ecs, *shd, texStore);
     }
 
     {
-        auto shd = assets.getShader("textured");
-        gear::renderSprites(ecs, batch, shd.get());
+        auto shd = shaderStore.getShader(assets.getShader("textured"));
+        gear::renderSprites(ecs, batch, *shd, texStore);
     }
 
     {
         auto font = assets.getFont("default");
-        auto shd = assets.getShader("font");
+        auto shd = shaderStore.getShader(assets.getShader("font"));
         shd->use();
         glUniform1i(shd->uniformLocation("tex"), 0);
         auto vm = view.matrix();
@@ -258,23 +264,24 @@ void render(gear::SpriteBatch& batch, gear::AssetRegistry& assets, gear::ecs::Re
         for(auto c : chunks){
             auto chunk = gecs::ChunkView<gear::Transform, Text>(*c);
             for (auto[transform, text] : chunk) {
-                gear::renderText(text.text, *text.font, transform.pos, batch);
+                gear::renderText(text.text, text.font, transform.pos, batch, texStore);
             }
         };
 
-        gear::renderText("Score: " + std::to_string(score), *font, glm::vec2(20, 680), batch);
+        gear::renderText("Score: " + std::to_string(score), font, glm::vec2(20, 680), batch, texStore);
 
         batch.flush();
     }
 
 }
 
-void debugDraw(gear::PrimDraw& dd, gear::AssetRegistry& assets, gear::ecs::Registry& ecs) {
-    gear::renderDebugShapes(ecs, dd, *assets.getShader("prim"));
+void debugDraw(gear::PrimDraw& dd, gear::AssetRegistry& assets, gear::ecs::Registry& ecs, gear::ShaderStore& shaderStore) {
+    auto shd = shaderStore.getShader(assets.getShader("prim"));
+    gear::renderDebugShapes(ecs, dd, *shd);
 }
 
-gear::ecs::Prefab createEnemyPrefab(gear::ecs::Registry& reg, gear::AssetRegistry& assets, gear::ecs::CommandBuffer& cmd) {
-    auto sprite = *assets.getSprite("ship1");
+gear::ecs::Prefab createEnemyPrefab(gear::ecs::Registry& reg, gear::AssetRegistry& assets, gear::ecs::CommandBuffer& cmd, gear::TextureStore& texStore) {
+    auto sprite = gear::createSprite(assets.getSprite("ship1"), texStore);
     gecs::EntityRef e = cmd.createEntity(
             Enemy{},
             *sprite.mask,
@@ -290,13 +297,15 @@ public:
         batch.emplace(100);
         primDraw.emplace();
         assets.emplace();
+        textureStore.emplace();
+        shaderStore.emplace();
 
         assets->loadBundle("assets.bin");
 
-        enemyPrefab = createEnemyPrefab(prefabs, *assets, cmd);
+        enemyPrefab = createEnemyPrefab(prefabs, *assets, cmd, *textureStore);
         gecs::executeCommandBuffer(cmd, world);
 
-        createStage(*assets, cmd);
+        createStage(*assets, cmd, *textureStore);
 
         enemyBulletFilter.entityA = gear::ecs::Query().all<Enemy>();
         enemyBulletFilter.entityB = gear::ecs::Query().all<Bullet>();
@@ -313,6 +322,10 @@ public:
 
     void update() override {
 
+        if( app->getInputState().keyPressed(gear::KEYS::ESCAPE)) {
+            app->close();
+        }
+
         gear::tilemapSystemCreateSystemComponent(world, cmd);
 
         movePlayer(app->getInputState(), world, cmd);
@@ -321,9 +334,9 @@ public:
         checkCollisions(world, enemyBulletFilter);
 
         gecs::executeCommandBuffer(cmd, world);
-        processCollisions(enemyBulletFilter, cmd, *assets);
-        render(*batch, *assets, world);
-        debugDraw(*primDraw, *assets, world);
+        processCollisions(enemyBulletFilter, cmd, *assets, *textureStore);
+        render(*batch, *assets, world, *textureStore, *shaderStore);
+        debugDraw(*primDraw, *assets, world, *shaderStore);
         processAnimation(world, cmd);
         processLifetime(world, cmd);
         gecs::executeCommandBuffer(cmd, world);
@@ -344,6 +357,8 @@ public:
         batch.reset();
         primDraw.reset();
         assets.reset();
+        textureStore.reset();
+        shaderStore.reset();
     }
 
 private:
@@ -360,6 +375,8 @@ private:
     std::optional<gear::AssetRegistry> assets;
     std::optional<gear::SpriteBatch> batch;
     std::optional<gear::PrimDraw> primDraw;
+    std::optional<gear::TextureStore> textureStore;
+    std::optional<gear::ShaderStore> shaderStore;
 
     int spawnTimer = 10;
     gear::ui::PerfData perf {};

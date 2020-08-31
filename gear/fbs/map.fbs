@@ -1,11 +1,12 @@
+include "common.fbs";
 
 namespace gear.assets;
 
 table Layer {
     name: string;
-    tileSet: string;
-    width: short;
-    height: short;
+    tileSet: Ref;
+    width: ushort;
+    height: ushort;
     data: [uint];
 }
 

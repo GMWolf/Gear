@@ -3,31 +3,16 @@
 //
 
 #include <gear/map/TileSet.h>
-#include <filesystem>
-#include <gear/AssetManager.h>
 #include <generated/tileset_generated.h>
 
-gear::TileSet gear::loadTileSet(const assets::TileSet *tileSetDef, AssetRegistry &registry) {
-    TileSet ts;
-    ts.tileWidth = tileSetDef->tileWidth();
-    ts.tileHeight = tileSetDef->tileHeight();
-    ts.tileCount = tileSetDef->tileCount();
-    ts.columnCount = tileSetDef->columns();
-    ts.texture = registry.getTexture(tileSetDef->texture()->c_str());
-    ts.imageWidth = tileSetDef->textureWidth();
-    ts.imageHeight = tileSetDef->textureHeight();
-    return ts;
-}
-
-
-glm::vec4 gear::TileSet::getTileUVs(int tileIndex, bool hflip, bool vflip, bool dflip) const{
-    auto tileX = (tileIndex) % columnCount;
-    auto tileY = (tileIndex) / columnCount;
+glm::vec4 gear::getTileUVs(const assets::TileSet* tileSet, int tileIndex, bool hflip, bool vflip, bool dflip) {
+    auto tileX = (tileIndex) % tileSet->columns();
+    auto tileY = (tileIndex) / tileSet->columns();
     glm::vec4 uvs {
-            (float)tileX * (float)tileWidth / (float)imageWidth,
-            (float)tileY * (float)tileHeight / (float)imageHeight,
-            (float)(tileX + 1) * (float)tileWidth / (float)imageWidth,
-            (float)(tileY + 1) * (float)tileHeight / (float)imageHeight
+            (float)tileX * (float)tileSet->tileWidth() / (float)tileSet->textureWidth(),
+            (float)tileY * (float)tileSet->tileHeight() / (float)tileSet->textureHeight(),
+            (float)(tileX + 1) * (float)tileSet->tileWidth() / (float)tileSet->textureWidth(),
+            (float)(tileY + 1) * (float)tileSet->tileHeight() / (float)tileSet->textureHeight()
     };
 
 

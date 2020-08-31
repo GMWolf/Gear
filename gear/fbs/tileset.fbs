@@ -1,7 +1,9 @@
+include "common.fbs";
+
 namespace gear.assets;
 
 table TileSet {
-    texture: string;
+    texture: Ref;
     textureWidth : short;
     textureHeight : short;
     tileWidth: short;

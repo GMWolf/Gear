@@ -29,7 +29,7 @@ static bool checkShaderCompilation(GLuint shader) {
     return isCompiled;
 }
 
-GLuint createShader(GLenum type, const char** source, int count) {
+GLuint createShaderStage(GLenum type, const char** source, int count) {
     GLuint shader = glCreateShader(type);
     glShaderSource(shader, count, source, nullptr);
     glCompileShader(shader);
@@ -44,8 +44,8 @@ GLuint createShader(GLenum type, const char** source, int count) {
 
 void gear::Shader::init(const char **vs, int vsCount, const char **fs, int fsCount) {
 
-    GLuint vertexShader = createShader(GL_VERTEX_SHADER, vs, vsCount);
-    GLuint fragmentShader = createShader(GL_FRAGMENT_SHADER, fs, fsCount);
+    GLuint vertexShader = createShaderStage(GL_VERTEX_SHADER, vs, vsCount);
+    GLuint fragmentShader = createShaderStage(GL_FRAGMENT_SHADER, fs, fsCount);
 
     if (!vertexShader || !fragmentShader) {
         return;
@@ -88,6 +88,14 @@ gear::Shader &gear::Shader::operator=(gear::Shader &&o) noexcept {
 }
 
 
-gear::Shader gear::ShaderLoader::load(const gear::assets::Shader* shader, AssetRegistry& registry) {
-    return Shader(shader->vertex()->c_str(), shader->fragment()->c_str());
+gear::Shader gear::createShader(const assets::Shader *shaderDef) {
+    return Shader(shaderDef->vertex()->c_str(), shaderDef->fragment()->c_str());
+}
+
+gear::Shader *gear::ShaderStore::getShader(const gear::assets::Shader *shader) {
+    auto it = store.find(shader);
+    if(it == store.end()) {
+        it = store.insert({shader, createShader(shader)}).first;
+    }
+    return &it->second;
 }

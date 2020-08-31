@@ -1,3 +1,4 @@
+include "common.fbs";
 include "sprite.fbs";
 include "font.fbs";
 include "shader.fbs";
@@ -11,7 +12,6 @@ table NestedBundle {
     bundle: [ubyte] (nested_flatbuffer: "Bundle");
 }
 
-
 union Asset {
     Texture,
     Sprite,
@@ -19,16 +19,17 @@ union Asset {
     Shader,
     TileSet,
     Map,
-    NestedBundle,
 }
 
 table AssetEntry {
-    name: string;
+    name: uint64 (key, hash: "fnv1_64");
     asset: Asset;
 }
 
 table Bundle {
     assets: [AssetEntry];
+    nestedBundles: [NestedBundle];
+    externalRefs: [Ref]; //references that need patching
 }
 
 root_type Bundle;

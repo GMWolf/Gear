@@ -11,6 +11,7 @@
 #include <zstd.h>
 #include <gear/fbs/generated/assets_generated.h>
 #include <fstream>
+#include <flatbuffers/hash.h>
 
 namespace fs = std::filesystem;
 namespace xml = tinyxml2;
@@ -45,6 +46,7 @@ int main(int argc, char* argv[]) {
 
     flatbuffers::FlatBufferBuilder builder(2048);
     std::vector<flatbuffers::Offset<gear::assets::Layer>> layers;
+    std::vector<flatbuffers::Offset<gear::assets::Ref>> externRefs;
 
     {
         xml::XMLDocument doc;
@@ -53,6 +55,8 @@ int main(int argc, char* argv[]) {
 
         std::vector<int> firstIds;
         std::vector<std::string> tilesets;
+
+        std::vector<flatbuffers::Offset<gear::assets::Ref>> references;
 
         //Get tilesets
         for(auto xTileset = xMap->FirstChildElement("tileset"); xTileset;
@@ -65,6 +69,7 @@ int main(int argc, char* argv[]) {
             firstIds.emplace_back(firstId);
             tilesets.emplace_back(name);
         }
+
 
         //get layers
         for(auto xLayer = xMap->FirstChildElement("layer"); xLayer;
@@ -94,15 +99,24 @@ int main(int argc, char* argv[]) {
             auto layerWidth = xLayer->IntAttribute("width");
             auto layerHeight = xLayer->IntAttribute("height");
 
-            auto layer = gear::assets::CreateLayerDirect(builder, layerName, tilesets[tilesetId].c_str(),layerWidth, layerHeight, &tiles);
+            auto tilesetHash = flatbuffers::HashFnv1<uint64_t>(tilesets[tilesetId].c_str());
+            builder.ForceDefaults(true);
+            auto tilesetRef = gear::assets::CreateRef(builder, (uint8_t)gear::assets::Asset::TileSet, tilesetHash);
+            references.push_back(tilesetRef);
+            builder.ForceDefaults(false);
+            externRefs.push_back(tilesetRef);
+            auto layer = gear::assets::CreateLayerDirect(builder, layerName, tilesetRef, layerWidth, layerHeight, &tiles);
+
             layers.push_back(layer);
         }
 
         auto map = gear::assets::CreateMapDirect(builder, &layers);
 
         std::vector<flatbuffers::Offset<gear::assets::AssetEntry>> entries;
-        entries.push_back(gear::assets::CreateAssetEntryDirect(builder, "map", gear::assets::Asset_Map, map.Union()));
-        auto bundle = gear::assets::CreateBundleDirect(builder, &entries);
+        entries.push_back(gear::assets::CreateAssetEntry(builder, flatbuffers::HashFnv1<uint64_t>("map"), gear::assets::Asset::Map, map.Union()));
+        auto assetVec = builder.CreateVectorOfSortedTables(&entries);
+        auto refVec = builder.CreateVector(references);
+        auto bundle = gear::assets::CreateBundle(builder, assetVec, 0, refVec);
         builder.Finish(bundle);
 
         auto buf = builder.GetBufferPointer();

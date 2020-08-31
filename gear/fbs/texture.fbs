@@ -12,5 +12,4 @@ table Texture {
     format: PixelFormat;
     data: [ubyte];
 }
-
 root_type Texture;

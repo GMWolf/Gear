@@ -12,6 +12,8 @@
 #include <gear/Shader.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
+#include <generated/texture_generated.h>
+#include <generated/tileset_generated.h>
 
 namespace gecs = gear::ecs;
 
@@ -19,6 +21,18 @@ namespace gecs = gear::ecs;
 struct TilemapVertex {
     glm::vec2 pos;
     glm::vec2 uv;
+};
+
+struct TilemapSystemComponent {
+    size_t count;
+    GLuint vertexArray;
+    union {
+        struct {
+            GLuint vertexBuffer;
+            GLuint elementBuffer;
+        };
+        GLuint buffers[2];
+    };
 };
 
 void gear::tilemapSystemCreateSystemComponent(ecs::Registry &ecs, gecs::CommandBuffer &cmd) {
@@ -31,9 +45,7 @@ void gear::tilemapSystemCreateSystemComponent(ecs::Registry &ecs, gecs::CommandB
     for (auto c : chunks) {
         auto chunk = gecs::ChunkView<gecs::EntityRef, TilemapComponent>(*c);
 
-        for (auto[entity, tilemapComponent] : chunk) {
-
-            auto &tilemap = tilemapComponent.tilemap;
+        for (auto[entity, tilemap] : chunk) {
             size_t vertexCount = tilemap.width * tilemap.height * 4;
             size_t elementCount = tilemap.width * tilemap.height * 6;
 
@@ -57,19 +69,19 @@ void gear::tilemapSystemCreateSystemComponent(ecs::Registry &ecs, gecs::CommandB
             for (int y = 0; y < tilemap.height; y++) {
                 for (int x = 0; x < tilemap.width; x++) {
                     size_t tileIndex = x + y * tilemap.width;
-                    auto tile = tilemap.tileData[tileIndex];
+                    auto tile = tileDataDecode(tilemap.data[tileIndex]);
                     auto tileVertexOffset = (x + y * tilemap.width) * 4;
                     auto tileElementOffset = (x + y * tilemap.width) * 6;
-                    auto uvs = tilemap.tileset->getTileUVs(tile.id, tile.hflip, tile.vflip, tile.dflip);
+                    auto uvs = getTileUVs(tilemap.tileSet, tile.id, tile.hflip, tile.vflip, tile.dflip);
                     //Write vertices
                     auto *tileVertices = vertices + tileVertexOffset;
-                    tileVertices[0].pos = {x * tilemap.tileWidth, y * tilemap.tileHeight};
+                    tileVertices[0].pos = {x * tilemap.tileSet->tileWidth(), y * tilemap.tileSet->tileHeight()};
                     tileVertices[0].uv = {uvs.x, uvs.y};
-                    tileVertices[1].pos = {x * tilemap.tileWidth, (y + 1) * tilemap.tileHeight};
+                    tileVertices[1].pos = {x * tilemap.tileSet->tileWidth(), (y + 1) * tilemap.tileSet->tileHeight()};
                     tileVertices[1].uv = {uvs.x, uvs.w};
-                    tileVertices[2].pos = {(x + 1) * tilemap.tileWidth, y * tilemap.tileHeight};
+                    tileVertices[2].pos = {(x + 1) * tilemap.tileSet->tileWidth(), y * tilemap.tileSet->tileHeight()};
                     tileVertices[2].uv = {uvs.z, uvs.y};
-                    tileVertices[3].pos = {(x + 1) * tilemap.tileWidth, (y + 1) * tilemap.tileHeight};
+                    tileVertices[3].pos = {(x + 1) * tilemap.tileSet->tileWidth(), (y + 1) * tilemap.tileSet->tileHeight()};
                     tileVertices[3].uv = {uvs.z, uvs.w};
                     //Write elements;
                     auto *tileElements = elements + tileElementOffset;
@@ -103,7 +115,7 @@ void gear::tilemapSystemCreateSystemComponent(ecs::Registry &ecs, gecs::CommandB
     }
 }
 
-void gear::tilemapSystemRender(ecs::Registry &ecs, const gear::Shader &shader) {
+void gear::tilemapSystemRender(ecs::Registry &ecs, const gear::Shader &shader, TextureStore& textureStore) {
 
     gecs::Chunk *chunkArray[512];
     auto chunks = ecs.queryChunks(gecs::Query().all<Transform, TilemapComponent, TilemapSystemComponent>(), chunkArray,
@@ -123,10 +135,12 @@ void gear::tilemapSystemRender(ecs::Registry &ecs, const gear::Shader &shader) {
                     auto tview = view;
                     tview.pos -= transform.pos;
                     auto vm = tview.matrix();
-                    glUniformMatrix4fv(shader.uniformLocation("view"), 1, GL_FALSE, glm::value_ptr(vm));
 
+                    auto tex = textureStore.getTexture((assets::Texture*)tc.tileSet->texture()->ptr());
+
+                    glUniformMatrix4fv(shader.uniformLocation("view"), 1, GL_FALSE, glm::value_ptr(vm));
                     glActiveTexture(GL_TEXTURE0);
-                    glBindTexture(GL_TEXTURE_2D, tc.tilemap.tileset->texture->tex);
+                    glBindTexture(GL_TEXTURE_2D, tex->tex);
                     glBindVertexArray(tsc.vertexArray);
                     glDrawElements(GL_TRIANGLES, tsc.count, GL_UNSIGNED_SHORT, nullptr);
                 }

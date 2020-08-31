@@ -3,8 +3,8 @@
 //
 #include <gear/ApplicationAdapter.h>
 #include <gear/Application.h>
-#include <gear/ECS/ECS.h>
-#include <gear/AssetManager.h>
+#include <gear/ecs/ECS.h>
+#include <gear/Assets.h>
 #include <gear/SpriteBatch.h>
 #include <gear/RenderSystem.h>
 #include <gear/Transform.h>
