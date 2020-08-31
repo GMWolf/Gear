@@ -10,3 +10,8 @@ struct ivec2 {
     x: int;
     y: int;
 }
+
+table Ref {
+    type: uint8;
+    ptr: uint64 (hash: "fnv1_64");
+}

@@ -10,7 +10,7 @@
 
 void gear::renderText(const std::string &text, const gear::assets::Font* font, glm::vec2 pos, SpriteBatch &batch, TextureStore& textureStore) {
 
-    auto texture = textureStore.getTexture(font->texture()->ptr());
+    auto texture = textureStore.getTexture((assets::Texture*)font->texture()->ptr());
 
     for(char c: text) {
         auto glyph = font->glyphs()->Get(c - font->range_start());

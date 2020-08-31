@@ -123,6 +123,7 @@ int main(int argc, char* argv[]) {
         {
             flatbuffers::FlatBufferBuilder builder(2048);
             std::vector<flatbuffers::Offset<gear::assets::AssetEntry>> entries;
+            std::vector<flatbuffers::Offset<gear::assets::Ref>> references;
 
             auto tilesetName = xTileSet->Attribute("name");
             auto texPathRel = fs::relative(outTexName, fs::path(outAtlasName).parent_path());
@@ -130,7 +131,8 @@ int main(int argc, char* argv[]) {
             auto texNameHash = flatbuffers::HashFnv1<uint64_t>(texName.c_str());
             auto texoffset = gear::buildTexture(builder, pageWidth, pageHeight, gear::assets::PixelFormat::PixelFormat_RGBA8,
                                                 reinterpret_cast<const uint8_t *>(textureData.data()));
-            auto texRef = gear::assets::CreateTextureRef(builder, texNameHash, texoffset);
+            auto texRef = gear::assets::CreateRef(builder, gear::assets::Asset_Texture, texNameHash);
+            references.push_back(texRef);
             entries.push_back(gear::assets::CreateAssetEntry(builder, flatbuffers::HashFnv1<uint64_t>(texName.c_str()), gear::assets::Asset_Texture, texoffset.Union()));
 
             for (auto xTile = xTileSet->FirstChildElement("tile"); xTile;
@@ -210,7 +212,8 @@ int main(int argc, char* argv[]) {
             }
 
             auto assetVec = builder.CreateVectorOfSortedTables(&entries);
-            auto bundle = gear::assets::CreateBundle(builder, assetVec);
+            auto refVec = builder.CreateVector(references);
+            auto bundle = gear::assets::CreateBundle(builder, assetVec, 0, refVec);
             gear::assets::FinishBundleBuffer(builder, bundle);
             builder.Finish(bundle);
 

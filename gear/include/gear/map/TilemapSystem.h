@@ -37,7 +37,8 @@ namespace gear {
 
 
     class Shader;
-    void tilemapSystemRender(ecs::Registry& ecs, const Shader &shader);
+    class TextureStore;
+    void tilemapSystemRender(ecs::Registry& ecs, const Shader &shader, TextureStore& textureStore);
 }
 
 

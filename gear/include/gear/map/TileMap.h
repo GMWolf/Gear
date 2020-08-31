@@ -23,7 +23,7 @@ namespace gear {
         };
 
         std::string name;
-        AssetReference <TileSet> tileset;
+        const assets::TileSet* tileset;
         std::vector<Tile> tileData;
         int width;
         int height;

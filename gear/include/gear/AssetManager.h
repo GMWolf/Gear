@@ -42,6 +42,7 @@ namespace gear {
         class Sprite;
         class Font;
         class Shader;
+        class TileSet;
     }
 
     class AssetRegistry {
@@ -61,15 +62,16 @@ namespace gear {
         const assets::Font* getFont(const char* name);
         const assets::Shader* getShader(uint64_t name);
         const assets::Shader* getShader(const char* name);
-        AssetReference<TileSet> getTileSet(uint64_t name);
-        AssetReference<TileSet> getTileSet(const char* name);
+        const assets::TileSet* getTileSet(uint64_t name);
+        const assets::TileSet* getTileSet(const char* name);
         AssetReference<Map> getMap(uint64_t name);
         AssetReference<Map> getMap(const char* name);
 
 
-
         void loadBundle(const std::string& name);
-        void loadBundle(uint64_t name, const assets::Bundle* bundle);
+        void loadBundleAssets(const assets::Bundle* bundle);
+        void registerBundleRecursive(const assets::Bundle* bundle);
+        void patchPointers(const assets::Bundle* bundle);
     };
 
 

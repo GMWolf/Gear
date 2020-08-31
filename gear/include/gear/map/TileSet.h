@@ -37,9 +37,14 @@ namespace gear {
     };
 
 
+
+
     namespace assets {
         class TileSet;
     }
+
+    glm::vec4 getTileUVs(const assets::TileSet* tileSet, int tileIndex, bool hflip, bool vflip, bool dflip);
+
     class AssetRegistry;
 
     TileSet loadTileSet(const assets::TileSet* tileSetDef, AssetRegistry& registry);

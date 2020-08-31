@@ -12,7 +12,7 @@ int main(int argc, char* argv[]) {
 
 
     flatbuffers::FlatBufferBuilder builder(4096);
-    std::vector<flatbuffers::Offset<AssetEntry>> assetEntries;
+    std::vector<flatbuffers::Offset<NestedBundle>> bundles;
     {
         for(int i = 2; i < argc; i++) {
             char *fileName = argv[i];
@@ -25,13 +25,11 @@ int main(int argc, char* argv[]) {
             in.read((char*)buffer, bufferSize);
             
             auto nb = CreateNestedBundle(builder, vec);
-            auto name = flatbuffers::HashFnv1<uint64_t>(fileName);
-            auto entry = CreateAssetEntry(builder, name, gear::assets::Asset_NestedBundle, nb.Union());
-            assetEntries.push_back(entry);
+            bundles.push_back(nb);
         }
     }
 
-    auto bundle = CreateBundleDirect(builder, &assetEntries);
+    auto bundle = CreateBundleDirect(builder, nullptr, &bundles);
     builder.Finish(bundle);
 
     {

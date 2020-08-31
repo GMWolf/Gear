@@ -90,7 +90,7 @@ gear::Texture gear::TextureLoader::load(const gear::assets::Texture* texDef, con
 
 gear::Sprite gear::createSprite(const gear::assets::Sprite* spriteDef, gear::TextureStore& textureStore) {
     gear::Sprite sprite;
-    sprite.tex = textureStore.getTexture(spriteDef->texture()->ptr());
+    sprite.tex = textureStore.getTexture((assets::Texture*)spriteDef->texture()->ptr());
     sprite.size = {};
     sprite.texRegions.reserve(spriteDef->images()->size());
     for (auto uvs : *spriteDef->images()) {

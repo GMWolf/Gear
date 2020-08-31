@@ -12,9 +12,4 @@ table Texture {
     format: PixelFormat;
     data: [ubyte];
 }
-
-table TextureRef {
-    name: uint64 (hash: "fnv1_64");
-    ptr: Texture;
-}
 root_type Texture;

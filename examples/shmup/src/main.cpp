@@ -81,9 +81,10 @@ static void createStage(gear::AssetRegistry& assets, gear::ecs::CommandBuffer& c
     }
 
     {
-        //gear::TileMap map = std::get<gear::Map::TileLayer>((*assets.getMap("map")).layers.front().variant).tileMap;
-        //cmd.createEntity(gear::Transform{{0,0}},
-        //                 gear::TilemapComponent{map});
+        auto map = assets.getMap("map");
+        gear::TileMap tileMap = std::get<gear::Map::TileLayer>((*map).layers.front().variant).tileMap;
+        cmd.createEntity(gear::Transform{{0,0}},
+                         gear::TilemapComponent{tileMap});
     }
 }
 
@@ -238,7 +239,7 @@ void render(gear::SpriteBatch& batch, gear::AssetRegistry& assets, gear::ecs::Re
     //tiles
     {
         auto shd = shaderStore.getShader(assets.getShader("textured"));
-        gear::tilemapSystemRender(ecs, *shd);
+        gear::tilemapSystemRender(ecs, *shd, texStore);
     }
 
     {

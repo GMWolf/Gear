@@ -1,3 +1,4 @@
+include "common.fbs";
 include "sprite.fbs";
 include "font.fbs";
 include "shader.fbs";
@@ -18,7 +19,6 @@ union Asset {
     Shader,
     TileSet,
     Map,
-    NestedBundle,
 }
 
 table AssetEntry {
@@ -28,6 +28,8 @@ table AssetEntry {
 
 table Bundle {
     assets: [AssetEntry];
+    nestedBundles: [NestedBundle];
+    externalRefs: [Ref]; //references that need patching
 }
 
 root_type Bundle;

@@ -12,6 +12,8 @@
 #include <gear/Shader.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
+#include <generated/texture_generated.h>
+#include <generated/tileset_generated.h>
 
 namespace gecs = gear::ecs;
 
@@ -60,7 +62,7 @@ void gear::tilemapSystemCreateSystemComponent(ecs::Registry &ecs, gecs::CommandB
                     auto tile = tilemap.tileData[tileIndex];
                     auto tileVertexOffset = (x + y * tilemap.width) * 4;
                     auto tileElementOffset = (x + y * tilemap.width) * 6;
-                    auto uvs = tilemap.tileset->getTileUVs(tile.id, tile.hflip, tile.vflip, tile.dflip);
+                    auto uvs = getTileUVs(tilemap.tileset, tile.id, tile.hflip, tile.vflip, tile.dflip);
                     //Write vertices
                     auto *tileVertices = vertices + tileVertexOffset;
                     tileVertices[0].pos = {x * tilemap.tileWidth, y * tilemap.tileHeight};
@@ -103,7 +105,7 @@ void gear::tilemapSystemCreateSystemComponent(ecs::Registry &ecs, gecs::CommandB
     }
 }
 
-void gear::tilemapSystemRender(ecs::Registry &ecs, const gear::Shader &shader) {
+void gear::tilemapSystemRender(ecs::Registry &ecs, const gear::Shader &shader, TextureStore& textureStore) {
 
     gecs::Chunk *chunkArray[512];
     auto chunks = ecs.queryChunks(gecs::Query().all<Transform, TilemapComponent, TilemapSystemComponent>(), chunkArray,
@@ -123,10 +125,12 @@ void gear::tilemapSystemRender(ecs::Registry &ecs, const gear::Shader &shader) {
                     auto tview = view;
                     tview.pos -= transform.pos;
                     auto vm = tview.matrix();
-                    glUniformMatrix4fv(shader.uniformLocation("view"), 1, GL_FALSE, glm::value_ptr(vm));
 
+                    auto tex = textureStore.getTexture((assets::Texture*)tc.tilemap.tileset->texture()->ptr());
+
+                    glUniformMatrix4fv(shader.uniformLocation("view"), 1, GL_FALSE, glm::value_ptr(vm));
                     glActiveTexture(GL_TEXTURE0);
-                    //glBindTexture(GL_TEXTURE_2D, tc.tilemap.tileset->texture->tex);
+                    glBindTexture(GL_TEXTURE_2D, tex->tex);
                     glBindVertexArray(tsc.vertexArray);
                     glDrawElements(GL_TRIANGLES, tsc.count, GL_UNSIGNED_SHORT, nullptr);
                 }

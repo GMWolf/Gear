@@ -39,7 +39,7 @@ table Object {
 }
 
 table Sprite {
-    texture: TextureRef;
+    texture: Ref;
     size: fvec2;
     images: [UVs];
     objects: [Object];

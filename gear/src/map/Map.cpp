@@ -5,7 +5,9 @@
 #include <gear/map/Map.h>
 
 #include <generated/map_generated.h>
+#include <generated/tileset_generated.h>
 #include <gear/AssetManager.h>
+
 
 static const unsigned FLIPPED_HORIZONTALLY_FLAG = 0x80000000;
 static const unsigned FLIPPED_VERTICALLY_FLAG   = 0x40000000;
@@ -20,12 +22,11 @@ gear::Map gear::loadMap(const assets::Map *mapDef, AssetRegistry &registry) {
         layer.name = layerDef->name()->str();
 
         Map::TileLayer tileLayer;
-        tileLayer.tileMap.tileset = registry.getTileSet(layerDef->tileSet());
-        if (tileLayer.tileMap.tileset.pending()) return map;
+        tileLayer.tileMap.tileset = ((assets::TileSet*) layerDef->tileSet()->ptr());
         tileLayer.tileMap.width = layerDef->width();
         tileLayer.tileMap.height = layerDef->height();
-        tileLayer.tileMap.tileWidth = tileLayer.tileMap.tileset->tileWidth;
-        tileLayer.tileMap.tileHeight = tileLayer.tileMap.tileset->tileHeight;
+        tileLayer.tileMap.tileWidth = tileLayer.tileMap.tileset->tileWidth();
+        tileLayer.tileMap.tileHeight = tileLayer.tileMap.tileset->tileHeight();
         tileLayer.tileMap.tileData.resize(tileLayer.tileMap.width * tileLayer.tileMap.height);
 
         for(int i = 0; i < tileLayer.tileMap.width * tileLayer.tileMap.height; i++) {
