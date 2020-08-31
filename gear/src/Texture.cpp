@@ -63,17 +63,17 @@ gear::Texture gear::TextureLoader::load(const gear::assets::Texture* texDef, con
     auto format = 0;
     auto type = 0;
     switch(texDef->format()) {
-        case assets::PixelFormat_R8:
+        case assets::PixelFormat::R8:
             internalFormat = GL_R8;
             format = GL_RED;
             type = GL_UNSIGNED_BYTE;
             break;
-        case assets::PixelFormat_RGB8:
+        case assets::PixelFormat::RGB8:
             internalFormat = GL_RGB8;
             format = GL_RGB;
             type = GL_UNSIGNED_BYTE;
             break;
-        case assets::PixelFormat_RGBA8:
+        case assets::PixelFormat::RGBA8:
             internalFormat = GL_RGBA8;
             format = GL_RGBA;
             type = GL_UNSIGNED_BYTE;

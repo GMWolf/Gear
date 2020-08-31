@@ -101,7 +101,7 @@ int main(int argc, char* argv[]) {
 
             auto tilesetHash = flatbuffers::HashFnv1<uint64_t>(tilesets[tilesetId].c_str());
             builder.ForceDefaults(true);
-            auto tilesetRef = gear::assets::CreateRef(builder, gear::assets::Asset_TileSet, tilesetHash);
+            auto tilesetRef = gear::assets::CreateRef(builder, (uint8_t)gear::assets::Asset::TileSet, tilesetHash);
             references.push_back(tilesetRef);
             builder.ForceDefaults(false);
             externRefs.push_back(tilesetRef);
@@ -113,7 +113,7 @@ int main(int argc, char* argv[]) {
         auto map = gear::assets::CreateMapDirect(builder, &layers);
 
         std::vector<flatbuffers::Offset<gear::assets::AssetEntry>> entries;
-        entries.push_back(gear::assets::CreateAssetEntry(builder, flatbuffers::HashFnv1<uint64_t>("map"), gear::assets::Asset_Map, map.Union()));
+        entries.push_back(gear::assets::CreateAssetEntry(builder, flatbuffers::HashFnv1<uint64_t>("map"), gear::assets::Asset::Map, map.Union()));
         auto assetVec = builder.CreateVectorOfSortedTables(&entries);
         auto refVec = builder.CreateVector(references);
         auto bundle = gear::assets::CreateBundle(builder, assetVec, 0, refVec);

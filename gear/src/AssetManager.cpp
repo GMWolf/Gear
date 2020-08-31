@@ -6,70 +6,12 @@
 #include <generated/assets_generated.h>
 #include <fstream>
 #include <ios>
-#include <gear/map/TileSet.h>
-#include <gear/map/TileMap.h>
-#include <gear/map/Map.h>
-#include <unordered_map>
 #include <iostream>
 #include <flatbuffers/hash.h>
 
 
-template<class T>
-struct gear::AssetEntry {
-    std::optional<const T> store {};
-
-    bool pending();;
-
-    T& get();
-};
-
-template<class T>
-T &gear::AssetEntry<T>::get() {
-    return *store; //TODO: deal with pending cast
-}
-
-template<class T>
-bool gear::AssetEntry<T>::pending() {
-    return !store.has_value();
-}
-
-template<class T>
-bool gear::AssetReference<T>::pending() const {
-    return ptr && ptr->pending();
-}
-
-template<class T>
-const T &gear::AssetReference<T>::get() const {
-    return ptr->store.value(); //TODO: deal with pending case
-}
-
-template<class T>
-const T *gear::AssetReference<T>::operator->() const {
-    return &ptr->store.value();
-}
-
-template<class T>
-const T &gear::AssetReference<T>::operator*() const {
-    return ptr->store.value();
-}
-
-template class gear::AssetReference<gear::TileSet>;
-template class gear::AssetReference<gear::TileMap>;
-template class gear::AssetReference<gear::Map>;
-
 class gear::AssetRegistry::Store {
 public:
-    template<class T>
-    class ResourceStore {
-    public:
-        std::unordered_map<uint64_t, std::shared_ptr<AssetEntry<T>>> map;
-        gear::AssetReference<T> get(uint64_t s);
-    };
-
-
-    ResourceStore<TileSet> tileSets;
-    ResourceStore<Map> maps;
-
     std::unordered_map<std::string, std::unique_ptr<char[]>> fileData;
     std::vector<const assets::Bundle*> bundles;
 
@@ -85,16 +27,6 @@ const gear::assets::AssetEntry *gear::AssetRegistry::Store::getAssetEntry(uint64
         }
     }
     return nullptr;
-}
-
-template<class T>
-gear::AssetReference<T> gear::AssetRegistry::Store::ResourceStore<T>::get(const uint64_t s) {
-    auto it = map.find(s);
-    if (it == map.end()) {
-        auto d = std::make_shared<AssetEntry<T>>();
-        it = map.insert({s, d}).first;
-    }
-    return {it->second};
 }
 
 
@@ -126,56 +58,13 @@ void gear::AssetRegistry::patchPointers(const gear::assets::Bundle* bundle) {
         auto ref = bundle->externalRefs()->GetMutableObject(i);
 
         auto entry = store->getAssetEntry(ref->ptr());
-        if (entry->asset_type() == ref->type()) {
+        if ((uint8_t)entry->asset_type() == ref->type()) {
             ref->mutate_ptr((uint64_t) entry->asset());
         } else {
             ref->mutate_ptr((uint64_t) nullptr);
         }
     }
 }
-
-
-void gear::AssetRegistry::loadBundleAssets(const gear::assets::Bundle *bundle) {
-
-    if (bundle->nestedBundles()) {
-        for (auto nestedBundle : *bundle->nestedBundles()) {
-            loadBundleAssets(nestedBundle->bundle_nested_root());
-        }
-    }
-
-    if (bundle->assets()) {
-        for (auto asset : *bundle->assets()) {
-            auto assetName = asset->name();
-            switch (asset->asset_type()) {
-                case assets::Asset_NONE:
-                    break;
-                case assets::Asset_Texture: {
-                    //getTexture(name).ptr->store.emplace(TextureLoader::load(asset->asset_as_Texture(), *this, name.c_str()));
-                }
-                    break;
-                case assets::Asset_Sprite: {
-                    //getSprite(assetName).ptr->store.emplace(SpriteLoader::load(asset->asset_as_Sprite(), *this));
-                }
-                    break;
-                case assets::Asset_Font: {
-                    //getFont(assetName).ptr->store.emplace(BitmapFontLoader::load(asset->asset_as_Font(), *this));
-                }
-                    break;
-                case assets::Asset_Shader: {
-                    //getShader(assetName).ptr->store.emplace(ShaderLoader::load(asset->asset_as_Shader(), *this));
-                }
-                    break;
-                case assets::Asset_TileSet:
-                    //getTileSet(assetName).ptr->store.emplace(loadTileSet(asset->asset_as_TileSet(), *this));
-                    break;
-                case assets::Asset_Map:
-                    getMap(assetName).ptr->store.emplace(loadMap(asset->asset_as_Map(), *this));
-                    break;
-            }
-        }
-    }
-}
-
 
 void gear::AssetRegistry::loadBundle(const std::string & fileName) {
 
@@ -191,8 +80,6 @@ void gear::AssetRegistry::loadBundle(const std::string & fileName) {
     registerBundleRecursive(bundle);
 
     patchPointers(bundle);
-
-    loadBundleAssets(bundle);
 
     store->fileData.insert({fileName, std::move(buffer)});
 }
@@ -222,8 +109,9 @@ const gear::assets::TileSet* gear::AssetRegistry::getTileSet(const uint64_t name
     return entry ? entry->asset_as_TileSet() : nullptr;
 }
 
-gear::AssetReference<gear::Map> gear::AssetRegistry::getMap(const uint64_t name) {
-    return store->maps.get(name);
+const gear::assets::Map* gear::AssetRegistry::getMap(const uint64_t name) {
+    auto entry = store->getAssetEntry(name);
+    return entry ? entry->asset_as_Map() : nullptr;
 }
 
 const gear::assets::Texture *gear::AssetRegistry::getTexture(const char* name) {
@@ -246,7 +134,7 @@ const gear::assets::TileSet* gear::AssetRegistry::getTileSet(const char *name) {
     return getTileSet(flatbuffers::HashFnv1<uint64_t>(name));
 }
 
-gear::AssetReference<gear::Map> gear::AssetRegistry::getMap(const char *name) {
+const gear::assets::Map* gear::AssetRegistry::getMap(const char *name) {
     return getMap(flatbuffers::HashFnv1<uint64_t>(name));
 }
 

@@ -9,11 +9,11 @@ namespace gear {
 
     static size_t getFormatSize(gear::assets::PixelFormat format) {
         switch (format) {
-            case gear::assets::PixelFormat_R8:
+            case gear::assets::PixelFormat::R8:
                 return 1;
-            case gear::assets::PixelFormat_RGB8:
+            case gear::assets::PixelFormat::RGB8:
                 return 3;
-            case gear::assets::PixelFormat_RGBA8:
+            case gear::assets::PixelFormat::RGBA8:
                 return 4;
         }
     }

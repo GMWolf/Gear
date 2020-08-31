@@ -17,4 +17,4 @@ local schemas = {
 }
 
 
-os.execute("flatc --cpp --gen-mutable -o generated "..table.concat(schemas, " "));
+os.execute("flatc --cpp --gen-mutable --cpp-std 'c++17' -o generated "..table.concat(schemas, " "));

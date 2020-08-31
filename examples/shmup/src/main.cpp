@@ -19,6 +19,7 @@
 #include <gear/RenderSystem.h>
 #include <gear/PrimDraw.h>
 #include <gear/Input.h>
+#include <generated/map_generated.h>
 
 #include "Collisions.h"
 
@@ -82,9 +83,13 @@ static void createStage(gear::AssetRegistry& assets, gear::ecs::CommandBuffer& c
 
     {
         auto map = assets.getMap("map");
-        gear::TileMap tileMap = std::get<gear::Map::TileLayer>((*map).layers.front().variant).tileMap;
+
         cmd.createEntity(gear::Transform{{0,0}},
-                         gear::TilemapComponent{tileMap});
+                         gear::TilemapComponent{
+                                 (gear::assets::TileSet*)map->layers()->Get(0)->tileSet()->ptr(),
+                                 map->layers()->Get(0)->width(), map->layers()->Get(0)->height(),
+                                 map->layers()->Get(0)->data()->data()
+        });
     }
 }
 

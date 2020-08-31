@@ -32,8 +32,6 @@ add_library(gear
         src/map/TileMap.cpp
         include/gear/map/TilemapSystem.h
         src/map/TilemapSystem.cpp
-        include/gear/map/Map.h
-        src/map/Map.cpp
         include/gear/PrimDraw.h
         src/PrimDraw.cpp
         include/gear/Job.h

@@ -61,7 +61,7 @@ int main(int argc, char* argv[]) {
     auto shader = shaderBuilder.Finish();
 
     std::vector<flatbuffers::Offset<gear::assets::AssetEntry>> entries;
-    entries.push_back(gear::assets::CreateAssetEntry(builder, flatbuffers::HashFnv1<uint64_t>(name.c_str()), gear::assets::Asset_Shader, shader.Union()));
+    entries.push_back(gear::assets::CreateAssetEntry(builder, flatbuffers::HashFnv1<uint64_t>(name.c_str()), gear::assets::Asset::Shader, shader.Union()));
     auto assetVec = builder.CreateVectorOfSortedTables(&entries);
     auto bundle = gear::assets::CreateBundle(builder, assetVec);
     builder.Finish(bundle);

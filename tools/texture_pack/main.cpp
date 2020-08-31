@@ -129,11 +129,11 @@ int main(int argc, char* argv[]) {
             auto texPathRel = fs::relative(outTexName, fs::path(outAtlasName).parent_path());
             auto texName = std::string(tilesetName) + "_texture";
             auto texNameHash = flatbuffers::HashFnv1<uint64_t>(texName.c_str());
-            auto texoffset = gear::buildTexture(builder, pageWidth, pageHeight, gear::assets::PixelFormat::PixelFormat_RGBA8,
+            auto texoffset = gear::buildTexture(builder, pageWidth, pageHeight, gear::assets::PixelFormat::RGBA8,
                                                 reinterpret_cast<const uint8_t *>(textureData.data()));
-            auto texRef = gear::assets::CreateRef(builder, gear::assets::Asset_Texture, texNameHash);
+            auto texRef = gear::assets::CreateRef(builder, (uint8_t)gear::assets::Asset::Texture, texNameHash);
             references.push_back(texRef);
-            entries.push_back(gear::assets::CreateAssetEntry(builder, flatbuffers::HashFnv1<uint64_t>(texName.c_str()), gear::assets::Asset_Texture, texoffset.Union()));
+            entries.push_back(gear::assets::CreateAssetEntry(builder, flatbuffers::HashFnv1<uint64_t>(texName.c_str()), gear::assets::Asset::Texture, texoffset.Union()));
 
             for (auto xTile = xTileSet->FirstChildElement("tile"); xTile;
                  xTile = xTile->NextSiblingElement("tile")) {
@@ -173,20 +173,20 @@ int main(int argc, char* argv[]) {
                         gear::assets::Shape shape_type;
                         flatbuffers::Offset<void> shape;
                         if (xObject->FirstChildElement("ellipse")) {
-                            shape_type = gear::assets::Shape_circle;
+                            shape_type = gear::assets::Shape::circle;
                             shape =builder.CreateStruct(gear::assets::Circle {
                                 xObject->FloatAttribute("x"),
                                 xObject->FloatAttribute("y"),
                                 xObject->FloatAttribute("width") / 2.f
                             }).Union();
                         } else if (xObject->FirstChildElement("point")) {
-                            shape_type = gear::assets::Shape_point;
+                            shape_type = gear::assets::Shape::point;
                             shape = builder.CreateStruct(gear::assets::Point {
                                     xObject->FloatAttribute("x"),
                                     xObject->FloatAttribute("y")
                             }).Union();
                         } else { // rectangle
-                            shape_type = gear::assets::Shape_rectangle;
+                            shape_type = gear::assets::Shape::rectangle;
                             shape = builder.CreateStruct(gear::assets::Rectangle {
                                     xObject->FloatAttribute("x"),
                                     xObject->FloatAttribute("y"),
@@ -208,7 +208,7 @@ int main(int argc, char* argv[]) {
                 auto uvsOffset = builder.CreateVectorOfStructs(uvs);
 
                 auto sprite = gear::assets::CreateSprite(builder, texRef, &size, uvsOffset, objectsOffset);
-                entries.push_back(gear::assets::CreateAssetEntry(builder, flatbuffers::HashFnv1<uint64_t>(name.c_str()), gear::assets::Asset_Sprite, sprite.Union()));
+                entries.push_back(gear::assets::CreateAssetEntry(builder, flatbuffers::HashFnv1<uint64_t>(name.c_str()), gear::assets::Asset::Sprite, sprite.Union()));
             }
 
             auto assetVec = builder.CreateVectorOfSortedTables(&entries);

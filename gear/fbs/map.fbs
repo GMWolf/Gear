@@ -5,8 +5,8 @@ namespace gear.assets;
 table Layer {
     name: string;
     tileSet: Ref;
-    width: short;
-    height: short;
+    width: ushort;
+    height: ushort;
     data: [uint];
 }
 

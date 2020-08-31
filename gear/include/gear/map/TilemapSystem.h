@@ -8,24 +8,14 @@
 #include <gear/AssetManager.h>
 #include <cstdint>
 #include <glad/glad.h>
-#include <gear/map/Map.h>
+#include <generated/map_generated.h>
 
 namespace gear {
 
     struct TilemapComponent {
-        TileMap tilemap;
-    };
-
-    struct TilemapSystemComponent {
-        size_t count;
-        GLuint vertexArray;
-        union {
-            struct {
-                GLuint vertexBuffer;
-                GLuint elementBuffer;
-            };
-            GLuint buffers[2];
-        };
+        const gear::assets::TileSet* tileSet;
+        uint16_t width, height;
+        const uint32_t* data;
     };
 
     namespace ecs {
