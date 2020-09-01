@@ -5,12 +5,9 @@
 #include <gear/ApplicationAdapter.h>
 #include <gear/g2d/SpriteBatch.h>
 #include <gear/CollisionShape.h>
-#include <gear/g2d/Shader.h>
 #include <gear/View.h>
-#include <glm/gtc/type_ptr.hpp>
 #include <gear/ecs/ECS.h>
 #include <gear/Transform.h>
-#include <gear/g2d/Texture.h>
 #include <gear/g2d/Text.h>
 #include <gear/Assets.h>
 #include <gear/g2d/DebugUI.h>
@@ -23,6 +20,8 @@
 
 #include <gear/Job.h>
 #include <iostream>
+
+#include <gear/g2d/g2d.h>
 
 namespace gecs = gear::ecs;
 
@@ -60,12 +59,12 @@ struct Velocity {
 
 static int score = 0;
 
-static void createStage(gear::AssetRegistry& assets, gear::ecs::CommandBuffer& cmd, gear::TextureStore& texStore) {
+static void createStage(gear::AssetRegistry& assets, gear::ecs::CommandBuffer& cmd) {
     {
-        auto spr = gear::createSprite(assets.getSprite("ship2"), texStore);
+        auto spr = gear::createSprite(assets.getSprite("ship2"));
 
         Player player;
-        player.bulletSprite = gear::createSprite(assets.getSprite("bullet_blue1"), texStore);
+        player.bulletSprite = gear::createSprite(assets.getSprite("bullet_blue1"));
         player.bulletShape = *player.bulletSprite.mask;
 
         cmd.createEntity( spr,
@@ -168,14 +167,14 @@ static void movePlayer(const gear::InputState& input, gear::ecs::Registry& ecs, 
     }
 }
 
-static void processCollisions(CollisionFilter& filter, gear::ecs::CommandBuffer& cmd, gear::AssetRegistry& assets, gear::TextureStore& texStore) {
+static void processCollisions(CollisionFilter& filter, gear::ecs::CommandBuffer& cmd, gear::AssetRegistry& assets) {
     for (auto& pair : filter.collisionPairs) {
         auto[enemy, t] = pair.entity[0].get<Enemy, gear::Transform>();
 
         if (--enemy.health <= 0) {
             score += 100;
             cmd.destroyEntity(pair.entity[0]);
-            cmd.createEntity(t, gear::ecs::CopyProvider{gear::createSprite(assets.getSprite("explosion_0"), texStore)}, DestroyOnAnimationEnd{});
+            cmd.createEntity(t, gear::createSprite(assets.getSprite("explosion_0")), DestroyOnAnimationEnd{});
             cmd.createEntity(gear::Transform{t.pos + glm::vec2(-25, 25)},
                              Text{"100", assets.getFont("default")},
                              Lifetime{1});
@@ -232,7 +231,7 @@ static void spawnEnemy(gecs::Prefab prefab, gear::AssetRegistry& assets, gear::e
             Velocity{{0, -1.5 - 0.5*(rand() / (float)RAND_MAX)}});
 }
 
-void render(gear::SpriteBatch& batch, gear::AssetRegistry& assets, gear::ecs::Registry& ecs, gear::TextureStore& texStore, gear::ShaderStore& shaderStore) {
+void render(gear::G2DInstance* g2d, gear::AssetRegistry& assets, gear::ecs::Registry& ecs) {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glDisable(GL_CULL_FACE);
@@ -241,45 +240,37 @@ void render(gear::SpriteBatch& batch, gear::AssetRegistry& assets, gear::ecs::Re
 
     //tiles
     {
-        auto shd = shaderStore.getShader(assets.getShader("textured"));
-        gear::tilemapSystemRender(ecs, *shd, texStore);
+        gear::tilemapSystemRender(g2d, ecs, assets.getShader("textured"));
     }
 
     {
-        auto shd = shaderStore.getShader(assets.getShader("textured"));
-        gear::renderSprites(ecs, batch, *shd, texStore);
+        gear::renderSprites(g2d, ecs, assets.getShader("textured"));
     }
 
     {
         auto font = assets.getFont("default");
-        auto shd = shaderStore.getShader(assets.getShader("font"));
-        shd->use();
-        glUniform1i(shd->uniformLocation("tex"), 0);
-        auto vm = view.matrix();
-        glUniformMatrix4fv(shd->uniformLocation("view"), 1, GL_FALSE, glm::value_ptr(vm));
 
         auto chunks = ecs.query(gecs::Query().all<Text, gear::Transform>());
-        for(auto c : chunks){
+        for(auto c : chunks) {
             auto chunk = gecs::ChunkView<gear::Transform, Text>(*c);
             for (auto[transform, text] : chunk) {
-                gear::renderText(text.text, text.font, transform.pos, batch, texStore);
+                gear::renderText(g2d, text.text, text.font, transform.pos, assets.getShader("font"), view);
             }
-        };
+        }
 
-        gear::renderText("Score: " + std::to_string(score), font, glm::vec2(20, 680), batch, texStore);
+        gear::renderText(g2d, "Score: " + std::to_string(score), font, glm::vec2(20, 680), assets.getShader("font"), view);
 
-        batch.flush();
+        //gear::spriteBatchFlush(*g2d->spriteBatch);
     }
 
 }
 
-void debugDraw(gear::PrimDraw& dd, gear::AssetRegistry& assets, gear::ecs::Registry& ecs, gear::ShaderStore& shaderStore) {
-    auto shd = shaderStore.getShader(assets.getShader("prim"));
-    gear::renderDebugShapes(ecs, dd, *shd);
+void debugDraw(gear::G2DInstance* g2d, gear::PrimDraw& dd, gear::AssetRegistry& assets, gear::ecs::Registry& ecs) {
+    gear::renderDebugShapes(g2d, ecs, dd, assets.getShader("prim"));
 }
 
-gear::ecs::Prefab createEnemyPrefab(gear::ecs::Registry& reg, gear::AssetRegistry& assets, gear::ecs::CommandBuffer& cmd, gear::TextureStore& texStore) {
-    auto sprite = gear::createSprite(assets.getSprite("ship1"), texStore);
+gear::ecs::Prefab createEnemyPrefab(gear::ecs::Registry& reg, gear::AssetRegistry& assets, gear::ecs::CommandBuffer& cmd) {
+    auto sprite = gear::createSprite(assets.getSprite("ship1"));
     gecs::EntityRef e = cmd.createEntity(
             Enemy{},
             *sprite.mask,
@@ -290,20 +281,34 @@ gear::ecs::Prefab createEnemyPrefab(gear::ecs::Registry& reg, gear::AssetRegistr
 
 class Game : public gear::ApplicationAdapter {
 public:
+
+    void initG2d() {
+
+        gear::SpriteBatchCreateInfo spriteBatchInfo = {
+                .batchSize = 100
+        };
+
+        gear::G2DInstanceCreateInfo instanceInfo = {
+                .spriteBatchCreateInfo = &spriteBatchInfo
+        };
+
+        g2d = gear::createG2DInstance(instanceInfo);
+    }
+
     void init(gear::Application *_app) override {
         app = _app;
-        batch.emplace(100);
+
+        initG2d();
+
         primDraw.emplace();
         assets.emplace();
-        textureStore.emplace();
-        shaderStore.emplace();
 
         assets->loadBundle("assets.bin");
 
-        enemyPrefab = createEnemyPrefab(prefabs, *assets, cmd, *textureStore);
+        enemyPrefab = createEnemyPrefab(prefabs, *assets, cmd);
         gecs::executeCommandBuffer(cmd, world);
 
-        createStage(*assets, cmd, *textureStore);
+        createStage(*assets, cmd);
 
         enemyBulletFilter.entityA = gear::ecs::Query().all<Enemy>();
         enemyBulletFilter.entityB = gear::ecs::Query().all<Bullet>();
@@ -332,9 +337,9 @@ public:
         checkCollisions(world, enemyBulletFilter);
 
         gecs::executeCommandBuffer(cmd, world);
-        processCollisions(enemyBulletFilter, cmd, *assets, *textureStore);
-        render(*batch, *assets, world, *textureStore, *shaderStore);
-        debugDraw(*primDraw, *assets, world, *shaderStore);
+        processCollisions(enemyBulletFilter, cmd, *assets);
+        render(g2d, *assets, world);
+        debugDraw(g2d, *primDraw, *assets, world);
         processAnimation(world, cmd);
         processLifetime(world, cmd);
         gecs::executeCommandBuffer(cmd, world);
@@ -352,11 +357,9 @@ public:
 
     void end() override {
         gear::ui::cleanup();
-        batch.reset();
+        gear::destroyG2DInstance(g2d);
         primDraw.reset();
         assets.reset();
-        textureStore.reset();
-        shaderStore.reset();
     }
 
 private:
@@ -368,13 +371,13 @@ private:
 
     gear::ecs::Prefab enemyPrefab;
 
+
+    gear::G2DInstance* g2d;
+
     CollisionFilter enemyBulletFilter;
 
     std::optional<gear::AssetRegistry> assets;
-    std::optional<gear::SpriteBatch> batch;
     std::optional<gear::PrimDraw> primDraw;
-    std::optional<gear::TextureStore> textureStore;
-    std::optional<gear::ShaderStore> shaderStore;
 
     int spawnTimer = 10;
     gear::ui::PerfData perf {};

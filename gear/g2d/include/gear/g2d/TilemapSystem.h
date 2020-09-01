@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <glad/glad.h>
 #include <gear/map_generated.h>
+#include "g2d.h"
 
 namespace gear {
 
@@ -28,7 +29,7 @@ namespace gear {
 
     class Shader;
     class TextureStore;
-    void tilemapSystemRender(ecs::Registry& ecs, const Shader &shader, TextureStore& textureStore);
+    void tilemapSystemRender(G2DInstance* g2d, ecs::Registry& ecs, const assets::Shader* shader);
 }
 
 

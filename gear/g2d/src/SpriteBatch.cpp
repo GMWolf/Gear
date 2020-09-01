@@ -2,15 +2,70 @@
 // Created by felix on 05/01/2020.
 //
 
+
 #include <SpriteBatch.h>
-#include <Texture.h>
+#include <glm/vec4.hpp>
+#include <memory>
+#include <glad/glad.h>
 
 #include <glm/vec2.hpp>
+
+
+#include "Texture.h"
 
 struct Vertex {
     glm::vec2 pos;
     glm::vec2 uv;
 };
+
+class gear::SpriteBatch {
+
+public:
+    explicit SpriteBatch(size_t size);
+
+    SpriteBatch(const SpriteBatch& spriteBatch) = delete;
+    SpriteBatch& operator=(const SpriteBatch& spriteBatch) = delete;
+
+
+    ~SpriteBatch();
+
+    void draw(const gear::Texture& tex, glm::vec2 pos, glm::vec2 size, glm::vec4 uv = {0, 0, 1, 1});
+
+    void draw(const gear::Texture& tex, const gear::TexRegion &texRegion, glm::vec2 pos, glm::vec2 size);
+
+    void flush();
+
+private:
+    const size_t batchSize; //number of sprites in a batch
+
+    /// Map the remainder of the buffer range UNSYNCHRONIZED
+    void bufferUpdate();
+
+    /// Map the entire buffer orphaning the previous data
+    void bufferOrphan();
+
+    void fillElementBuffer();
+
+    void* map = nullptr;
+    size_t count = 0;
+    size_t first = 0;
+
+    GLuint batchTex = 0;
+
+    union {
+        struct {
+            GLuint vbo{};
+            GLuint ebo{};
+        };
+        GLuint buffers[2];
+    };
+    GLuint vao{};
+
+    std::unique_ptr<gear::Texture> nulltex;
+
+};
+
+
 
 void gear::SpriteBatch::flush() {
 
@@ -39,10 +94,10 @@ void gear::SpriteBatch::flush() {
 }
 
 void gear::SpriteBatch::bufferUpdate() {
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    map = glMapBufferRange(GL_ARRAY_BUFFER, 0, batchSize * 4 * sizeof(Vertex),
-                           GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT | GL_MAP_INVALIDATE_RANGE_BIT |
-                           GL_MAP_FLUSH_EXPLICIT_BIT);
+glBindBuffer(GL_ARRAY_BUFFER, vbo);
+map = glMapBufferRange(GL_ARRAY_BUFFER, 0, batchSize * 4 * sizeof(Vertex),
+                       GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT | GL_MAP_INVALIDATE_RANGE_BIT |
+                       GL_MAP_FLUSH_EXPLICIT_BIT);
 }
 
 void gear::SpriteBatch::bufferOrphan() {
@@ -62,7 +117,6 @@ gear::SpriteBatch::~SpriteBatch() {
     glDeleteBuffers(1, &vbo);
     glDeleteVertexArrays(1, &vao);
 }
-
 
 gear::SpriteBatch::SpriteBatch(size_t size) : batchSize(size) {
     glGenVertexArrays(1, &vao);
@@ -84,11 +138,10 @@ gear::SpriteBatch::SpriteBatch(size_t size) : batchSize(size) {
 
     fillElementBuffer();
 
-    nulltex = std::make_unique<Texture>(glm::vec4{1, 0, 1, 1});
+    nulltex = std::make_unique<gear::Texture>(glm::vec4{1, 0, 1, 1});
 }
 
-
-void gear::SpriteBatch::draw(const Texture& tex, glm::vec2 pos, glm::vec2 size, glm::vec4 uv) {
+void gear::SpriteBatch::draw(const gear::Texture& tex, glm::vec2 pos, glm::vec2 size, glm::vec4 uv) {
     if (batchTex == 0) {
         batchTex = tex.tex;
     } else if (batchTex != tex.tex) {
@@ -123,7 +176,7 @@ void gear::SpriteBatch::draw(const Texture& tex, glm::vec2 pos, glm::vec2 size, 
     }
 }
 
-void gear::SpriteBatch::draw(const Texture& tex, const TexRegion& texRegion, glm::vec2 pos, glm::vec2 size) {
+void gear::SpriteBatch::draw(const gear::Texture& tex, const gear::TexRegion& texRegion, glm::vec2 pos, glm::vec2 size) {
     draw(tex, pos, size, texRegion.uvs);
 }
 
@@ -140,4 +193,27 @@ void gear::SpriteBatch::fillElementBuffer() {
     }
 
     glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
+}
+
+
+gear::SpriteBatch* gear::createSpriteBatch(const gear::SpriteBatchCreateInfo& createInfo) {
+    return new gear::SpriteBatch(createInfo.batchSize);
+}
+
+
+void gear::destroySpriteBatch(gear::SpriteBatch * spriteBatch) {
+    delete spriteBatch;
+}
+
+void gear::spriteBatchDraw(gear::SpriteBatch& spriteBatch, const gear::Texture &tex, const gear::TexRegion &texRegion, glm::vec2 pos, glm::vec2 size) {
+    spriteBatch.draw(tex, texRegion, pos, size);
+}
+
+
+void gear::spriteBatchDraw(gear::SpriteBatch& spriteBatch, const gear::Texture& tex, glm::vec2 pos, glm::vec2 size, glm::vec4 uv) {
+    spriteBatch.draw(tex, pos, size, uv);
+}
+
+void gear::spriteBatchFlush(gear::SpriteBatch &spriteBatch) {
+    spriteBatch.flush();
 }

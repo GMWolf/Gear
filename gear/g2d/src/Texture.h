@@ -14,6 +14,7 @@
 #include <gear/Assets.h>
 #include <gear/CollisionShape.h>
 #include <unordered_map>
+#include "SpriteBatch.h"
 
 namespace gear {
 
@@ -34,11 +35,6 @@ namespace gear {
         glm::ivec2 size {0,0};
     };
 
-    struct TexRegion {
-        glm::vec4 uvs; // min uv, max uv
-        glm::vec4 crop; //left, top, right, bottom
-    };
-
     namespace assets {
         class Sprite;
         class Texture;
@@ -51,18 +47,6 @@ namespace gear {
     };
 
     Texture createTexture(const assets::Texture* texDef, const char* name = nullptr);
-
-    struct Sprite {
-        glm::vec2 size {};
-        glm::vec2 origin {};
-        std::vector<TexRegion> texRegions {}; //TODO get rid of this allocation
-        const Texture* tex;
-        uint16_t imageIndex {0};
-
-        std::optional<CollisionShape> mask;
-    };
-
-    Sprite createSprite(const assets::Sprite* spriteDef, TextureStore& textureStore);
 }
 
 

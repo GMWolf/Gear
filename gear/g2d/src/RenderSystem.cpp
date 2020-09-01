@@ -11,11 +11,12 @@
 #include <PrimDraw.h>
 #include <Shader.h>
 #include <gear/CollisionShape.h>
-#include <Texture.h>
+#include "Texture.h"
 #include <gear/sprite_generated.h>
+#include "G2DInstance.h"
 
 
-void gear::renderSprites(gear::ecs::Registry &ecs, gear::SpriteBatch &batch, const gear::Shader &shader, TextureStore& textureStore) {
+void gear::renderSprites(gear::G2DInstance* g2d, gear::ecs::Registry &ecs, const gear::assets::Shader* shader) {
 
     using namespace gear;
     static const ecs::Query viewQuery = ecs::Query().all<View>();
@@ -29,29 +30,32 @@ void gear::renderSprites(gear::ecs::Registry &ecs, gear::SpriteBatch &batch, con
     ecs::Chunk* viewChunkArray[viewChunkArraySize];
     auto viewChunks = ecs.queryChunks(viewQuery, viewChunkArray, viewChunkArraySize);
 
-    shader.use();
-    glUniform1i(shader.uniformLocation("tex"), 0);
+    auto shd = g2d->shaderStore->getShader(shader);
+
+    shd->use();
+    glUniform1i(shd->uniformLocation("tex"), 0);
 
     for(auto c : viewChunks) {
         for(auto [view] : ecs::ChunkView<View>(*c)) {
 
             auto vm = view.matrix();
-            glUniformMatrix4fv(shader.uniformLocation("view"), 1, GL_FALSE, glm::value_ptr(vm));
+            glUniformMatrix4fv(shd->uniformLocation("view"), 1, GL_FALSE, glm::value_ptr(vm));
 
             for(auto c : spriteChunks) {
                 for(auto [sprite, transform] : ecs::ChunkView<Sprite, Transform>(*c)) {
-                    batch.draw(*sprite.tex, sprite.texRegions[sprite.imageIndex], transform.pos - sprite.origin, sprite.size);
+                    auto tex = g2d->textureStore->getTexture(sprite.tex);
+                    gear::spriteBatchDraw(*g2d->spriteBatch, *tex, sprite.texRegions[sprite.imageIndex], transform.pos - sprite.origin, sprite.size);
                 }
             }
 
         }
     }
 
-    batch.flush();
+    spriteBatchFlush(*g2d->spriteBatch);
 }
 
 
-void gear::renderDebugShapes(gear::ecs::Registry &ecs, gear::PrimDraw& primDraw, const gear::Shader &shader) {
+void gear::renderDebugShapes(gear::G2DInstance* g2d, gear::ecs::Registry &ecs, gear::PrimDraw& primDraw, const gear::assets::Shader* shader) {
 
     const size_t chunkArraySize = 1024;
     ecs::Chunk* chunkArray[chunkArraySize];
@@ -59,10 +63,12 @@ void gear::renderDebugShapes(gear::ecs::Registry &ecs, gear::PrimDraw& primDraw,
 
         gear::View view {{0,0}, {480, 720}};
 
-        shader.use();
-        glUniform1i(shader.uniformLocation("tex"), 0);
+        auto shd = g2d->shaderStore->getShader(shader);
+
+        shd->use();
+        glUniform1i(shd->uniformLocation("tex"), 0);
         auto vm = view.matrix();
-        glUniformMatrix4fv(shader.uniformLocation("view"), 1, GL_FALSE, glm::value_ptr(vm));
+        glUniformMatrix4fv(shd->uniformLocation("view"), 1, GL_FALSE, glm::value_ptr(vm));
 
         auto chunks = ecs.queryChunks(ecs::Query().all<gear::Transform, gear::CollisionShape>(), chunkArray,
                                       chunkArraySize);

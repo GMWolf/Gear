@@ -13,6 +13,7 @@
 #include <gear/View.h>
 #include <gear/CollisionDetection.h>
 #include <gear/Input.h>
+#include "SpriteBatch.h"
 
 struct Bat {float spd = 4;};
 struct Ball {glm::vec2 v;};
