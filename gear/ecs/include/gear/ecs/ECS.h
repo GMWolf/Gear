@@ -8,6 +8,5 @@
 #include "Core.h"
 #include "ChunkView.h"
 #include "CommandBuffer.h"
-#include "Prefab.h"
 
 #endif //GEAR_ECS_H

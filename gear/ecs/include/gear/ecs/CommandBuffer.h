@@ -46,6 +46,8 @@ namespace gear::ecs {
 
         template<class... T>
         EntityRef createEntity(T&&... t);
+        template<class... T>
+        EntityRef createEntityPrefab(EntityRef prefab, T&&... t);
         void destroyEntity(const EntityRef& entity);
         template<class T>
         void createComponent(const EntityRef& entity, T&& t);
@@ -56,48 +58,6 @@ namespace gear::ecs {
         bool writeComponentMove(ComponentId id, void *cptr);
         bool writeComponentCopy(ComponentId id, const void *cptr);
     };
-
-    template<class T>
-    struct ComponentProvider {
-        static void writeComponents(T& t, CommandBuffer& cmd);
-        static Archetype archetype(const T& t);
-    };
-
-    template<class T>
-    Archetype ComponentProvider<T>::archetype(const T& t) {
-        return Archetype::create<T>();
-    }
-
-    template<class T>
-    void ComponentProvider<T>::writeComponents(T& t, CommandBuffer& cmd){
-        cmd.writeComponentMove(Component<T>::ID(), &t);
-    }
-
-    template<class T>
-    struct CopyProvider {
-            explicit CopyProvider(const T& t);
-            const T& t;
-    };
-
-    template<class T>
-    CopyProvider<T>::CopyProvider(const T &t) : t(t){
-    }
-
-    template<class T>
-    struct ComponentProvider<CopyProvider<T>> {
-        static void writeComponents(CopyProvider<T>& cpy, CommandBuffer& cmd);
-        static Archetype archetype(const CopyProvider<T>& cpy);
-    };
-
-    template<class T>
-    void ComponentProvider<CopyProvider<T>>::writeComponents(CopyProvider<T> &cpy, CommandBuffer &cmd) {
-        cmd.writeComponentCopy(Component<T>::ID(), &cpy.t);
-    }
-
-    template<class T>
-    Archetype ComponentProvider<CopyProvider<T>>::archetype(const CopyProvider<T>& cpy) {
-        return Archetype::create<T>();
-    }
 
     template<class T>
     T *CommandBuffer::allocate() {
@@ -116,11 +76,12 @@ namespace gear::ecs {
 
     template<class... T>
     EntityRef CommandBuffer::createEntity(T &&... t) {
+        static_assert(!std::conjunction_v<std::is_const<T>...>); // we are about to move, so cannot be const
         Entity* entity = entityPool.getFreeEntity();
         write(CommandType::CreateEntity);
         write(entity);
-        write((ComponentProvider<std::remove_reference_t<std::remove_const_t<T>>>::archetype(t) | ...));
-        (ComponentProvider<std::remove_reference_t<std::remove_const_t<T>>>::writeComponents(t, *this), ...);
+        write(Archetype::create<std::remove_reference_t<T>...>());
+        (writeComponentMove(Component<std::remove_reference_t<T>>::ID(), &t), ...);
         commandCount++;
         return EntityRef{
             entity,
@@ -128,8 +89,37 @@ namespace gear::ecs {
         };
     }
 
+    template<class... T>
+    EntityRef CommandBuffer::createEntityPrefab(EntityRef prefab, T &&... t) {
+
+        Entity* entity = entityPool.getFreeEntity();
+        write(CommandType::CreateEntity);
+        write(entity);
+
+        Archetype extraArchetype = Archetype::create<T...>();
+        Archetype prefabArchetype = prefab.alive() ? prefab.entity->chunk->archetype / Component<EntityRef>::ID() : Archetype{};
+        Archetype archetype = prefabArchetype | extraArchetype;
+        write(archetype);
+
+        //Write prefab components not overriten by extras
+        for(int i = 0; i < prefabArchetype.bits.size(); i++) {
+            if (prefabArchetype[i] && !extraArchetype[i]) {
+                writeComponentCopy(i, prefab.entity->chunk->get(i, prefab.entity->index));
+            }
+        }
+        //write extras
+        (writeComponentMove(Component<std::remove_reference_t<T>>::ID(), &t), ...);
+
+        commandCount++;
+        return EntityRef{
+                entity,
+                entity->version
+        };
+    }
+
     template<class T>
     void CommandBuffer::createComponent(const EntityRef &entity, T&& t) {
+        static_assert( !std::is_const_v<T>, "Component cannot be const." );
         write(CommandType::CreateComponent);
         write(entity);
         writeComponentMove(Component<std::remove_reference_t<T>>::ID(), &t);

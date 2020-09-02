@@ -75,7 +75,7 @@ void createBricks(gear::ecs::CommandBuffer& cmd, gear::AssetRegistry& assets) {
     for(int i = 0; i < 5; i++) {
         for(int j = 0; j < 15; j++) {
             gear::Sprite spr = gear::createSprite(assets.getSprite("brick"));
-            cmd.createEntity(gear::Transform{{20 + j * 48,480 - (32 + i * 24)}}, spr,gear::ecs::CopyProvider{*spr.mask},Brick{});
+            cmd.createEntity(gear::Transform{{20 + j * 48,480 - (32 + i * 24)}}, spr, *spr.mask, Brick{});
         }
     }
 }
@@ -96,10 +96,10 @@ public:
         assets->loadBundle("assets.bin");
 
         auto ballSpr = gear::createSprite(assets->getSprite("ball"));
-        cmd.createEntity(gear::Transform{{400, 80}},*ballSpr.mask,ballSpr,Ball{{-1, -1}});
+        cmd.createEntity(gear::Transform{{400, 80}}, *ballSpr.mask, ballSpr, Ball{{-1, -1}});
 
         auto batSpr = gear::createSprite(assets->getSprite("bat"));
-        cmd.createEntity(gear::Transform{{720 / 2, 30}},*batSpr.mask,batSpr,Bat{});
+        cmd.createEntity(gear::Transform{{720 / 2, 30}},*batSpr.mask, batSpr, Bat{});
 
         cmd.createEntity(gear::View{{0, 0}, {720, 480}});
         cmd.createEntity(gear::Transform{{0,0}}, gear::CollisionShape{gear::Rectangle{glm::vec2{-10,0},glm::vec2{0, 480}}});

@@ -7,7 +7,6 @@ set(GEAR_ECS_HEADERS
         include/gear/ecs/Config.h
         include/gear/ecs/Core.h
         include/gear/ecs/ECS.h
-        include/gear/ecs/Prefab.h
         include/gear/ecs/System.h
         )
 
@@ -16,7 +15,6 @@ set(GEAR_ECS_SOURCES
         src/CommandBuffer.cpp
         src/Component.cpp
         src/Core.cpp
-        src/Prefab.cpp
         )
 
 

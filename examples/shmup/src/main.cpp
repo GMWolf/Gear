@@ -173,7 +173,7 @@ static void processCollisions(CollisionFilter& filter, gear::ecs::CommandBuffer&
         if (--enemy.health <= 0) {
             score += 100;
             cmd.destroyEntity(pair.entity[0]);
-            cmd.createEntity(t, gear::createSprite(assets.getSprite("explosion_0")), DestroyOnAnimationEnd{});
+            cmd.createEntity(gear::Transform{t}, gear::createSprite(assets.getSprite("explosion_0")), DestroyOnAnimationEnd{});
             cmd.createEntity(gear::Transform{t.pos + glm::vec2(-25, 25)},
                              Text{"100", assets.getFont("default")},
                              Lifetime{1});
@@ -224,8 +224,8 @@ static void processAnimation(gear::ecs::Registry& ecs, gear::ecs::CommandBuffer&
     }
 }
 
-static void spawnEnemy(gecs::Prefab prefab, gear::AssetRegistry& assets, gear::ecs::CommandBuffer& cmd) {
-    cmd.createEntity(prefab,
+static void spawnEnemy(gecs::EntityRef prefab, gear::AssetRegistry& assets, gear::ecs::CommandBuffer& cmd) {
+    cmd.createEntityPrefab(prefab,
             gear::Transform{{480.0f * (rand()/(float)RAND_MAX), 720}},
             Velocity{{0, -1.5 - 0.5*(rand() / (float)RAND_MAX)}});
 }
@@ -267,14 +267,14 @@ void debugDraw(gear::G2DInstance* g2d, gear::AssetRegistry& assets, gear::ecs::R
     gear::renderDebugShapes(g2d, ecs, assets.getShader("prim"));
 }
 
-gear::ecs::Prefab createEnemyPrefab(gear::ecs::Registry& reg, gear::AssetRegistry& assets, gear::ecs::CommandBuffer& cmd) {
+gear::ecs::EntityRef createEnemyPrefab(gear::ecs::Registry& reg, gear::AssetRegistry& assets, gear::ecs::CommandBuffer& cmd) {
     auto sprite = gear::createSprite(assets.getSprite("ship1"));
     gecs::EntityRef e = cmd.createEntity(
             Enemy{},
             *sprite.mask,
             sprite);
 
-    return gecs::Prefab{e};
+    return e;
 };
 
 class Game : public gear::ApplicationAdapter {
@@ -364,7 +364,7 @@ private:
     gear::ecs::EntityPool pool;
     gear::ecs::CommandBuffer cmd{pool, 256'000'000};
 
-    gear::ecs::Prefab enemyPrefab;
+    gear::ecs::EntityRef enemyPrefab;
 
     gear::G2DInstance* g2d;
 

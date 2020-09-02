@@ -14,7 +14,7 @@
 namespace gear::ecs {
 
     class Archetype {
-        Archetype(const std::bitset<MaxComponents>& bits);;
+        explicit Archetype(const std::bitset<MaxComponents>& bits);
     public:
         Archetype(std::initializer_list<ComponentId> t);
         Archetype() = default;
