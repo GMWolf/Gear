@@ -8,7 +8,7 @@
 #include <gear/Transform.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <SpriteBatch.h>
-#include <PrimDraw.h>
+#include "PrimDraw.h"
 #include <Shader.h>
 #include <gear/CollisionShape.h>
 #include "Texture.h"
@@ -55,7 +55,9 @@ void gear::renderSprites(gear::G2DInstance* g2d, gear::ecs::Registry &ecs, const
 }
 
 
-void gear::renderDebugShapes(gear::G2DInstance* g2d, gear::ecs::Registry &ecs, gear::PrimDraw& primDraw, const gear::assets::Shader* shader) {
+void gear::renderDebugShapes(gear::G2DInstance* g2d, gear::ecs::Registry &ecs, const gear::assets::Shader* shader) {
+
+    auto primDraw = g2d->primDraw;
 
     const size_t chunkArraySize = 1024;
     ecs::Chunk* chunkArray[chunkArraySize];
@@ -77,15 +79,15 @@ void gear::renderDebugShapes(gear::G2DInstance* g2d, gear::ecs::Registry &ecs, g
             auto chunk = ecs::ChunkView<gear::Transform, gear::CollisionShape>(*c);
             for(auto[transform, shape] : chunk) {
                 if (auto circle = std::get_if<gear::Circle>(&shape)) {
-                    primDraw.circle(transform.pos + circle->center, circle->radius);
+                    primDraw->circle(transform.pos + circle->center, circle->radius);
                 }
                 if (auto rect = std::get_if<gear::Rectangle>(&shape)) {
-                    primDraw.rect(transform.pos + rect->min, transform.pos + rect->max);
+                    primDraw->rect(transform.pos + rect->min, transform.pos + rect->max);
                 }
             }
         }
     }
 
-    primDraw.flush();
+    primDraw->flush();
 }
 

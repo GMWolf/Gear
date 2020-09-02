@@ -11,10 +11,7 @@
 
 namespace gear {
 
-    class SpriteBatch;
-    class PrimDraw;
     class Shader;
-    class TextureStore;
 
     namespace ecs {
         class Registry;
@@ -22,7 +19,7 @@ namespace gear {
 
     void renderSprites(G2DInstance* g2d, gear::ecs::Registry &ecs, const gear::assets::Shader* shader);
 
-    void renderDebugShapes(G2DInstance* g2d, gear::ecs::Registry &eCs, gear::PrimDraw& primDraw, const gear::assets::Shader* shader);
+    void renderDebugShapes(G2DInstance* g2d, gear::ecs::Registry &eCs, const gear::assets::Shader* shader);
 
 }
 #endif //TBTG_RENDERSYSTEM_H

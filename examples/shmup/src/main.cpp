@@ -13,7 +13,6 @@
 #include <gear/g2d/DebugUI.h>
 #include <gear/g2d/TilemapSystem.h>
 #include <gear/g2d/RenderSystem.h>
-#include <gear/g2d/PrimDraw.h>
 #include <gear/Input.h>
 
 #include "Collisions.h"
@@ -260,13 +259,12 @@ void render(gear::G2DInstance* g2d, gear::AssetRegistry& assets, gear::ecs::Regi
 
         gear::renderText(g2d, "Score: " + std::to_string(score), font, glm::vec2(20, 680), assets.getShader("font"), view);
 
-        //gear::spriteBatchFlush(*g2d->spriteBatch);
     }
 
 }
 
-void debugDraw(gear::G2DInstance* g2d, gear::PrimDraw& dd, gear::AssetRegistry& assets, gear::ecs::Registry& ecs) {
-    gear::renderDebugShapes(g2d, ecs, dd, assets.getShader("prim"));
+void debugDraw(gear::G2DInstance* g2d, gear::AssetRegistry& assets, gear::ecs::Registry& ecs) {
+    gear::renderDebugShapes(g2d, ecs, assets.getShader("prim"));
 }
 
 gear::ecs::Prefab createEnemyPrefab(gear::ecs::Registry& reg, gear::AssetRegistry& assets, gear::ecs::CommandBuffer& cmd) {
@@ -300,9 +298,7 @@ public:
 
         initG2d();
 
-        primDraw.emplace();
         assets.emplace();
-
         assets->loadBundle("assets.bin");
 
         enemyPrefab = createEnemyPrefab(prefabs, *assets, cmd);
@@ -339,7 +335,7 @@ public:
         gecs::executeCommandBuffer(cmd, world);
         processCollisions(enemyBulletFilter, cmd, *assets);
         render(g2d, *assets, world);
-        debugDraw(g2d, *primDraw, *assets, world);
+        debugDraw(g2d, *assets, world);
         processAnimation(world, cmd);
         processLifetime(world, cmd);
         gecs::executeCommandBuffer(cmd, world);
@@ -358,7 +354,6 @@ public:
     void end() override {
         gear::ui::cleanup();
         gear::destroyG2DInstance(g2d);
-        primDraw.reset();
         assets.reset();
     }
 
@@ -377,7 +372,6 @@ private:
     CollisionFilter enemyBulletFilter;
 
     std::optional<gear::AssetRegistry> assets;
-    std::optional<gear::PrimDraw> primDraw;
 
     int spawnTimer = 10;
     gear::ui::PerfData perf {};

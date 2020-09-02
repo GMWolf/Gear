@@ -7,13 +7,15 @@
 
 #include "Texture.h"
 #include <Shader.h>
+#include "PrimDraw.h"
 
 namespace gear {
 
     struct G2DInstance {
-        SpriteBatch *spriteBatch;
-        TextureStore *textureStore;
-        ShaderStore *shaderStore;
+        SpriteBatch* spriteBatch;
+        TextureStore* textureStore;
+        ShaderStore* shaderStore;
+        PrimDraw* primDraw;
     };
 
 }

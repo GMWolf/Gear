@@ -7,13 +7,13 @@
 
 namespace gear {
 
-
     G2DInstance *createG2DInstance(G2DInstanceCreateInfo &createInfo) {
         auto* g2dInstance = new G2DInstance();
 
         g2dInstance->spriteBatch = createSpriteBatch(*createInfo.spriteBatchCreateInfo);
         g2dInstance->shaderStore = new ShaderStore();
         g2dInstance->textureStore = new TextureStore();
+        g2dInstance->primDraw = new PrimDraw();
 
         return g2dInstance;
     }
@@ -22,6 +22,7 @@ namespace gear {
         destroySpriteBatch(instance->spriteBatch);
         delete instance->shaderStore;
         delete instance->textureStore;
+        delete instance->primDraw;
         delete instance;
     }
 

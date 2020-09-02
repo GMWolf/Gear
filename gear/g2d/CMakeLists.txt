@@ -1,17 +1,19 @@
 
 set(GEAR_G2D_PUBLIC
         include/gear/g2d/g2d.h
-        include/gear/g2d/PrimDraw.h
         include/gear/g2d/RenderSystem.h
         include/gear/g2d/SpriteBatch.h
         include/gear/g2d/Shader.h
         include/gear/g2d/Text.h
         include/gear/g2d/TilemapSystem.h
         include/gear/g2d/DebugUI.h
+        include/gear/g2d/Sprite.h
         )
 
 set(GEAR_G2D_HEADERS
         src/Texture.h
+        src/G2DInstance.h
+        src/PrimDraw.h
         )
 
 set(GEAR_G2D_SOURCES
@@ -23,7 +25,9 @@ set(GEAR_G2D_SOURCES
         src/Texture.cpp
         src/TilemapSystem.cpp
         src/DebugUI.cpp
-        src/G2DInstance.cpp include/gear/g2d/Sprite.h src/Sprite.cpp src/G2DInstance.h)
+        src/G2DInstance.cpp
+        src/Sprite.cpp
+        )
 
 add_library(gear-g2d ${GEAR_G2D_PUBLIC} ${GEAR_G2D_HEADERS} ${GEAR_G2D_SOURCES})
 
