@@ -7,7 +7,7 @@
 
 namespace gear {
 
-    G2DInstance *createG2DInstance(G2DInstanceCreateInfo &createInfo) {
+    G2DInstance *createG2DInstance(const G2DInstanceCreateInfo &createInfo) {
         auto* g2dInstance = new G2DInstance();
 
         g2dInstance->spriteBatch = createSpriteBatch(*createInfo.spriteBatchCreateInfo);

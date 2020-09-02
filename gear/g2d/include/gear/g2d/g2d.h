@@ -16,7 +16,7 @@ namespace gear {
         SpriteBatchCreateInfo* spriteBatchCreateInfo;
     };
 
-    G2DInstance* createG2DInstance(G2DInstanceCreateInfo& createInfo);
+    G2DInstance* createG2DInstance(const G2DInstanceCreateInfo& createInfo);
     void destroyG2DInstance(G2DInstance* instance);
 }
 

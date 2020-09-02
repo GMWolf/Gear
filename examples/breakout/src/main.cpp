@@ -9,11 +9,10 @@
 #include <gear/g2d/RenderSystem.h>
 #include <gear/g2d/Shader.h>
 #include <gear/Transform.h>
-#include <gear/g2d/Texture.h>
 #include <gear/View.h>
 #include <gear/CollisionDetection.h>
 #include <gear/Input.h>
-#include "SpriteBatch.h"
+#include <gear/g2d/g2d.h>
 
 struct Bat {float spd = 4;};
 struct Ball {glm::vec2 v;};
@@ -72,11 +71,11 @@ void moveBall(gear::ecs::Registry& ecs, gear::ecs::CommandBuffer& cmd) {
     }
 }
 
-void createBricks(gear::ecs::CommandBuffer& cmd, gear::AssetRegistry& assets, gear::TextureStore& texStore) {
-    gear::Sprite spr = gear::createSprite(assets.getSprite("brick"), texStore);
+void createBricks(gear::ecs::CommandBuffer& cmd, gear::AssetRegistry& assets) {
     for(int i = 0; i < 5; i++) {
         for(int j = 0; j < 15; j++) {
-            cmd.createEntity(gear::Transform{{20 + j * 48,480 - (32 + i * 24)}},gear::ecs::CopyProvider{spr},gear::ecs::CopyProvider{*spr.mask},Brick{});
+            gear::Sprite spr = gear::createSprite(assets.getSprite("brick"));
+            cmd.createEntity(gear::Transform{{20 + j * 48,480 - (32 + i * 24)}}, spr,gear::ecs::CopyProvider{*spr.mask},Brick{});
         }
     }
 }
@@ -85,24 +84,28 @@ class Game : public gear::ApplicationAdapter {
 public:
     void init(gear::Application *_app) override {
         app = _app;
-        batch.emplace(100);
         assets.emplace();
-        texStore.emplace();
-        shdStore.emplace();
+        gear::SpriteBatchCreateInfo batchInfo = {
+            .batchSize = 100
+        };
+
+        g2d = gear::createG2DInstance({
+            .spriteBatchCreateInfo = &batchInfo
+        });
 
         assets->loadBundle("assets.bin");
 
-        auto ballSpr = gear::createSprite(assets->getSprite("ball"), *texStore);
+        auto ballSpr = gear::createSprite(assets->getSprite("ball"));
         cmd.createEntity(gear::Transform{{400, 80}},*ballSpr.mask,ballSpr,Ball{{-1, -1}});
 
-        auto batSpr = gear::createSprite(assets->getSprite("bat"), *texStore);
+        auto batSpr = gear::createSprite(assets->getSprite("bat"));
         cmd.createEntity(gear::Transform{{720 / 2, 30}},*batSpr.mask,batSpr,Bat{});
 
         cmd.createEntity(gear::View{{0, 0}, {720, 480}});
         cmd.createEntity(gear::Transform{{0,0}}, gear::CollisionShape{gear::Rectangle{glm::vec2{-10,0},glm::vec2{0, 480}}});
         cmd.createEntity(gear::Transform{{0,0}}, gear::CollisionShape{gear::Rectangle{glm::vec2{720,0},glm::vec2{730, 480}}});
         cmd.createEntity(gear::Transform{{0,0}}, gear::CollisionShape{gear::Rectangle{glm::vec2{0,480},glm::vec2{720, 490}}});
-        createBricks(cmd, *assets, *texStore);
+        createBricks(cmd, *assets);
     }
 
     void update() override {
@@ -112,15 +115,13 @@ public:
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glDisable(GL_CULL_FACE);
-        auto shd = shdStore->getShader(assets->getShader("textured"));
-        gear::renderSprites(world, *batch, *shd, *texStore);
+        auto shd = assets->getShader("textured");
+        gear::renderSprites(g2d, world, shd);
     }
 
     void end() override {
-        batch.reset();
+        gear::destroyG2DInstance(g2d);
         assets.reset();
-        texStore.reset();
-        shdStore.reset();
     }
 
 private:
@@ -128,9 +129,7 @@ private:
     gear::ecs::EntityPool pool;
     gear::ecs::CommandBuffer cmd{pool, 256'000'000};
     std::optional<gear::AssetRegistry> assets;
-    std::optional<gear::SpriteBatch> batch;
-    std::optional<gear::TextureStore> texStore;
-    std::optional<gear::ShaderStore> shdStore;
+    gear::G2DInstance* g2d;
     gear::Application* app {};
 };
 

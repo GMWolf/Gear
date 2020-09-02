@@ -366,7 +366,6 @@ private:
 
     gear::ecs::Prefab enemyPrefab;
 
-
     gear::G2DInstance* g2d;
 
     CollisionFilter enemyBulletFilter;
