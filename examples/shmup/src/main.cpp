@@ -311,11 +311,6 @@ public:
 
         gear::ui::initialize(app->window);
 
-        gear::Scheduler scheduler;
-        scheduler.addJob([]() {
-            std::cout << "yo!";
-        });
-        scheduler.resume();
 
     }
 

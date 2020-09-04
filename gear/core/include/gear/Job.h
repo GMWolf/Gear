@@ -9,7 +9,7 @@
 #include <queue>
 #include <vector>
 #include <atomic>
-#include <boost/context/fiber.hpp>
+//#include <boost/context/fiber.hpp>
 #include <optional>
 
 namespace gear {
@@ -18,22 +18,22 @@ namespace gear {
         std::function<void(void)> fn;
     };
 
-    struct WaitingJob {
-        boost::context::fiber fiber;
-        std::atomic<int>& waitOn;
-    };
-
-    struct Scheduler {
-        boost::context::fiber fiber;
-        std::queue<Job> jobs;
-        std::vector<WaitingJob> waiting;
-
-        void addJob(const std::function<void(void)>& fn);
-
-        std::optional<WaitingJob> getWaitingJob();
-
-        void resume();
-    };
+    //struct WaitingJob {
+    //    boost::context::fiber fiber;
+    //    std::atomic<int>& waitOn;
+    //};
+//
+    //struct Scheduler {
+    //    boost::context::fiber fiber;
+    //    std::queue<Job> jobs;
+    //    std::vector<WaitingJob> waiting;
+//
+    //    void addJob(const std::function<void(void)>& fn);
+//
+    //    std::optional<WaitingJob> getWaitingJob();
+//
+    //    void resume();
+    //};
 
 }
 

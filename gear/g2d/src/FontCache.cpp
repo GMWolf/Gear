@@ -4,9 +4,8 @@
 
 #include "FontCache.h"
 #include <gear/Util.h>
-#include <stb_truetype.h>
 
-std::size_t gear::GlyphEntryHash::operator()(const gear::GlyphEntry &g) {
+std::size_t gear::GlyphEntryHash::operator()(const gear::GlyphEntry &g) const{
     size_t result = std::hash<const assets::Font *>{}(g.font);
     result = hashCombine(result, std::hash<uint32_t>{}(g.glyphIndex));
     result = hashCombine(result, std::hash<uint16_t>{}(g.pixelWidth));
@@ -30,4 +29,11 @@ void gear::FontCache::addGlyph(const gear::GlyphEntry& glyphEntry) {
 
 
     }
+}
+
+bool gear::operator==(const gear::GlyphEntry &a, const gear::GlyphEntry &b) {
+    return a.font == b.font
+    && a.glyphIndex == b.glyphIndex
+    && a.pixelHeight == b.pixelHeight
+    && a.pixelWidth == b.pixelWidth;
 }

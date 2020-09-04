@@ -34,7 +34,9 @@ add_subdirectory(deps/lz4/contrib/cmake_unofficial)
 
 add_subdirectory(deps/zstd/build/cmake)
 
-add_subdirectory(deps/boost-cmake)
+#add_subdirectory(deps/boost-cmake)
+
+add_subdirectory(deps/freetype)
 
 add_subdirectory(gear)
 

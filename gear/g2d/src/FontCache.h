@@ -20,8 +20,10 @@ namespace gear {
     };
 
     struct GlyphEntryHash {
-        std::size_t operator()(const GlyphEntry& g);
+        std::size_t operator()(const GlyphEntry& g) const;
     };
+
+    bool operator==(const GlyphEntry& a, const GlyphEntry& b);
 
     struct GlyphUvs {
         uint16_t xoffset, yoffset;
