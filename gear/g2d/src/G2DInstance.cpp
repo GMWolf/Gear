@@ -14,6 +14,7 @@ namespace gear {
         g2dInstance->shaderStore = new ShaderStore();
         g2dInstance->textureStore = new TextureStore();
         g2dInstance->primDraw = new PrimDraw();
+        g2dInstance->fontCache = new FontCache(1024);
 
         return g2dInstance;
     }
@@ -23,6 +24,7 @@ namespace gear {
         delete instance->shaderStore;
         delete instance->textureStore;
         delete instance->primDraw;
+        delete instance->fontCache;
         delete instance;
     }
 

@@ -9,6 +9,7 @@
 
 #include "Texture.h"
 #include "G2DInstance.h"
+#include "FontCache.h"
 
 
 void gear::renderText(gear::G2DInstance* g2d, const std::string &text, const gear::assets::BitmapFont* font, glm::vec2 pos, const gear::assets::Shader* shader, gear::View view) {
@@ -32,4 +33,17 @@ void gear::renderText(gear::G2DInstance* g2d, const std::string &text, const gea
     }
 
     spriteBatchFlush(*g2d->spriteBatch);
+}
+
+void gear::testTex(gear::G2DInstance* g2d) {
+    spriteBatchDraw(*g2d->spriteBatch, *g2d->fontCache->texture, {0,0}, {1024, 1024}, {0, 0, 1, 1});
+}
+
+void gear::fontCacheAddChar(gear::G2DInstance *g2d, const gear::assets::Font *font, char c) {
+    g2d->fontCache->addGlyph(GlyphEntry{
+       .font = font,
+       .glyphIndex = (uint32_t)c,
+       .pixelWidth = 0,
+       .pixelHeight = 164,
+    });
 }

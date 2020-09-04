@@ -259,7 +259,10 @@ void render(gear::G2DInstance* g2d, gear::AssetRegistry& assets, gear::ecs::Regi
 
         gear::renderText(g2d, "Score: " + std::to_string(score), font, glm::vec2(20, 680), assets.getShader("font"), view);
 
+
     }
+
+    gear::testTex(g2d);
 
 }
 
@@ -311,6 +314,8 @@ public:
 
         gear::ui::initialize(app->window);
 
+
+        gear::fontCacheAddChar(g2d, assets->getFont("6809 chargen"), 'N');
 
     }
 

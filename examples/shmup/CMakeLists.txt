@@ -14,6 +14,7 @@ add_assets(shmup_assets
             src/shaders/prim.yaml
         FONT
             assets/fonts/defaultFont.yaml
+            "assets/fonts/6809 chargen.ttf"
         MAP
             assets/maps/map1.tmx
         )

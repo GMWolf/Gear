@@ -8,6 +8,7 @@
 #include "Texture.h"
 #include <Shader.h>
 #include "PrimDraw.h"
+#include "FontCache.h"
 
 namespace gear {
 
@@ -16,6 +17,7 @@ namespace gear {
         TextureStore* textureStore;
         ShaderStore* shaderStore;
         PrimDraw* primDraw;
+        FontCache* fontCache;
     };
 
 }

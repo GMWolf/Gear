@@ -10,6 +10,9 @@
 #include "Texture.h"
 #include <vector>
 
+#include <ft2build.h>
+#include FT_FREETYPE_H
+
 namespace gear {
 
     struct GlyphEntry {
@@ -32,11 +35,12 @@ namespace gear {
 
     struct FontCache {
         std::unordered_map<GlyphEntry, GlyphUvs, GlyphEntryHash> glyphs;
-        GLuint tex {0};
+        std::unordered_map<const assets::Font*, FT_Face> faces;
+        std::optional<gear::Texture> texture;
         size_t texSize;
+        FT_Library ftLibrary;
 
-        void addGlyph(const GlyphEntry& glyphEntry);
-
+        void addGlyph(const GlyphEntry &glyphEntry);
 
         explicit FontCache(size_t texSize);
     };

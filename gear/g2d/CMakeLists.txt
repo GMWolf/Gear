@@ -32,7 +32,7 @@ set(GEAR_G2D_SOURCES
 add_library(gear-g2d ${GEAR_G2D_PUBLIC} ${GEAR_G2D_HEADERS} ${GEAR_G2D_SOURCES})
 
 target_link_libraries(gear-g2d
-        PRIVATE imgui imgui_glfw imgui_ogl3 libzstd_static)
+        PRIVATE imgui imgui_glfw imgui_ogl3 libzstd_static freetype)
 target_link_libraries(gear-g2d
         PUBLIC gear-core gear-assets glad
         )
