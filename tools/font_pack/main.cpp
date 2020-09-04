@@ -118,12 +118,12 @@ int main(int argc, char* argv[]) {
         auto texNameHash = flatbuffers::HashFnv1<uint64_t>(texName.c_str());
         auto texRef = gear::assets::CreateRef(builder, (uint8_t)gear::assets::Asset::Texture, texNameHash);
         references.push_back(texRef);
-        auto font = gear::assets::CreateFontDirect(builder, texRef, rangeStart, rangeCount, &glyphs);
+        auto font = gear::assets::CreateBitmapFontDirect(builder, texRef, rangeStart, rangeCount, &glyphs);
 
         std::vector<flatbuffers::Offset<gear::assets::AssetEntry>> entries;
         entries.reserve(2);
         entries.push_back(gear::assets::CreateAssetEntry(builder, flatbuffers::HashFnv1<uint64_t>(texName.c_str()), gear::assets::Asset::Texture, tex.Union()));
-        entries.push_back(gear::assets::CreateAssetEntry(builder, flatbuffers::HashFnv1<uint64_t>(name.c_str()), gear::assets::Asset::Font, font.Union()));
+        entries.push_back(gear::assets::CreateAssetEntry(builder, flatbuffers::HashFnv1<uint64_t>(name.c_str()), gear::assets::Asset::BitmapFont, font.Union()));
         auto assetVec = builder.CreateVectorOfSortedTables(&entries);
         auto refVec = builder.CreateVector(references);
         auto bundle = gear::assets::CreateBundle(builder, assetVec, 0, refVec);

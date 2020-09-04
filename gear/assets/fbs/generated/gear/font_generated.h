@@ -6,142 +6,28 @@
 
 #include "flatbuffers/flatbuffers.h"
 
-#include "common_generated.h"
-#include "texture_generated.h"
-
 namespace gear {
 namespace assets {
 
-struct Glyph;
-
 struct Font;
 struct FontBuilder;
-
-FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Glyph FLATBUFFERS_FINAL_CLASS {
- private:
-  uint16_t x0_;
-  uint16_t y0_;
-  uint16_t x1_;
-  uint16_t y1_;
-  float xadvance_;
-  float xoff_;
-  float yoff_;
-  float xoff2_;
-  float yoff2_;
-
- public:
-  Glyph() {
-    memset(static_cast<void *>(this), 0, sizeof(Glyph));
-  }
-  Glyph(uint16_t _x0, uint16_t _y0, uint16_t _x1, uint16_t _y1, float _xadvance, float _xoff, float _yoff, float _xoff2, float _yoff2)
-      : x0_(flatbuffers::EndianScalar(_x0)),
-        y0_(flatbuffers::EndianScalar(_y0)),
-        x1_(flatbuffers::EndianScalar(_x1)),
-        y1_(flatbuffers::EndianScalar(_y1)),
-        xadvance_(flatbuffers::EndianScalar(_xadvance)),
-        xoff_(flatbuffers::EndianScalar(_xoff)),
-        yoff_(flatbuffers::EndianScalar(_yoff)),
-        xoff2_(flatbuffers::EndianScalar(_xoff2)),
-        yoff2_(flatbuffers::EndianScalar(_yoff2)) {
-  }
-  uint16_t x0() const {
-    return flatbuffers::EndianScalar(x0_);
-  }
-  void mutate_x0(uint16_t _x0) {
-    flatbuffers::WriteScalar(&x0_, _x0);
-  }
-  uint16_t y0() const {
-    return flatbuffers::EndianScalar(y0_);
-  }
-  void mutate_y0(uint16_t _y0) {
-    flatbuffers::WriteScalar(&y0_, _y0);
-  }
-  uint16_t x1() const {
-    return flatbuffers::EndianScalar(x1_);
-  }
-  void mutate_x1(uint16_t _x1) {
-    flatbuffers::WriteScalar(&x1_, _x1);
-  }
-  uint16_t y1() const {
-    return flatbuffers::EndianScalar(y1_);
-  }
-  void mutate_y1(uint16_t _y1) {
-    flatbuffers::WriteScalar(&y1_, _y1);
-  }
-  float xadvance() const {
-    return flatbuffers::EndianScalar(xadvance_);
-  }
-  void mutate_xadvance(float _xadvance) {
-    flatbuffers::WriteScalar(&xadvance_, _xadvance);
-  }
-  float xoff() const {
-    return flatbuffers::EndianScalar(xoff_);
-  }
-  void mutate_xoff(float _xoff) {
-    flatbuffers::WriteScalar(&xoff_, _xoff);
-  }
-  float yoff() const {
-    return flatbuffers::EndianScalar(yoff_);
-  }
-  void mutate_yoff(float _yoff) {
-    flatbuffers::WriteScalar(&yoff_, _yoff);
-  }
-  float xoff2() const {
-    return flatbuffers::EndianScalar(xoff2_);
-  }
-  void mutate_xoff2(float _xoff2) {
-    flatbuffers::WriteScalar(&xoff2_, _xoff2);
-  }
-  float yoff2() const {
-    return flatbuffers::EndianScalar(yoff2_);
-  }
-  void mutate_yoff2(float _yoff2) {
-    flatbuffers::WriteScalar(&yoff2_, _yoff2);
-  }
-};
-FLATBUFFERS_STRUCT_END(Glyph, 28);
 
 struct Font FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef FontBuilder Builder;
   struct Traits;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_TEXTURE = 4,
-    VT_RANGE_START = 6,
-    VT_RANGE_COUNT = 8,
-    VT_GLYPHS = 10
+    VT_DATA = 4
   };
-  const gear::assets::Ref *texture() const {
-    return GetPointer<const gear::assets::Ref *>(VT_TEXTURE);
+  const flatbuffers::Vector<uint8_t> *data() const {
+    return GetPointer<const flatbuffers::Vector<uint8_t> *>(VT_DATA);
   }
-  gear::assets::Ref *mutable_texture() {
-    return GetPointer<gear::assets::Ref *>(VT_TEXTURE);
-  }
-  int32_t range_start() const {
-    return GetField<int32_t>(VT_RANGE_START, 0);
-  }
-  bool mutate_range_start(int32_t _range_start) {
-    return SetField<int32_t>(VT_RANGE_START, _range_start, 0);
-  }
-  int32_t range_count() const {
-    return GetField<int32_t>(VT_RANGE_COUNT, 0);
-  }
-  bool mutate_range_count(int32_t _range_count) {
-    return SetField<int32_t>(VT_RANGE_COUNT, _range_count, 0);
-  }
-  const flatbuffers::Vector<const gear::assets::Glyph *> *glyphs() const {
-    return GetPointer<const flatbuffers::Vector<const gear::assets::Glyph *> *>(VT_GLYPHS);
-  }
-  flatbuffers::Vector<const gear::assets::Glyph *> *mutable_glyphs() {
-    return GetPointer<flatbuffers::Vector<const gear::assets::Glyph *> *>(VT_GLYPHS);
+  flatbuffers::Vector<uint8_t> *mutable_data() {
+    return GetPointer<flatbuffers::Vector<uint8_t> *>(VT_DATA);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyOffset(verifier, VT_TEXTURE) &&
-           verifier.VerifyTable(texture()) &&
-           VerifyField<int32_t>(verifier, VT_RANGE_START) &&
-           VerifyField<int32_t>(verifier, VT_RANGE_COUNT) &&
-           VerifyOffset(verifier, VT_GLYPHS) &&
-           verifier.VerifyVector(glyphs()) &&
+           VerifyOffset(verifier, VT_DATA) &&
+           verifier.VerifyVector(data()) &&
            verifier.EndTable();
   }
 };
@@ -150,17 +36,8 @@ struct FontBuilder {
   typedef Font Table;
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_texture(flatbuffers::Offset<gear::assets::Ref> texture) {
-    fbb_.AddOffset(Font::VT_TEXTURE, texture);
-  }
-  void add_range_start(int32_t range_start) {
-    fbb_.AddElement<int32_t>(Font::VT_RANGE_START, range_start, 0);
-  }
-  void add_range_count(int32_t range_count) {
-    fbb_.AddElement<int32_t>(Font::VT_RANGE_COUNT, range_count, 0);
-  }
-  void add_glyphs(flatbuffers::Offset<flatbuffers::Vector<const gear::assets::Glyph *>> glyphs) {
-    fbb_.AddOffset(Font::VT_GLYPHS, glyphs);
+  void add_data(flatbuffers::Offset<flatbuffers::Vector<uint8_t>> data) {
+    fbb_.AddOffset(Font::VT_DATA, data);
   }
   explicit FontBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -176,15 +53,9 @@ struct FontBuilder {
 
 inline flatbuffers::Offset<Font> CreateFont(
     flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<gear::assets::Ref> texture = 0,
-    int32_t range_start = 0,
-    int32_t range_count = 0,
-    flatbuffers::Offset<flatbuffers::Vector<const gear::assets::Glyph *>> glyphs = 0) {
+    flatbuffers::Offset<flatbuffers::Vector<uint8_t>> data = 0) {
   FontBuilder builder_(_fbb);
-  builder_.add_glyphs(glyphs);
-  builder_.add_range_count(range_count);
-  builder_.add_range_start(range_start);
-  builder_.add_texture(texture);
+  builder_.add_data(data);
   return builder_.Finish();
 }
 
@@ -195,17 +66,11 @@ struct Font::Traits {
 
 inline flatbuffers::Offset<Font> CreateFontDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<gear::assets::Ref> texture = 0,
-    int32_t range_start = 0,
-    int32_t range_count = 0,
-    const std::vector<gear::assets::Glyph> *glyphs = nullptr) {
-  auto glyphs__ = glyphs ? _fbb.CreateVectorOfStructs<gear::assets::Glyph>(*glyphs) : 0;
+    const std::vector<uint8_t> *data = nullptr) {
+  auto data__ = data ? _fbb.CreateVector<uint8_t>(*data) : 0;
   return gear::assets::CreateFont(
       _fbb,
-      texture,
-      range_start,
-      range_count,
-      glyphs__);
+      data__);
 }
 
 inline const gear::assets::Font *GetFont(const void *buf) {

@@ -45,7 +45,7 @@ struct DestroyOnAnimationEnd {
 
 struct Text {
     std::string text;
-    const gear::assets::Font* font;
+    const gear::assets::BitmapFont* font;
 };
 
 struct Lifetime {
@@ -175,7 +175,7 @@ static void processCollisions(CollisionFilter& filter, gear::ecs::CommandBuffer&
             cmd.destroyEntity(pair.entity[0]);
             cmd.createEntity(gear::Transform{t}, gear::createSprite(assets.getSprite("explosion_0")), DestroyOnAnimationEnd{});
             cmd.createEntity(gear::Transform{t.pos + glm::vec2(-25, 25)},
-                             Text{"100", assets.getFont("default")},
+                             Text{"100", assets.getBitmapFont("default")},
                              Lifetime{1});
         }
         cmd.destroyEntity(pair.entity[1]);
@@ -247,7 +247,7 @@ void render(gear::G2DInstance* g2d, gear::AssetRegistry& assets, gear::ecs::Regi
     }
 
     {
-        auto font = assets.getFont("default");
+        auto font = assets.getBitmapFont("default");
 
         auto chunks = ecs.query(gecs::Query().all<Text, gear::Transform>());
         for(auto c : chunks) {

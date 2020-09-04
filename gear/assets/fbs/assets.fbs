@@ -1,5 +1,6 @@
 include "common.fbs";
 include "sprite.fbs";
+include "bitmapFont.fbs";
 include "font.fbs";
 include "shader.fbs";
 include "tileset.fbs";
@@ -15,6 +16,7 @@ table NestedBundle {
 union Asset {
     Texture,
     Sprite,
+    BitmapFont,
     Font,
     Shader,
     TileSet,

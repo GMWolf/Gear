@@ -4,14 +4,14 @@
 
 #include <Text.h>
 #include <SpriteBatch.h>
-#include <gear/font_generated.h>
+#include <gear/bitmapFont_generated.h>
 #include <glm/gtc/type_ptr.hpp>
 
 #include "Texture.h"
 #include "G2DInstance.h"
 
 
-void gear::renderText(gear::G2DInstance* g2d, const std::string &text, const gear::assets::Font* font, glm::vec2 pos, const gear::assets::Shader* shader, gear::View view) {
+void gear::renderText(gear::G2DInstance* g2d, const std::string &text, const gear::assets::BitmapFont* font, glm::vec2 pos, const gear::assets::Shader* shader, gear::View view) {
 
     auto shd = g2d->shaderStore->getShader(shader);
     shd->use();

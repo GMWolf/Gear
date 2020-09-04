@@ -93,9 +93,9 @@ const gear::assets::Sprite* gear::AssetRegistry::getSprite(uint64_t name) {
     return entry ? entry->asset_as_Sprite() : nullptr;
 }
 
-const gear::assets::Font* gear::AssetRegistry::getFont(const uint64_t name) {
+const gear::assets::BitmapFont* gear::AssetRegistry::getBitmapFont(const uint64_t name) {
     auto entry = store->getAssetEntry(name);
-    return entry ? entry->asset_as_Font() : nullptr;
+    return entry ? entry->asset_as_BitmapFont() : nullptr;
 }
 
 const gear::assets::Shader* gear::AssetRegistry::getShader(const uint64_t name) {

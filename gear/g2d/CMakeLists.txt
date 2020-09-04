@@ -14,7 +14,7 @@ set(GEAR_G2D_HEADERS
         src/Texture.h
         src/G2DInstance.h
         src/PrimDraw.h
-        )
+        src/FontCache.h)
 
 set(GEAR_G2D_SOURCES
         src/PrimDraw.cpp
@@ -27,7 +27,7 @@ set(GEAR_G2D_SOURCES
         src/DebugUI.cpp
         src/G2DInstance.cpp
         src/Sprite.cpp
-        )
+        src/FontCache.h src/FontCache.cpp)
 
 add_library(gear-g2d ${GEAR_G2D_PUBLIC} ${GEAR_G2D_HEADERS} ${GEAR_G2D_SOURCES})
 

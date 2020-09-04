@@ -43,6 +43,7 @@ void gear::renderSprites(gear::G2DInstance* g2d, gear::ecs::Registry &ecs, const
 
             for(auto c : spriteChunks) {
                 for(auto [sprite, transform] : ecs::ChunkView<Sprite, Transform>(*c)) {
+                    
                     auto tex = g2d->textureStore->getTexture(sprite.tex);
                     gear::spriteBatchDraw(*g2d->spriteBatch, *tex, sprite.texRegions[sprite.imageIndex], transform.pos - sprite.origin, sprite.size);
                 }

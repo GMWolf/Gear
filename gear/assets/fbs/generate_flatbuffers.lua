@@ -8,6 +8,7 @@
 local schemas = {
     "common.fbs",
     "sprite.fbs",
+    "bitmapFont.fbs",
     "font.fbs",
     "map.fbs",
     "shader.fbs",

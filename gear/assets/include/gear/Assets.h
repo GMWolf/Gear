@@ -14,7 +14,7 @@ namespace gear {
         class Bundle;
         class Texture;
         class Sprite;
-        class Font;
+        class BitmapFont;
         class Shader;
         class TileSet;
         class Map;
@@ -33,8 +33,8 @@ namespace gear {
         const assets::Texture* getTexture(const char* name);
         const assets::Sprite* getSprite(uint64_t name);
         const assets::Sprite* getSprite(const char* name);
-        const assets::Font* getFont(uint64_t name);
-        const assets::Font* getFont(const char* name);
+        const assets::BitmapFont* getBitmapFont(uint64_t name);
+        const assets::BitmapFont* getBitmapFont(const char* name);
         const assets::Shader* getShader(uint64_t name);
         const assets::Shader* getShader(const char* name);
         const assets::TileSet* getTileSet(uint64_t name);
@@ -58,8 +58,8 @@ namespace gear {
         return getSprite(flatbuffers::HashFnv1<uint64_t>(name));
     }
 
-    inline const gear::assets::Font* gear::AssetRegistry::getFont(const char *name) {
-        return getFont(flatbuffers::HashFnv1<uint64_t>(name));
+    inline const gear::assets::BitmapFont* gear::AssetRegistry::getBitmapFont(const char *name) {
+        return getBitmapFont(flatbuffers::HashFnv1<uint64_t>(name));
     }
 
     inline const gear::assets::Shader* gear::AssetRegistry::getShader(const char *name) {

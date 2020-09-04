@@ -24,5 +24,10 @@ namespace gear {
         ArrayRange(T *begin, T *end) : _begin(begin), _end(end) {};
         ArrayRange() : _begin(nullptr), _end(nullptr) {};
     };
+
+
+    inline size_t hashCombine(size_t a, size_t b) {
+        return a ^ (b + 0x9e3779b9u + (a<<6u) + (a>>2u));
+    }
 }
 #endif //GEAR_UTIL_H

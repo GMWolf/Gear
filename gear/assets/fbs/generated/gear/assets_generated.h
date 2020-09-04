@@ -6,6 +6,7 @@
 
 #include "flatbuffers/flatbuffers.h"
 
+#include "bitmapFont_generated.h"
 #include "common_generated.h"
 #include "font_generated.h"
 #include "map_generated.h"
@@ -30,19 +31,21 @@ enum class Asset : uint8_t {
   NONE = 0,
   Texture = 1,
   Sprite = 2,
-  Font = 3,
-  Shader = 4,
-  TileSet = 5,
-  Map = 6,
+  BitmapFont = 3,
+  Font = 4,
+  Shader = 5,
+  TileSet = 6,
+  Map = 7,
   MIN = NONE,
   MAX = Map
 };
 
-inline const Asset (&EnumValuesAsset())[7] {
+inline const Asset (&EnumValuesAsset())[8] {
   static const Asset values[] = {
     Asset::NONE,
     Asset::Texture,
     Asset::Sprite,
+    Asset::BitmapFont,
     Asset::Font,
     Asset::Shader,
     Asset::TileSet,
@@ -52,10 +55,11 @@ inline const Asset (&EnumValuesAsset())[7] {
 }
 
 inline const char * const *EnumNamesAsset() {
-  static const char * const names[8] = {
+  static const char * const names[9] = {
     "NONE",
     "Texture",
     "Sprite",
+    "BitmapFont",
     "Font",
     "Shader",
     "TileSet",
@@ -81,6 +85,10 @@ template<> struct AssetTraits<gear::assets::Texture> {
 
 template<> struct AssetTraits<gear::assets::Sprite> {
   static const Asset enum_value = Asset::Sprite;
+};
+
+template<> struct AssetTraits<gear::assets::BitmapFont> {
+  static const Asset enum_value = Asset::BitmapFont;
 };
 
 template<> struct AssetTraits<gear::assets::Font> {
@@ -199,6 +207,9 @@ struct AssetEntry FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const gear::assets::Sprite *asset_as_Sprite() const {
     return asset_type() == gear::assets::Asset::Sprite ? static_cast<const gear::assets::Sprite *>(asset()) : nullptr;
   }
+  const gear::assets::BitmapFont *asset_as_BitmapFont() const {
+    return asset_type() == gear::assets::Asset::BitmapFont ? static_cast<const gear::assets::BitmapFont *>(asset()) : nullptr;
+  }
   const gear::assets::Font *asset_as_Font() const {
     return asset_type() == gear::assets::Asset::Font ? static_cast<const gear::assets::Font *>(asset()) : nullptr;
   }
@@ -230,6 +241,10 @@ template<> inline const gear::assets::Texture *AssetEntry::asset_as<gear::assets
 
 template<> inline const gear::assets::Sprite *AssetEntry::asset_as<gear::assets::Sprite>() const {
   return asset_as_Sprite();
+}
+
+template<> inline const gear::assets::BitmapFont *AssetEntry::asset_as<gear::assets::BitmapFont>() const {
+  return asset_as_BitmapFont();
 }
 
 template<> inline const gear::assets::Font *AssetEntry::asset_as<gear::assets::Font>() const {
@@ -399,6 +414,10 @@ inline bool VerifyAsset(flatbuffers::Verifier &verifier, const void *obj, Asset 
     }
     case Asset::Sprite: {
       auto ptr = reinterpret_cast<const gear::assets::Sprite *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case Asset::BitmapFont: {
+      auto ptr = reinterpret_cast<const gear::assets::BitmapFont *>(obj);
       return verifier.VerifyTable(ptr);
     }
     case Asset::Font: {
