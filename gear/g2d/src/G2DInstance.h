@@ -6,7 +6,7 @@
 #define GEAR_G2DINSTANCE_H
 
 #include "Texture.h"
-#include <Shader.h>
+#include <gear/g2d/Shader.h>
 #include "PrimDraw.h"
 #include "FontCache.h"
 

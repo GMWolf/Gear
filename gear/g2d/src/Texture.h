@@ -14,7 +14,7 @@
 #include <gear/Assets.h>
 #include <gear/CollisionShape.h>
 #include <unordered_map>
-#include "SpriteBatch.h"
+#include <gear/g2d/SpriteBatch.h>
 
 namespace gear {
 

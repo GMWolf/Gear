@@ -263,7 +263,7 @@ void render(gear::G2DInstance* g2d, gear::AssetRegistry& assets, gear::ecs::Regi
     }
 
     gear::testTex(g2d);
-
+    gear::spriteBatchFlush(*g2dGetSpriteBatch(g2d));
 }
 
 void debugDraw(gear::G2DInstance* g2d, gear::AssetRegistry& assets, gear::ecs::Registry& ecs) {

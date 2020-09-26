@@ -28,4 +28,8 @@ namespace gear {
         delete instance;
     }
 
+    SpriteBatch* g2dGetSpriteBatch(const G2DInstance* g2d) {
+        return g2d->spriteBatch;
+    }
+
 }

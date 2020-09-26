@@ -48,7 +48,6 @@ void gear::FontCache::addGlyph(const gear::GlyphEntry& glyphEntry) {
         assert(!error);
         error = FT_Load_Char(face, glyphEntry.glyphIndex, FT_LOAD_RENDER);
         assert(!error);
-        //FT_Render_Glyph( face->glyph, FT_RENDER_MODE_NORMAL);
         glBindTexture(GL_TEXTURE_2D, texture->tex);
 
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);

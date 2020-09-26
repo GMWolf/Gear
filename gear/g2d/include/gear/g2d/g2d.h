@@ -11,6 +11,7 @@ namespace gear {
 
     struct G2DInstance;
     struct SpriteBatchCreateInfo;
+    struct SpriteBatch;
 
     struct G2DInstanceCreateInfo {
         SpriteBatchCreateInfo* spriteBatchCreateInfo;
@@ -18,6 +19,9 @@ namespace gear {
 
     G2DInstance* createG2DInstance(const G2DInstanceCreateInfo& createInfo);
     void destroyG2DInstance(G2DInstance* instance);
+
+    SpriteBatch* g2dGetSpriteBatch(const G2DInstance* g2d);
+
 }
 
 #endif //GEAR_G2D_H
