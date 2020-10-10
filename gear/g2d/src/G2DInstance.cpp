@@ -11,25 +11,20 @@
 
 namespace gear {
 
-    G2DInstance *createG2DInstance(const G2DInstanceCreateInfo &createInfo) {
-        auto* g2dInstance = new G2DInstance();
-
-        g2dInstance->spriteBatch = new SpriteBatch(*createInfo.spriteBatchCreateInfo);
-        g2dInstance->shaderStore = new ShaderStore();
-        g2dInstance->textureStore = new TextureStore();
-        g2dInstance->primDraw = new PrimDraw();
-        g2dInstance->fontCache = new FontCache(1024);
-
-        return g2dInstance;
+    G2DInstance::G2DInstance(const G2DInstanceCreateInfo &createInfo) {
+        spriteBatch = new SpriteBatch(*createInfo.spriteBatchCreateInfo);
+        shaderStore = new ShaderStore();
+        textureStore = new TextureStore();
+        primDraw = new PrimDraw();
+        fontCache = new FontCache(1024);
     }
 
-    void destroyG2DInstance(G2DInstance *instance) {
-        delete instance->spriteBatch;
-        delete instance->shaderStore;
-        delete instance->textureStore;
-        delete instance->primDraw;
-        delete instance->fontCache;
-        delete instance;
+    G2DInstance::~G2DInstance() {
+        delete spriteBatch;
+        delete shaderStore;
+        delete textureStore;
+        delete primDraw;
+        delete fontCache;
     }
 
     void G2DInstance::flush() {

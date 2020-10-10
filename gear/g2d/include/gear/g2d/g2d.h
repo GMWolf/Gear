@@ -26,6 +26,10 @@ namespace gear {
     };
 
     struct G2DInstance {
+
+        explicit G2DInstance(const G2DInstanceCreateInfo &createInfo);
+        ~G2DInstance();
+
         SpriteBatch* spriteBatch;
         TextureStore* textureStore;
         ShaderStore* shaderStore;
@@ -34,9 +38,6 @@ namespace gear {
 
         void flush();
     };
-
-    G2DInstance* createG2DInstance(const G2DInstanceCreateInfo& createInfo);
-    void destroyG2DInstance(G2DInstance* instance);
 
 }
 

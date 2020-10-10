@@ -294,7 +294,7 @@ public:
                 .spriteBatchCreateInfo = &spriteBatchInfo
         };
 
-        g2d = gear::createG2DInstance(instanceInfo);
+        g2d = new gear::G2DInstance(instanceInfo);
     }
 
     void init(gear::Application *_app) override {
@@ -354,7 +354,7 @@ public:
 
     void end() override {
         gear::ui::cleanup();
-        gear::destroyG2DInstance(g2d);
+        delete g2d;
         assets.reset();
     }
 
