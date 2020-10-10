@@ -6,7 +6,6 @@
 #define TBTG_RENDERSYSTEM_H
 
 #include <gear/shader_generated.h>
-#include "SpriteBatch.h"
 #include "g2d.h"
 
 namespace gear {

@@ -20,7 +20,7 @@ namespace gear {
         float radius;
     };
 
-    using CollisionShape = std::variant<Rectangle, Circle>;
+    using CollisionShape = std::variant<std::monostate, Rectangle, Circle>;
 
 }
 #endif //GEAR_COLLISIONSHAPE_H

@@ -3,14 +3,18 @@
 //
 
 #include <g2d.h>
-#include "G2DInstance.h"
+#include "SpriteBatch.h"
+#include "Shader.h"
+#include "Texture.h"
+#include "PrimDraw.h"
+#include "FontCache.h"
 
 namespace gear {
 
     G2DInstance *createG2DInstance(const G2DInstanceCreateInfo &createInfo) {
         auto* g2dInstance = new G2DInstance();
 
-        g2dInstance->spriteBatch = createSpriteBatch(*createInfo.spriteBatchCreateInfo);
+        g2dInstance->spriteBatch = new SpriteBatch(*createInfo.spriteBatchCreateInfo);
         g2dInstance->shaderStore = new ShaderStore();
         g2dInstance->textureStore = new TextureStore();
         g2dInstance->primDraw = new PrimDraw();
@@ -20,7 +24,7 @@ namespace gear {
     }
 
     void destroyG2DInstance(G2DInstance *instance) {
-        destroySpriteBatch(instance->spriteBatch);
+        delete instance->spriteBatch;
         delete instance->shaderStore;
         delete instance->textureStore;
         delete instance->primDraw;
@@ -28,8 +32,7 @@ namespace gear {
         delete instance;
     }
 
-    SpriteBatch* g2dGetSpriteBatch(const G2DInstance* g2d) {
-        return g2d->spriteBatch;
+    void G2DInstance::flush() {
+        spriteBatch->flush();
     }
-
 }

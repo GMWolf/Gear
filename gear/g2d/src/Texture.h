@@ -14,7 +14,6 @@
 #include <gear/Assets.h>
 #include <gear/CollisionShape.h>
 #include <unordered_map>
-#include <gear/g2d/SpriteBatch.h>
 
 namespace gear {
 
@@ -38,12 +37,14 @@ namespace gear {
     namespace assets {
         class Sprite;
         class Texture;
+        class Ref;
     }
 
     class TextureStore {
         std::unordered_map<const assets::Texture*, Texture> textures;
     public:
         Texture* getTexture(const assets::Texture*);
+        Texture* getTexture(const assets::Ref*);
     };
 
     Texture createTexture(const assets::Texture* texDef, const char* name = nullptr);

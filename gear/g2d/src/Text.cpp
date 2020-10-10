@@ -3,13 +3,14 @@
 //
 
 #include <Text.h>
-#include <SpriteBatch.h>
+#include "SpriteBatch.h"
 #include <gear/bitmapFont_generated.h>
 #include <glm/gtc/type_ptr.hpp>
 
 #include "Texture.h"
-#include "G2DInstance.h"
+#include <g2d.h>
 #include "FontCache.h"
+#include "Shader.h"
 
 
 void gear::renderText(gear::G2DInstance* g2d, const std::string &text, const gear::assets::BitmapFont* font, glm::vec2 pos, const gear::assets::Shader* shader, gear::View view) {
@@ -28,15 +29,15 @@ void gear::renderText(gear::G2DInstance* g2d, const std::string &text, const gea
         glm::vec2 size = {glyph->x1() - glyph->x0(), glyph->y1() - glyph->y0()};
         glm::vec4 uvs = {glyph->x0(), glyph->y0(), glyph->x1(), glyph->y1()};
         uvs /= glm::vec4{texture->size, texture->size};
-        spriteBatchDraw(*g2d->spriteBatch, *texture, pos + off, size, uvs);
+        g2d->spriteBatch->draw(*texture, pos + off, size, uvs);
         pos.x += glyph->xadvance();
     }
 
-    spriteBatchFlush(*g2d->spriteBatch);
+    g2d->spriteBatch->flush();
 }
 
 void gear::testTex(gear::G2DInstance* g2d) {
-    spriteBatchDraw(*g2d->spriteBatch, *g2d->fontCache->texture, {0,0}, {1024, 1024}, {0, 0, 1, 1});
+    g2d->spriteBatch->draw(*g2d->fontCache->texture, {0,0}, {1024, 1024}, {0, 0, 1, 1});
 }
 
 void gear::fontCacheAddChar(gear::G2DInstance *g2d, const gear::assets::Font *font, char c) {

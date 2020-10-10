@@ -7,20 +7,18 @@
 #include <gear/View.h>
 #include <gear/Transform.h>
 #include <glm/gtc/type_ptr.hpp>
-#include <SpriteBatch.h>
+#include "SpriteBatch.h"
 #include "PrimDraw.h"
-#include <Shader.h>
+#include "Shader.h"
 #include <gear/CollisionShape.h>
 #include "Texture.h"
-#include <gear/sprite_generated.h>
-#include "G2DInstance.h"
 
 
 void gear::renderSprites(gear::G2DInstance* g2d, gear::ecs::Registry &ecs, const gear::assets::Shader* shader) {
 
     using namespace gear;
     static const ecs::Query viewQuery = ecs::Query().all<View>();
-    static const ecs::Query spriteQuery = ecs::Query().all<Sprite, Transform>();
+    static const ecs::Query spriteQuery = ecs::Query().all<SpriteComponent, Transform>();
 
     const size_t spriteChunkArraySize = 1024;
     ecs::Chunk* spriteChunkArray[spriteChunkArraySize];
@@ -42,17 +40,23 @@ void gear::renderSprites(gear::G2DInstance* g2d, gear::ecs::Registry &ecs, const
             glUniformMatrix4fv(shd->uniformLocation("view"), 1, GL_FALSE, glm::value_ptr(vm));
 
             for(auto c : spriteChunks) {
-                for(auto [sprite, transform] : ecs::ChunkView<Sprite, Transform>(*c)) {
+                for(auto [sprite, transform] : ecs::ChunkView<SpriteComponent, Transform>(*c)) {
                     
-                    auto tex = g2d->textureStore->getTexture(sprite.tex);
-                    gear::spriteBatchDraw(*g2d->spriteBatch, *tex, sprite.texRegions[sprite.imageIndex], transform.pos - sprite.origin, sprite.size);
+                    auto tex = g2d->textureStore->getTexture((gear::assets::Texture*)sprite.sprite->texture()->ptr());
+                    float x0 = sprite.sprite->images()->Get(sprite.imageIndex)->x0() / (float)tex->size.x;
+                    float x1 = sprite.sprite->images()->Get(sprite.imageIndex)->x1() / (float)tex->size.x;
+                    float y0 = sprite.sprite->images()->Get(sprite.imageIndex)->y0() / (float)tex->size.y;
+                    float y1 = sprite.sprite->images()->Get(sprite.imageIndex)->y1() / (float)tex->size.y;
+                    glm::vec2 origin = {sprite.sprite->origin()->x(), sprite.sprite->origin()->y()};
+                    glm::vec2 size = {sprite.sprite->size()->x(), sprite.sprite->size()->y()};
+                    g2d->spriteBatch->draw(*tex, transform.pos - origin, size, {x0, y0, x1, y1});
                 }
             }
 
         }
     }
 
-    spriteBatchFlush(*g2d->spriteBatch);
+    g2d->spriteBatch->flush();
 }
 
 

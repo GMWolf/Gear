@@ -7,7 +7,6 @@
 
 #include <string>
 #include <glm/vec2.hpp>
-#include "SpriteBatch.h"
 #include "g2d.h"
 #include <gear/View.h>
 

@@ -9,12 +9,11 @@
 #include <glm/vec2.hpp>
 #include <gear/Transform.h>
 #include <gear/View.h>
-#include <Shader.h>
+#include "Shader.h"
 #include <glm/gtc/type_ptr.hpp>
 #include <gear/texture_generated.h>
 #include <gear/tileset_generated.h>
 #include "Texture.h"
-#include "G2DInstance.h"
 
 namespace gecs = gear::ecs;
 

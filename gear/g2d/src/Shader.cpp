@@ -2,7 +2,7 @@
 // Created by felix on 05/01/2020.
 //
 
-#include <Shader.h>
+#include "Shader.h"
 #include <vector>
 #include <iostream>
 #include <gear/shader_generated.h>

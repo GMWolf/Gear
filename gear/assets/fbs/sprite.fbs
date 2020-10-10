@@ -42,6 +42,8 @@ table Sprite {
     texture: Ref;
     size: fvec2;
     images: [UVs];
+    origin: fvec2;
+    collisionMask: Shape;
     objects: [Object];
 }
 

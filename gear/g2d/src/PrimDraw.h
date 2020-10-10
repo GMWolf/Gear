@@ -7,6 +7,8 @@
 
 #include <glad/glad.h>
 #include <glm/vec2.hpp>
+#include <gear/g2d/g2d.h>
+
 
 namespace gear {
 

@@ -94,3 +94,7 @@ gear::Texture *gear::TextureStore::getTexture(const gear::assets::Texture * tex)
     }
     return &it->second;
 }
+
+gear::Texture *gear::TextureStore::getTexture(const gear::assets::Ref* ref) {
+    return nullptr;
+}

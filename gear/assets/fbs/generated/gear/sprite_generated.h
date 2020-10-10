@@ -358,7 +358,10 @@ struct Sprite FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_TEXTURE = 4,
     VT_SIZE = 6,
     VT_IMAGES = 8,
-    VT_OBJECTS = 10
+    VT_ORIGIN = 10,
+    VT_COLLISIONMASK_TYPE = 12,
+    VT_COLLISIONMASK = 14,
+    VT_OBJECTS = 16
   };
   const gear::assets::Ref *texture() const {
     return GetPointer<const gear::assets::Ref *>(VT_TEXTURE);
@@ -378,6 +381,31 @@ struct Sprite FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   flatbuffers::Vector<const gear::assets::UVs *> *mutable_images() {
     return GetPointer<flatbuffers::Vector<const gear::assets::UVs *> *>(VT_IMAGES);
   }
+  const gear::assets::fvec2 *origin() const {
+    return GetStruct<const gear::assets::fvec2 *>(VT_ORIGIN);
+  }
+  gear::assets::fvec2 *mutable_origin() {
+    return GetStruct<gear::assets::fvec2 *>(VT_ORIGIN);
+  }
+  gear::assets::Shape collisionMask_type() const {
+    return static_cast<gear::assets::Shape>(GetField<uint8_t>(VT_COLLISIONMASK_TYPE, 0));
+  }
+  const void *collisionMask() const {
+    return GetPointer<const void *>(VT_COLLISIONMASK);
+  }
+  template<typename T> const T *collisionMask_as() const;
+  const gear::assets::Rectangle *collisionMask_as_rectangle() const {
+    return collisionMask_type() == gear::assets::Shape::rectangle ? static_cast<const gear::assets::Rectangle *>(collisionMask()) : nullptr;
+  }
+  const gear::assets::Circle *collisionMask_as_circle() const {
+    return collisionMask_type() == gear::assets::Shape::circle ? static_cast<const gear::assets::Circle *>(collisionMask()) : nullptr;
+  }
+  const gear::assets::Point *collisionMask_as_point() const {
+    return collisionMask_type() == gear::assets::Shape::point ? static_cast<const gear::assets::Point *>(collisionMask()) : nullptr;
+  }
+  void *mutable_collisionMask() {
+    return GetPointer<void *>(VT_COLLISIONMASK);
+  }
   const flatbuffers::Vector<flatbuffers::Offset<gear::assets::Object>> *objects() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<gear::assets::Object>> *>(VT_OBJECTS);
   }
@@ -391,12 +419,28 @@ struct Sprite FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            VerifyField<gear::assets::fvec2>(verifier, VT_SIZE) &&
            VerifyOffset(verifier, VT_IMAGES) &&
            verifier.VerifyVector(images()) &&
+           VerifyField<gear::assets::fvec2>(verifier, VT_ORIGIN) &&
+           VerifyField<uint8_t>(verifier, VT_COLLISIONMASK_TYPE) &&
+           VerifyOffset(verifier, VT_COLLISIONMASK) &&
+           VerifyShape(verifier, collisionMask(), collisionMask_type()) &&
            VerifyOffset(verifier, VT_OBJECTS) &&
            verifier.VerifyVector(objects()) &&
            verifier.VerifyVectorOfTables(objects()) &&
            verifier.EndTable();
   }
 };
+
+template<> inline const gear::assets::Rectangle *Sprite::collisionMask_as<gear::assets::Rectangle>() const {
+  return collisionMask_as_rectangle();
+}
+
+template<> inline const gear::assets::Circle *Sprite::collisionMask_as<gear::assets::Circle>() const {
+  return collisionMask_as_circle();
+}
+
+template<> inline const gear::assets::Point *Sprite::collisionMask_as<gear::assets::Point>() const {
+  return collisionMask_as_point();
+}
 
 struct SpriteBuilder {
   typedef Sprite Table;
@@ -410,6 +454,15 @@ struct SpriteBuilder {
   }
   void add_images(flatbuffers::Offset<flatbuffers::Vector<const gear::assets::UVs *>> images) {
     fbb_.AddOffset(Sprite::VT_IMAGES, images);
+  }
+  void add_origin(const gear::assets::fvec2 *origin) {
+    fbb_.AddStruct(Sprite::VT_ORIGIN, origin);
+  }
+  void add_collisionMask_type(gear::assets::Shape collisionMask_type) {
+    fbb_.AddElement<uint8_t>(Sprite::VT_COLLISIONMASK_TYPE, static_cast<uint8_t>(collisionMask_type), 0);
+  }
+  void add_collisionMask(flatbuffers::Offset<void> collisionMask) {
+    fbb_.AddOffset(Sprite::VT_COLLISIONMASK, collisionMask);
   }
   void add_objects(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<gear::assets::Object>>> objects) {
     fbb_.AddOffset(Sprite::VT_OBJECTS, objects);
@@ -431,12 +484,18 @@ inline flatbuffers::Offset<Sprite> CreateSprite(
     flatbuffers::Offset<gear::assets::Ref> texture = 0,
     const gear::assets::fvec2 *size = 0,
     flatbuffers::Offset<flatbuffers::Vector<const gear::assets::UVs *>> images = 0,
+    const gear::assets::fvec2 *origin = 0,
+    gear::assets::Shape collisionMask_type = gear::assets::Shape::NONE,
+    flatbuffers::Offset<void> collisionMask = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<gear::assets::Object>>> objects = 0) {
   SpriteBuilder builder_(_fbb);
   builder_.add_objects(objects);
+  builder_.add_collisionMask(collisionMask);
+  builder_.add_origin(origin);
   builder_.add_images(images);
   builder_.add_size(size);
   builder_.add_texture(texture);
+  builder_.add_collisionMask_type(collisionMask_type);
   return builder_.Finish();
 }
 
@@ -450,6 +509,9 @@ inline flatbuffers::Offset<Sprite> CreateSpriteDirect(
     flatbuffers::Offset<gear::assets::Ref> texture = 0,
     const gear::assets::fvec2 *size = 0,
     const std::vector<gear::assets::UVs> *images = nullptr,
+    const gear::assets::fvec2 *origin = 0,
+    gear::assets::Shape collisionMask_type = gear::assets::Shape::NONE,
+    flatbuffers::Offset<void> collisionMask = 0,
     std::vector<flatbuffers::Offset<gear::assets::Object>> *objects = nullptr) {
   auto images__ = images ? _fbb.CreateVectorOfStructs<gear::assets::UVs>(*images) : 0;
   auto objects__ = objects ? _fbb.CreateVectorOfSortedTables<gear::assets::Object>(objects) : 0;
@@ -458,6 +520,9 @@ inline flatbuffers::Offset<Sprite> CreateSpriteDirect(
       texture,
       size,
       images__,
+      origin,
+      collisionMask_type,
+      collisionMask,
       objects__);
 }
 

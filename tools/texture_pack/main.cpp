@@ -24,6 +24,60 @@ stbrp_rect getRectById(const std::vector<stbrp_rect>& rects, int id) {
     return *std::find_if(rects.begin(), rects.end(), [id](const stbrp_rect& r){return r.id == id;});
 }
 
+
+std::pair<gear::assets::Shape, flatbuffers::Offset<void>>
+parseShape(flatbuffers::FlatBufferBuilder& builder, const xml::XMLElement* element, gear::assets::fvec2 origin, gear::assets::fvec2 spriteSize)
+{
+    gear::assets::Shape shape_type;
+    flatbuffers::Offset<void> shape;
+    if (element->FirstChildElement("ellipse")) {
+        shape_type = gear::assets::Shape::circle;
+        float r = element->FloatAttribute("width") / 2.f;
+        float xLeft = element->FloatAttribute("x");
+        float yBottom = spriteSize.y() - element->FloatAttribute("y") - 2 * r;
+        shape = builder.CreateStruct(gear::assets::Circle{
+                (xLeft + r) - origin.x(),
+                 (yBottom + r) - origin.y(),
+                r
+        }).Union();
+    } else if (element->FirstChildElement("point")) {
+        shape_type = gear::assets::Shape::point;
+        shape = builder.CreateStruct(gear::assets::Point{
+                element->FloatAttribute("x") - origin.x(),
+                element->FloatAttribute("y") - origin.y()
+        }).Union();
+    } else { // rectangle
+        shape_type = gear::assets::Shape::rectangle;
+        float w = element->FloatAttribute("width");
+        float h = element->FloatAttribute("height");
+        float x0 = element->FloatAttribute("x");
+        float y0 = spriteSize.y() - element->FloatAttribute("y") - h;
+        shape = builder.CreateStruct(gear::assets::Rectangle {
+            x0 - origin.x(),
+            y0 - origin.y(),
+            w,
+            h
+        }).Union();
+    }
+
+    return {shape_type, shape};
+}
+
+gear::assets::fvec2 shapeOrigin(const xml::XMLElement* element, gear::assets::fvec2 spriteSize)
+{
+    if (element->FirstChildElement("ellipse")) {
+        float r = element->FloatAttribute("width") / 2.f;
+        return {element->FloatAttribute("x") + r, spriteSize.y() - (element->FloatAttribute("y") + r)};
+    } else if (element->FirstChildElement("point")) {
+       return { element->FloatAttribute("x"), spriteSize.y() - element->FloatAttribute("y")};
+    } else { // rectangle
+        return {
+                element->FloatAttribute("x") + element->FloatAttribute("width") / 2,
+                spriteSize.y() - (element->FloatAttribute("y") + element->FloatAttribute("height") / 2)
+        };
+    }
+}
+
 int main(int argc, char* argv[]) {
 
     std::string inputPath;
@@ -166,48 +220,60 @@ int main(int argc, char* argv[]) {
                    addFrame(id);
                 }
 
-                if (xObjects) {
-                    for(auto xObject = xObjects->FirstChildElement("object"); xObject;
-                    xObject = xObject->NextSiblingElement("object")) {
-                        auto name = builder.CreateString(xObject->Attribute("name"));
-                        gear::assets::Shape shape_type;
-                        flatbuffers::Offset<void> shape;
-                        if (xObject->FirstChildElement("ellipse")) {
-                            shape_type = gear::assets::Shape::circle;
-                            shape =builder.CreateStruct(gear::assets::Circle {
-                                xObject->FloatAttribute("x"),
-                                xObject->FloatAttribute("y"),
-                                xObject->FloatAttribute("width") / 2.f
-                            }).Union();
-                        } else if (xObject->FirstChildElement("point")) {
-                            shape_type = gear::assets::Shape::point;
-                            shape = builder.CreateStruct(gear::assets::Point {
-                                    xObject->FloatAttribute("x"),
-                                    xObject->FloatAttribute("y")
-                            }).Union();
-                        } else { // rectangle
-                            shape_type = gear::assets::Shape::rectangle;
-                            shape = builder.CreateStruct(gear::assets::Rectangle {
-                                    xObject->FloatAttribute("x"),
-                                    xObject->FloatAttribute("y"),
-                                    xObject->FloatAttribute("width"),
-                                    xObject->FloatAttribute("height")
-                            }).Union();
-                        }
-                        objects.push_back(gear::assets::CreateObject(builder, name, shape_type, shape));
-                    }
-                }
+                gear::assets::fvec2 origin = {0,0};
+                bool explicitOrigin = false;
 
-                std::string name = fs::path(source).stem();
+                gear::assets::Shape collisionShapeType = gear::assets::Shape::NONE;
+                flatbuffers::Offset<void> collisionShape;
+
                 gear::assets::fvec2 size {
                         (float)xImage->IntAttribute("width"),
                         (float)xImage->IntAttribute("height")
                 };
 
+                if (xObjects) {
+
+                    //Find the origin
+                    for(auto xObject = xObjects->FirstChildElement("object"); xObject;
+                        xObject = xObject->NextSiblingElement("object")) {
+                        const char *nameStr = xObject->Attribute("name");
+                        if (strcmp(nameStr, "origin") == 0 ) {
+                            if (xObject->FirstChildElement("point")) {
+                                origin = {xObject->FloatAttribute("x"),
+                                          xObject->FloatAttribute("y")
+                                };
+                                explicitOrigin = true;
+                            }
+                        }
+                    }
+
+                    //Rest of objects
+                    for(auto xObject = xObjects->FirstChildElement("object"); xObject;
+                    xObject = xObject->NextSiblingElement("object")) {
+                        const char *nameStr = xObject->Attribute("name");
+                        if (strcmp(nameStr, "origin") == 0 ) {
+                            //Do nothing!
+                        } else if (strcmp(nameStr, "collision") == 0) {
+                            if (!explicitOrigin) {
+                                origin = shapeOrigin(xObject, size);
+                            }
+                            auto[shape_type, shape] = parseShape(builder, xObject, origin, size);
+                            collisionShapeType = shape_type;
+                            collisionShape = shape;
+                        } else {
+                                auto name = builder.CreateString(nameStr);
+                                auto[shape_type, shape] = parseShape(builder, xObject, origin, size);
+                                objects.push_back(gear::assets::CreateObject(builder, name, shape_type, shape));
+                            }
+                        }
+                    }
+
+                std::string name = fs::path(source).stem();
+
                 auto objectsOffset = builder.CreateVector(objects);
                 auto uvsOffset = builder.CreateVectorOfStructs(uvs);
 
-                auto sprite = gear::assets::CreateSprite(builder, texRef, &size, uvsOffset, objectsOffset);
+                auto sprite = gear::assets::CreateSprite(builder, texRef, &size, uvsOffset, &origin, collisionShapeType, collisionShape, objectsOffset);
                 entries.push_back(gear::assets::CreateAssetEntry(builder, flatbuffers::HashFnv1<uint64_t>(name.c_str()), gear::assets::Asset::Sprite, sprite.Union()));
             }
 

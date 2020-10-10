@@ -3,7 +3,6 @@
 //
 #include <gear/Application.h>
 #include <gear/ApplicationAdapter.h>
-#include <gear/g2d/SpriteBatch.h>
 #include <gear/CollisionShape.h>
 #include <gear/View.h>
 #include <gear/ecs/ECS.h>
@@ -21,12 +20,13 @@
 #include <iostream>
 
 #include <gear/g2d/g2d.h>
+#include <gear/g2d/Sprite.h>
 
 namespace gecs = gear::ecs;
 
 struct Player {
     float moveSpeed = 4;
-    gear::Sprite bulletSprite;
+    const gear::assets::Sprite* bulletSprite;
     gear::CollisionShape  bulletShape;
     float shootTimer = 0;
     float shootSideOffset = 2;
@@ -60,15 +60,15 @@ static int score = 0;
 
 static void createStage(gear::AssetRegistry& assets, gear::ecs::CommandBuffer& cmd) {
     {
-        auto spr = gear::createSprite(assets.getSprite("ship2"));
+        auto spr = assets.getSprite("ship2");
 
         Player player;
-        player.bulletSprite = gear::createSprite(assets.getSprite("bullet_blue1"));
-        player.bulletShape = *player.bulletSprite.mask;
+        player.bulletSprite = assets.getSprite("bullet_blue1");
+        player.bulletShape = gear::getCollisionMask( player.bulletSprite );
 
-        cmd.createEntity( spr,
+        cmd.createEntity( gear::SpriteComponent{spr},
                 gear::Transform{{480 / 2, 32}},
-                *spr.mask,
+                gear::getCollisionMask(spr),
                 player);
     }
 
@@ -116,7 +116,7 @@ static void movePlayer(const gear::InputState& input, gear::ecs::Registry& ecs, 
                 if (player.shootTimer > 0) player.shootTimer--;
 
                 if (input.keyDown(gear::KEYS::SPACE) && player.shootTimer <= 0) {
-                    cmd.createEntity(gear::Sprite(player.bulletSprite),
+                    cmd.createEntity(gear::SpriteComponent{player.bulletSprite},
                                      player.bulletShape,
                                      gear::Transform{transform.pos + glm::vec2(player.shootSideOffset, 24)},
                                      Bullet{{0, 2}}
@@ -173,7 +173,7 @@ static void processCollisions(CollisionFilter& filter, gear::ecs::CommandBuffer&
         if (--enemy.health <= 0) {
             score += 100;
             cmd.destroyEntity(pair.entity[0]);
-            cmd.createEntity(gear::Transform{t}, gear::createSprite(assets.getSprite("explosion_0")), DestroyOnAnimationEnd{});
+            cmd.createEntity(gear::Transform{t}, gear::SpriteComponent{assets.getSprite("explosion_0")}, DestroyOnAnimationEnd{});
             cmd.createEntity(gear::Transform{t.pos + glm::vec2(-25, 25)},
                              Text{"100", assets.getBitmapFont("default")},
                              Lifetime{1});
@@ -198,13 +198,13 @@ static void processLifetime(gear::ecs::Registry& ecs, gear::ecs::CommandBuffer& 
 static void processAnimation(gear::ecs::Registry& ecs, gear::ecs::CommandBuffer& cmd) {
 
     {
-        auto chunks = ecs.query(gecs::Query().all<gear::Sprite>());
+        auto chunks = ecs.query(gecs::Query().all<gear::SpriteComponent>());
 
         for (auto c : chunks) {
-            auto chunk = gecs::ChunkView<gear::Sprite>(*c);
+            auto chunk = gecs::ChunkView<gear::SpriteComponent>(*c);
             for (auto[sprite] : chunk) {
                 sprite.imageIndex++;
-                if (sprite.imageIndex >= sprite.texRegions.size()) {
+                if (sprite.imageIndex >= sprite.sprite->images()->size()) {
                     sprite.imageIndex = 0;
                 }
             }
@@ -212,9 +212,9 @@ static void processAnimation(gear::ecs::Registry& ecs, gear::ecs::CommandBuffer&
     }
 
     {
-        auto chunks = ecs.query(gecs::Query().all<gear::Sprite, DestroyOnAnimationEnd>());
+        auto chunks = ecs.query(gecs::Query().all<gear::SpriteComponent, DestroyOnAnimationEnd>());
         for (auto c: chunks) {
-            auto chunk = gecs::ChunkView<gecs::EntityRef, gear::Sprite>(*c);
+            auto chunk = gecs::ChunkView<gecs::EntityRef, gear::SpriteComponent>(*c);
             for (auto[entity, sprite] : chunk) {
                 if (sprite.imageIndex == 0) {
                     cmd.destroyEntity(entity);
@@ -263,7 +263,8 @@ void render(gear::G2DInstance* g2d, gear::AssetRegistry& assets, gear::ecs::Regi
     }
 
     gear::testTex(g2d);
-    gear::spriteBatchFlush(*g2dGetSpriteBatch(g2d));
+
+    g2d->flush();
 }
 
 void debugDraw(gear::G2DInstance* g2d, gear::AssetRegistry& assets, gear::ecs::Registry& ecs) {
@@ -271,10 +272,10 @@ void debugDraw(gear::G2DInstance* g2d, gear::AssetRegistry& assets, gear::ecs::R
 }
 
 gear::ecs::EntityRef createEnemyPrefab(gear::ecs::Registry& reg, gear::AssetRegistry& assets, gear::ecs::CommandBuffer& cmd) {
-    auto sprite = gear::createSprite(assets.getSprite("ship1"));
+    auto sprite = gear::SpriteComponent{assets.getSprite("ship1")};
     gecs::EntityRef e = cmd.createEntity(
             Enemy{},
-            *sprite.mask,
+            gear::getCollisionMask(sprite.sprite),
             sprite);
 
     return e;

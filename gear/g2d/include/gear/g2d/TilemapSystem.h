@@ -26,7 +26,6 @@ namespace gear {
 
     void tilemapSystemCreateSystemComponent(ecs::Registry& ecs, ecs::CommandBuffer& cmdbuffer);
 
-
     class Shader;
     class TextureStore;
     void tilemapSystemRender(G2DInstance* g2d, ecs::Registry& ecs, const assets::Shader* shader);

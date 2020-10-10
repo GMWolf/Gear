@@ -21,17 +21,14 @@ namespace gear {
         glm::vec4 crop; //left, top, right, bottom
     };
 
-    struct Sprite {
-        glm::vec2 size{};
-        glm::vec2 origin{};
-        std::vector <TexRegion> texRegions{};
-        const assets::Texture *tex;
-        uint16_t imageIndex{0};
 
-        std::optional <CollisionShape> mask;
+    struct SpriteComponent {
+        const assets::Sprite* sprite{};
+        uint16_t imageIndex{0};
     };
 
-    Sprite createSprite(const assets::Sprite* spriteDef);
+    CollisionShape getObject( const assets::Sprite* sprite, const std::string& name );
+    CollisionShape getCollisionMask( const assets::Sprite* sprite );
 
 }
 
