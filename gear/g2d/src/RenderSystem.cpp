@@ -11,13 +11,28 @@
 #include "PrimDraw.h"
 #include "Shader.h"
 #include <gear/CollisionShape.h>
+#include <gear/g2d/Text.h>
 #include "Texture.h"
 
 
-void gear::renderSprites(gear::G2DInstance* g2d, gear::ecs::Registry &ecs, const gear::assets::Shader* shader) {
+template<class Fun>
+static void foreachView(gear::ecs::Registry &ecs, Fun fun) {
+    using namespace gear;
+    static const ecs::Query viewQuery = gear::ecs::Query().all<View>();
+
+    for(auto c : ecs.query(viewQuery)) {
+        for(auto[view] : ecs::ChunkView<View>(*c)) {
+            fun(view);
+        }
+    }
+}
+
+
+void gear::renderSprites(gear::G2DInstance* g2d, gear::ecs::Registry &ecs, const gear::assets::Shader* shader, gear::ecs::CommandBuffer& cmd) {
 
     using namespace gear;
-    static const ecs::Query viewQuery = ecs::Query().all<View>();
+
+    static const ecs::Query viewQuery = gear::ecs::Query().all<View>();
     static const ecs::Query spriteQuery = ecs::Query().all<SpriteComponent, Transform>();
 
     const size_t spriteChunkArraySize = 1024;
@@ -41,7 +56,6 @@ void gear::renderSprites(gear::G2DInstance* g2d, gear::ecs::Registry &ecs, const
 
             for(auto c : spriteChunks) {
                 for(auto [sprite, transform] : ecs::ChunkView<SpriteComponent, Transform>(*c)) {
-                    
                     auto tex = g2d->textureStore->getTexture((gear::assets::Texture*)sprite.sprite->texture()->ptr());
                     float x0 = sprite.sprite->images()->Get(sprite.imageIndex)->x0() / (float)tex->size.x;
                     float x1 = sprite.sprite->images()->Get(sprite.imageIndex)->x1() / (float)tex->size.x;
@@ -50,9 +64,26 @@ void gear::renderSprites(gear::G2DInstance* g2d, gear::ecs::Registry &ecs, const
                     glm::vec2 origin = {sprite.sprite->origin()->x(), sprite.sprite->origin()->y()};
                     glm::vec2 size = {sprite.sprite->size()->x(), sprite.sprite->size()->y()};
                     g2d->spriteBatch->draw(*tex, transform.pos - origin, size, {x0, y0, x1, y1});
+
+                    sprite.imageIndex++;
+                    if (sprite.imageIndex >= sprite.sprite->images()->size()) {
+                        sprite.imageIndex = 0;
+                    }
                 }
             }
 
+        }
+    }
+
+    {
+        auto chunks = ecs.query(ecs::Query().all<gear::SpriteComponent, DestroyOnAnimationEnd>());
+        for (auto c: chunks) {
+            auto chunk = ecs::ChunkView<ecs::EntityRef, gear::SpriteComponent>(*c);
+            for (auto[entity, sprite] : chunk) {
+                if (sprite.imageIndex == 0) {
+                    cmd.destroyEntity(entity);
+                }
+            }
         }
     }
 
@@ -96,3 +127,19 @@ void gear::renderDebugShapes(gear::G2DInstance* g2d, gear::ecs::Registry &ecs, c
     primDraw->flush();
 }
 
+
+
+void gear::renderTextSystem(G2DInstance *g2d, gear::ecs::Registry &ecs, const gear::assets::Shader *shader) {
+
+    foreachView(ecs, [&](View& view) {
+        auto chunks = ecs.query(ecs::Query().all<Text, gear::Transform>());
+        for(auto c : chunks) {
+            for (auto[transform, text] : ecs::ChunkView<gear::Transform, Text>(*c)) {
+                renderText(g2d, text.text, text.font, transform.pos, shader, view);
+            }
+        }
+    });
+
+
+
+}

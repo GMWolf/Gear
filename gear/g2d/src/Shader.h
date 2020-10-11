@@ -7,6 +7,8 @@
 
 #include <glad/glad.h>
 #include <unordered_map>
+#include <gear/g2d/RenderSystem.h>
+
 
 namespace gear {
 

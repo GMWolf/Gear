@@ -45,13 +45,10 @@ namespace gear {
         const assets::Map* getMap(uint64_t name);
         const assets::Map* getMap(const char* name);
 
-
         void loadBundle(const std::string& name);
         void registerBundleRecursive(const assets::Bundle* bundle);
         void patchPointers(const assets::Bundle* bundle);
     };
-
-
 
     inline const gear::assets::Texture *gear::AssetRegistry::getTexture(const char* name) {
         return getTexture(flatbuffers::HashFnv1<uint64_t>(name));
@@ -80,7 +77,6 @@ namespace gear {
     inline const gear::assets::Font* gear::AssetRegistry::getFont(const char *name) {
         return getFont(flatbuffers::HashFnv1<uint64_t>(name));
     }
-
 
 }
 

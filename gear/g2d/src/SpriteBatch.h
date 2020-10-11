@@ -26,8 +26,6 @@ namespace gear {
 
         void draw(const gear::Texture& tex, glm::vec2 pos, glm::vec2 size, glm::vec4 uv = {0, 0, 1, 1});
 
-        void draw(const gear::Texture& tex, const gear::TexRegion &texRegion, glm::vec2 pos, glm::vec2 size);
-
         void flush();
 
     private:

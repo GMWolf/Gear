@@ -40,14 +40,6 @@ struct Bullet {
     glm::vec2 vel;
 };
 
-struct DestroyOnAnimationEnd {
-};
-
-struct Text {
-    std::string text;
-    const gear::assets::BitmapFont* font;
-};
-
 struct Lifetime {
     float time;
 };
@@ -90,8 +82,6 @@ static void createStage(gear::AssetRegistry& assets, gear::ecs::CommandBuffer& c
 }
 
 static void movePlayer(const gear::InputState& input, gear::ecs::Registry& ecs, gear::ecs::CommandBuffer& cmd) {
-
-
     {
         auto chunks = ecs.query(gear::ecs::Query().all<Player, gear::Transform>());
 
@@ -173,9 +163,9 @@ static void processCollisions(CollisionFilter& filter, gear::ecs::CommandBuffer&
         if (--enemy.health <= 0) {
             score += 100;
             cmd.destroyEntity(pair.entity[0]);
-            cmd.createEntity(gear::Transform{t}, gear::SpriteComponent{assets.getSprite("explosion_0")}, DestroyOnAnimationEnd{});
+            cmd.createEntity(gear::Transform{t}, gear::SpriteComponent{assets.getSprite("explosion_0")}, gear::DestroyOnAnimationEnd{});
             cmd.createEntity(gear::Transform{t.pos + glm::vec2(-25, 25)},
-                             Text{"100", assets.getBitmapFont("default")},
+                             gear::Text{"100", assets.getBitmapFont("default")},
                              Lifetime{1});
         }
         cmd.destroyEntity(pair.entity[1]);
@@ -195,71 +185,32 @@ static void processLifetime(gear::ecs::Registry& ecs, gear::ecs::CommandBuffer& 
     }
 }
 
-static void processAnimation(gear::ecs::Registry& ecs, gear::ecs::CommandBuffer& cmd) {
-
-    {
-        auto chunks = ecs.query(gecs::Query().all<gear::SpriteComponent>());
-
-        for (auto c : chunks) {
-            auto chunk = gecs::ChunkView<gear::SpriteComponent>(*c);
-            for (auto[sprite] : chunk) {
-                sprite.imageIndex++;
-                if (sprite.imageIndex >= sprite.sprite->images()->size()) {
-                    sprite.imageIndex = 0;
-                }
-            }
-        }
-    }
-
-    {
-        auto chunks = ecs.query(gecs::Query().all<gear::SpriteComponent, DestroyOnAnimationEnd>());
-        for (auto c: chunks) {
-            auto chunk = gecs::ChunkView<gecs::EntityRef, gear::SpriteComponent>(*c);
-            for (auto[entity, sprite] : chunk) {
-                if (sprite.imageIndex == 0) {
-                    cmd.destroyEntity(entity);
-                }
-            }
-        }
-    }
-}
-
 static void spawnEnemy(gecs::EntityRef prefab, gear::AssetRegistry& assets, gear::ecs::CommandBuffer& cmd) {
     cmd.createEntityPrefab(prefab,
             gear::Transform{{480.0f * (rand()/(float)RAND_MAX), 720}},
             Velocity{{0, -1.5 - 0.5*(rand() / (float)RAND_MAX)}});
 }
 
-void render(gear::G2DInstance* g2d, gear::AssetRegistry& assets, gear::ecs::Registry& ecs) {
+void render(gear::G2DInstance* g2d, gear::AssetRegistry& assets, gear::ecs::Registry& ecs, gear::ecs::CommandBuffer& cmd) {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glDisable(GL_CULL_FACE);
 
     gear::View view {{0,0}, {480, 720}};
 
-    //tiles
     {
         gear::tilemapSystemRender(g2d, ecs, assets.getShader("textured"));
     }
 
     {
-        gear::renderSprites(g2d, ecs, assets.getShader("textured"));
+        gear::renderSprites(g2d, ecs, assets.getShader("textured"), cmd);
     }
 
     {
+        auto shd = assets.getShader("font");
+        gear::renderTextSystem(g2d, ecs, shd);
         auto font = assets.getBitmapFont("default");
-
-        auto chunks = ecs.query(gecs::Query().all<Text, gear::Transform>());
-        for(auto c : chunks) {
-            auto chunk = gecs::ChunkView<gear::Transform, Text>(*c);
-            for (auto[transform, text] : chunk) {
-                gear::renderText(g2d, text.text, text.font, transform.pos, assets.getShader("font"), view);
-            }
-        }
-
         gear::renderText(g2d, "Score: " + std::to_string(score), font, glm::vec2(20, 680), assets.getShader("font"), view);
-
-
     }
 
     gear::testTex(g2d);
@@ -315,9 +266,7 @@ public:
 
         gear::ui::initialize(app->window);
 
-
         gear::fontCacheAddChar(g2d, assets->getFont("6809 chargen"), 'N');
-
     }
 
     void update() override {
@@ -335,9 +284,8 @@ public:
 
         gecs::executeCommandBuffer(cmd, world);
         processCollisions(enemyBulletFilter, cmd, *assets);
-        render(g2d, *assets, world);
+        render(g2d, *assets, world, cmd);
         debugDraw(g2d, *assets, world);
-        processAnimation(world, cmd);
         processLifetime(world, cmd);
         gecs::executeCommandBuffer(cmd, world);
 

@@ -124,10 +124,6 @@ void gear::SpriteBatch::draw(const gear::Texture& tex, glm::vec2 pos, glm::vec2 
     }
 }
 
-void gear::SpriteBatch::draw(const gear::Texture& tex, const gear::TexRegion& texRegion, glm::vec2 pos, glm::vec2 size) {
-    draw(tex, pos, size, texRegion.uvs);
-}
-
 void gear::SpriteBatch::fillElementBuffer() {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
     auto* elements = static_cast<GLushort*>(glMapBufferRange(GL_ELEMENT_ARRAY_BUFFER, 0, batchSize * 6 * sizeof(GLushort), GL_MAP_WRITE_BIT));
