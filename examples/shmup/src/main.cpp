@@ -144,7 +144,7 @@ static void movePlayer(const gear::InputState& input, gear::ecs::Registry& ecs, 
         for (auto c: chunks) {
             auto chunk = gear::ecs::ChunkView<gear::ecs::EntityRef, gear::Transform>(*c);
             for (auto[entity, transform] : chunk) {
-                if (transform.pos.y < 32) {
+                if (transform.pos.y < -32) {
                     cmd.destroyEntity(entity);
                 }
             }
@@ -193,24 +193,13 @@ void render(gear::G2DInstance* g2d, gear::AssetRegistry& assets, gear::ecs::Regi
     g2d->setCullFace(false);
 
     gear::View view {{0,0}, {480, 720}};
+    gear::tilemapSystemRender(g2d, ecs, assets.getShader("textured"));
+    gear::renderSprites(g2d, ecs, assets.getShader("textured"), cmd);
 
-    {
-        gear::tilemapSystemRender(g2d, ecs, assets.getShader("textured"));
-    }
-
-    {
-        gear::renderSprites(g2d, ecs, assets.getShader("textured"), cmd);
-    }
-
-    {
-        auto shd = assets.getShader("font");
-        gear::renderTextSystem(g2d, ecs, shd);
-        auto font = assets.getBitmapFont("default");
-        gear::renderText(g2d, "Score: " + std::to_string(score), font, glm::vec2(20, 680), assets.getShader("font"), view);
-    }
+    gear::renderTextSystem(g2d, ecs, assets.getShader("font"));
+    gear::renderText(g2d, "Score: " + std::to_string(score), assets.getBitmapFont("default"), glm::vec2(20, 680), assets.getShader("font"), view);
 
     gear::testTex(g2d);
-
     g2d->flush();
 }
 
@@ -220,11 +209,7 @@ void debugDraw(gear::G2DInstance* g2d, gear::AssetRegistry& assets, gear::ecs::R
 
 gear::ecs::EntityRef createEnemyPrefab(gear::ecs::Registry& reg, gear::AssetRegistry& assets, gear::ecs::CommandBuffer& cmd) {
     auto sprite = gear::SpriteComponent{assets.getSprite("ship1")};
-    gecs::EntityRef e = cmd.createEntity(
-            Enemy{},
-            gear::getCollisionMask(sprite.sprite),
-            sprite);
-
+    gecs::EntityRef e = cmd.createEntity(Enemy{}, gear::getCollisionMask(sprite.sprite), sprite);
     return e;
 };
 
