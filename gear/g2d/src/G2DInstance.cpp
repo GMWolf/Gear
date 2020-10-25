@@ -27,7 +27,7 @@ namespace gear {
 
 
     G2DInstance::G2DInstance(const G2DInstanceCreateInfo &createInfo) {
-        spriteBatch = new SpriteBatch(*createInfo.spriteBatchCreateInfo);
+        spriteBatch = new SpriteBatch(createInfo.spriteBatchCreateInfo);
         shaderStore = new ShaderStore();
         textureStore = new TextureStore();
         primDraw = new PrimDraw();

@@ -217,14 +217,11 @@ class Game : public gear::ApplicationAdapter {
 public:
 
     void initG2d() {
-        gear::SpriteBatchCreateInfo spriteBatchInfo = {
-                .batchSize = 100
-        };
-
         gear::G2DInstanceCreateInfo instanceInfo = {
-                .spriteBatchCreateInfo = &spriteBatchInfo
+                .spriteBatchCreateInfo = {
+                    .batchSize = 100
+                }
         };
-
         g2d = new gear::G2DInstance(instanceInfo);
     }
 

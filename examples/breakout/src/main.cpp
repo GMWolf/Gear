@@ -88,14 +88,11 @@ public:
     void init(gear::Application *_app) override {
         app = _app;
         assets.emplace();
-        gear::SpriteBatchCreateInfo batchInfo = {
-            .batchSize = 100
-        };
-
         g2d = new gear::G2DInstance({
-            .spriteBatchCreateInfo = &batchInfo
+            .spriteBatchCreateInfo = {
+                    .batchSize = 100
+            }
         });
-
         assets->loadBundle("assets.bin");
 
         auto ballSpr = assets->getSprite("ball");

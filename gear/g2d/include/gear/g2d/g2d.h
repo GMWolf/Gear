@@ -12,19 +12,18 @@
 namespace gear {
 
     struct G2DInstance;
-    struct SpriteBatchCreateInfo;
     struct SpriteBatch;
     struct TextureStore;
     struct ShaderStore;
     struct PrimDraw;
     struct FontCache;
 
-    struct G2DInstanceCreateInfo {
-        SpriteBatchCreateInfo* spriteBatchCreateInfo;
-    };
-
     struct SpriteBatchCreateInfo {
         size_t batchSize;
+    };
+
+    struct G2DInstanceCreateInfo {
+        SpriteBatchCreateInfo spriteBatchCreateInfo;
     };
 
     const Gapi* g2dGetGapi();
