@@ -115,7 +115,7 @@ void gear::tilemapSystemCreateSystemComponent(ecs::Registry &ecs, gecs::CommandB
     }
 }
 
-void gear::tilemapSystemRender(gear::G2DInstance* g2d, ecs::Registry &ecs, const gear::assets::Shader* shader) {
+void gear::tilemapSystemRender(gear::G2DInstance& g2d, ecs::Registry &ecs, const gear::assets::Shader* shader) {
 
     gecs::Chunk *chunkArray[512];
     auto chunks = ecs.queryChunks(gecs::Query().all<Transform, TilemapComponent, TilemapSystemComponent>(), chunkArray,
@@ -125,7 +125,7 @@ void gear::tilemapSystemRender(gear::G2DInstance* g2d, ecs::Registry &ecs, const
     ecs::Chunk *viewChunkArray[1];
     auto viewChunks = ecs.queryChunks(ecs::Query().all<View>(), viewChunkArray, 1);
 
-    auto shd = g2d->shaderStore->getShader(shader);
+    auto shd = g2d.shaderStore->getShader(shader);
 
     shd->use();
 
@@ -138,7 +138,7 @@ void gear::tilemapSystemRender(gear::G2DInstance* g2d, ecs::Registry &ecs, const
                     tview.pos -= transform.pos;
                     auto vm = tview.matrix();
 
-                    auto tex = g2d->textureStore->getTexture((assets::Texture*)tc.tileSet->texture()->ptr());
+                    auto tex = g2d.textureStore->getTexture((assets::Texture*)tc.tileSet->texture()->ptr());
 
                     glUniformMatrix4fv(shd->uniformLocation("view"), 1, GL_FALSE, glm::value_ptr(vm));
                     glActiveTexture(GL_TEXTURE0);

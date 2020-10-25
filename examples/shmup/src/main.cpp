@@ -193,18 +193,18 @@ void render(gear::G2DInstance* g2d, gear::AssetRegistry& assets, gear::ecs::Regi
     g2d->setCullFace(false);
 
     gear::View view {{0,0}, {480, 720}};
-    gear::tilemapSystemRender(g2d, ecs, assets.getShader("textured"));
-    gear::renderSprites(g2d, ecs, assets.getShader("textured"), cmd);
+    gear::tilemapSystemRender(*g2d, ecs, assets.getShader("textured"));
+    gear::renderSprites(*g2d, ecs, assets.getShader("textured"), cmd);
 
-    gear::renderTextSystem(g2d, ecs, assets.getShader("font"));
-    gear::renderText(g2d, "Score: " + std::to_string(score), assets.getBitmapFont("default"), glm::vec2(20, 680), assets.getShader("font"), view);
+    gear::renderTextSystem(*g2d, ecs, assets.getShader("font"));
+    gear::renderText(*g2d, "Score: " + std::to_string(score), assets.getBitmapFont("default"), glm::vec2(20, 680), assets.getShader("font"), view);
 
-    gear::testTex(g2d);
+    gear::testTex(*g2d);
     g2d->flush();
 }
 
 void debugDraw(gear::G2DInstance* g2d, gear::AssetRegistry& assets, gear::ecs::Registry& ecs) {
-    gear::renderDebugShapes(g2d, ecs, assets.getShader("prim"));
+    gear::renderDebugShapes(*g2d, ecs, assets.getShader("prim"));
 }
 
 gear::ecs::EntityRef createEnemyPrefab(gear::ecs::Registry& reg, gear::AssetRegistry& assets, gear::ecs::CommandBuffer& cmd) {
@@ -222,7 +222,7 @@ public:
                     .batchSize = 100
                 }
         };
-        g2d = new gear::G2DInstance(instanceInfo);
+        g2d.emplace(instanceInfo);
     }
 
     void init(gear::Application *_app) override {
@@ -243,7 +243,7 @@ public:
 
         gear::ui::initialize(app->window);
 
-        gear::fontCacheAddChar(g2d, assets->getFont("6809 chargen"), 'N');
+        gear::fontCacheAddChar(*g2d, assets->getFont("6809 chargen"), 'N');
     }
 
     void update() override {
@@ -261,8 +261,8 @@ public:
 
         gecs::executeCommandBuffer(cmd, world);
         processCollisions(enemyBulletFilter, cmd, *assets);
-        render(g2d, *assets, world, cmd);
-        debugDraw(g2d, *assets, world);
+        render(&*g2d, *assets, world, cmd);
+        debugDraw(&*g2d, *assets, world);
         processLifetime(world, cmd);
         if (--spawnTimer <= 0) {
             spawnEnemy(enemyPrefab, *assets, cmd);
@@ -279,7 +279,7 @@ public:
 
     void end() override {
         gear::ui::cleanup();
-        delete g2d;
+        g2d.reset();
         assets.reset();
     }
 
@@ -292,7 +292,7 @@ private:
 
     gear::ecs::EntityRef enemyPrefab;
 
-    gear::G2DInstance* g2d;
+    std::optional<gear::G2DInstance> g2d;
 
     CollisionFilter enemyBulletFilter;
 

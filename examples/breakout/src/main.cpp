@@ -88,11 +88,12 @@ public:
     void init(gear::Application *_app) override {
         app = _app;
         assets.emplace();
-        g2d = new gear::G2DInstance({
-            .spriteBatchCreateInfo = {
-                    .batchSize = 100
-            }
-        });
+        gear::G2DInstanceCreateInfo instanceInfo = {
+                .spriteBatchCreateInfo = {
+                        .batchSize = 100
+                }
+        };
+        g2d.emplace(instanceInfo);
         assets->loadBundle("assets.bin");
 
         auto ballSpr = assets->getSprite("ball");
@@ -125,11 +126,11 @@ public:
         g2d->setCullFace(false);
 
         auto shd = assets->getShader("textured");
-        gear::renderSprites(g2d, world, shd, cmd);
+        gear::renderSprites(*g2d, world, shd, cmd);
     }
 
     void end() override {
-        delete g2d;
+        g2d.reset();
         assets.reset();
     }
 
@@ -138,7 +139,7 @@ private:
     gear::ecs::EntityPool pool;
     gear::ecs::CommandBuffer cmd{pool, 256'000'000};
     std::optional<gear::AssetRegistry> assets;
-    gear::G2DInstance* g2d;
+    std::optional<gear::G2DInstance> g2d;
     gear::Application* app {};
 };
 

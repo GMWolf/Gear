@@ -32,11 +32,11 @@ namespace gear {
         const gear::assets::BitmapFont* font;
     };
 
-    void renderSprites(G2DInstance* g2d, gear::ecs::Registry &ecs, const gear::assets::Shader* shader, gear::ecs::CommandBuffer& cmd);
+    void renderSprites(G2DInstance& g2d, gear::ecs::Registry &ecs, const gear::assets::Shader* shader, gear::ecs::CommandBuffer& cmd);
 
-    void renderDebugShapes(G2DInstance* g2d, gear::ecs::Registry &eCs, const gear::assets::Shader* shader);
+    void renderDebugShapes(G2DInstance& g2d, gear::ecs::Registry &eCs, const gear::assets::Shader* shader);
 
-    void renderTextSystem(G2DInstance* g2d, gear::ecs::Registry& ecs, const gear::assets::Shader* shader);
+    void renderTextSystem(G2DInstance& g2d, gear::ecs::Registry& ecs, const gear::assets::Shader* shader);
 
 }
 #endif //TBTG_RENDERSYSTEM_H
