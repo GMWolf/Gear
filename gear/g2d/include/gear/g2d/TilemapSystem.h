@@ -7,7 +7,6 @@
 
 #include <gear/Assets.h>
 #include <cstdint>
-#include <glad/glad.h>
 #include <gear/map_generated.h>
 #include "g2d.h"
 

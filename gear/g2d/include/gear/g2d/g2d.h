@@ -7,6 +7,7 @@
 
 #include <cstddef>
 #include <gear/gapi.h>
+#include <glm/fwd.hpp>
 
 namespace gear {
 
@@ -37,6 +38,11 @@ namespace gear {
         ShaderStore* shaderStore;
         PrimDraw* primDraw;
         FontCache* fontCache;
+
+        void clearColor(const glm::vec4& color);
+        void setBlendMode();
+        void setCullFace(bool enable);
+        void setViewport(const glm::vec2& pos, const glm::vec2& size);
 
         void flush();
     };

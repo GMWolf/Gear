@@ -5,14 +5,13 @@
 #include <gear/Application.h>
 #include <gear/ecs/ECS.h>
 #include <gear/Assets.h>
-#include <gear/g2d/SpriteBatch.h>
 #include <gear/g2d/RenderSystem.h>
-#include <gear/g2d/Shader.h>
 #include <gear/Transform.h>
 #include <gear/View.h>
 #include <gear/CollisionDetection.h>
 #include <gear/Input.h>
 #include <gear/g2d/g2d.h>
+#include <gear/g2d/Sprite.h>
 
 struct Bat {float spd = 4;};
 struct Ball {glm::vec2 v;};
@@ -72,10 +71,14 @@ void moveBall(gear::ecs::Registry& ecs, gear::ecs::CommandBuffer& cmd) {
 }
 
 void createBricks(gear::ecs::CommandBuffer& cmd, gear::AssetRegistry& assets) {
+    const gear::assets::Sprite* spr = assets.getSprite("brick");
     for(int i = 0; i < 5; i++) {
         for(int j = 0; j < 15; j++) {
-            gear::Sprite spr = gear::createSprite(assets.getSprite("brick"));
-            cmd.createEntity(gear::Transform{{20 + j * 48,480 - (32 + i * 24)}}, spr, *spr.mask, Brick{});
+            cmd.createEntity(
+                    gear::Transform{{20 + j * 48,480 - (32 + i * 24)}},
+                    gear::SpriteComponent{spr},
+                    gear::getCollisionMask(spr),
+                    Brick{});
         }
     }
 }
@@ -89,17 +92,24 @@ public:
             .batchSize = 100
         };
 
-        g2d = gear::createG2DInstance({
+        g2d = new gear::G2DInstance({
             .spriteBatchCreateInfo = &batchInfo
         });
 
         assets->loadBundle("assets.bin");
 
-        auto ballSpr = gear::createSprite(assets->getSprite("ball"));
-        cmd.createEntity(gear::Transform{{400, 80}}, *ballSpr.mask, ballSpr, Ball{{-1, -1}});
+        auto ballSpr = assets->getSprite("ball");
+        cmd.createEntity(gear::Transform{{400, 80}},
+                         gear::getCollisionMask(ballSpr),
+                         gear::SpriteComponent{ballSpr},
+                         Ball{{-1, -1}}
+                         );
 
-        auto batSpr = gear::createSprite(assets->getSprite("bat"));
-        cmd.createEntity(gear::Transform{{720 / 2, 30}},*batSpr.mask, batSpr, Bat{});
+        auto batSpr = assets->getSprite("bat");
+        cmd.createEntity(gear::Transform{{720 / 2, 30}},
+                         gear::getCollisionMask(batSpr),
+                         gear::SpriteComponent{batSpr},
+                         Bat{});
 
         cmd.createEntity(gear::View{{0, 0}, {720, 480}});
         cmd.createEntity(gear::Transform{{0,0}}, gear::CollisionShape{gear::Rectangle{glm::vec2{-10,0},glm::vec2{0, 480}}});
@@ -112,15 +122,17 @@ public:
         moveBat(world, app);
         moveBall(world, cmd);
         gear::ecs::executeCommandBuffer(cmd, world);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glDisable(GL_CULL_FACE);
+
+        g2d->clearColor({0,0,0,1});
+        g2d->setBlendMode();
+        g2d->setCullFace(false);
+
         auto shd = assets->getShader("textured");
-        gear::renderSprites(g2d, world, shd);
+        gear::renderSprites(g2d, world, shd, cmd);
     }
 
     void end() override {
-        gear::destroyG2DInstance(g2d);
+        delete g2d;
         assets.reset();
     }
 
@@ -138,6 +150,7 @@ int main() {
     gear::AppConfig config = {
             720, 480,
             "shmup",
+            gear::g2dGetGapi()
     };
 
     Game game;

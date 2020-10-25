@@ -188,13 +188,9 @@ static void spawnEnemy(gecs::EntityRef prefab, gear::AssetRegistry& assets, gear
 }
 
 void render(gear::G2DInstance* g2d, gear::AssetRegistry& assets, gear::ecs::Registry& ecs, gear::ecs::CommandBuffer& cmd) {
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glDisable(GL_CULL_FACE);
-
-    glViewport(0, 0, 480, 720);
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
+    g2d->clearColor({0,0,0,1});
+    g2d->setBlendMode();
+    g2d->setCullFace(false);
 
     gear::View view {{0,0}, {480, 720}};
 

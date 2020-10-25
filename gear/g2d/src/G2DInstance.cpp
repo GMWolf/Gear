@@ -45,4 +45,26 @@ namespace gear {
     void G2DInstance::flush() {
         spriteBatch->flush();
     }
+
+    void G2DInstance::clearColor(const glm::vec4 &color) {
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+    }
+
+    void G2DInstance::setBlendMode() {
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    }
+
+    void G2DInstance::setCullFace(bool enable) {
+        if (enable) {
+            glEnable(GL_CULL_FACE);
+        } else {
+            glDisable(GL_CULL_FACE);
+        }
+    }
+
+    void G2DInstance::setViewport(const glm::vec2 &pos, const glm::vec2 &size) {
+        glViewport(pos.x, pos.y, size.x, size.y);
+    }
 }
