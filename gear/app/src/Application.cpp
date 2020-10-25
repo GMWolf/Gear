@@ -4,9 +4,8 @@
 
 #include <Application.h>
 #include <iostream>
-#include <glad/glad.h>
+#define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
-
 #include <Input.h>
 #include <ApplicationAdapter.h>
 
@@ -58,8 +57,11 @@ gear::Application::Application(const AppConfig& config) {
 
     inputState = std::make_unique<InputState>();
 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    if (auto ogl = std::get_if<Gapi::Ogl>(&config.gapi->api)) {
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, ogl->version_major);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, ogl->version_minor);
+    }
+
     glfwWindowHint(GLFW_SRGB_CAPABLE, GLFW_TRUE);
     window = glfwCreateWindow(config.width, config.height, config.title.c_str(), nullptr, nullptr);
 
@@ -76,11 +78,13 @@ gear::Application::Application(const AppConfig& config) {
     glfwSetKeyCallback(window, key_callback);
 
     glfwMakeContextCurrent(window);
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-        std::cerr << "Failed to initialize opengl context\n";
-        glfwDestroyWindow(window);
-        glfwTerminate();
-        return;
+    if (auto ogl = std::get_if<Gapi::Ogl>(&config.gapi->api)) {
+        if (!ogl->loadGLLoader((Gapi::Ogl::LoadProcFn *) glfwGetProcAddress)) {
+            std::cerr << "Failed to initialize opengl context\n";
+            glfwDestroyWindow(window);
+            glfwTerminate();
+            return;
+        }
     }
     glfwSwapInterval(1);
 
@@ -91,8 +95,6 @@ gear::Application::Application(const AppConfig& config) {
 
 void gear::Application::run(gear::ApplicationAdapter& adapter) {
     if (initialized) {
-        glViewport(0, 0, width, height);
-
         adapter.init(this);
 
         int frame = 1;
@@ -101,8 +103,7 @@ void gear::Application::run(gear::ApplicationAdapter& adapter) {
             glfwPollEvents();
 
             double time = glfwGetTime();
-            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-            glClear(GL_COLOR_BUFFER_BIT);
+
             adapter.update();
 
             glfwSwapBuffers(window);

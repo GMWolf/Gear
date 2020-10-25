@@ -18,5 +18,5 @@ target_include_directories(gear-app
 )
 
 target_link_libraries(gear-app
-        PRIVATE glad glfw
-        PUBLIC glm)
+        PRIVATE glfw
+        PUBLIC glm gear-gapi)

@@ -9,6 +9,7 @@
 #include "KeyboardKeys.h"
 #include <glm/vec2.hpp>
 #include <memory>
+#include <gear/gapi.h>
 
 struct GLFWwindow;
 namespace gear {
@@ -16,6 +17,7 @@ namespace gear {
     struct AppConfig {
         int width = 640, height = 480;
         std::string title;
+        const Gapi* gapi;
     };
 
     class ApplicationAdapter;

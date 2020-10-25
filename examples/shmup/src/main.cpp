@@ -13,12 +13,8 @@
 #include <gear/g2d/TilemapSystem.h>
 #include <gear/g2d/RenderSystem.h>
 #include <gear/Input.h>
-
 #include "Collisions.h"
-
-#include <gear/Job.h>
 #include <iostream>
-
 #include <gear/g2d/g2d.h>
 #include <gear/g2d/Sprite.h>
 
@@ -196,6 +192,10 @@ void render(gear::G2DInstance* g2d, gear::AssetRegistry& assets, gear::ecs::Regi
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glDisable(GL_CULL_FACE);
 
+    glViewport(0, 0, 480, 720);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
     gear::View view {{0,0}, {480, 720}};
 
     {
@@ -236,7 +236,6 @@ class Game : public gear::ApplicationAdapter {
 public:
 
     void initG2d() {
-
         gear::SpriteBatchCreateInfo spriteBatchInfo = {
                 .batchSize = 100
         };
@@ -287,12 +286,12 @@ public:
         render(g2d, *assets, world, cmd);
         debugDraw(g2d, *assets, world);
         processLifetime(world, cmd);
-        gecs::executeCommandBuffer(cmd, world);
-
         if (--spawnTimer <= 0) {
             spawnEnemy(enemyPrefab, *assets, cmd);
             spawnTimer = 24;
         }
+
+        gecs::executeCommandBuffer(cmd, world);
 
         gear::ui::begin();
         perf.frameTime = app->frameTime;
@@ -329,8 +328,10 @@ private:
 int main() {
 
     gear::AppConfig config {
-        480, 720,
-        "shmup",
+        .width = 480,
+        .height = 720,
+        .title ="shmup",
+        .gapi = gear::g2dGetGapi()
     };
 
     Game game;

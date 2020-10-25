@@ -6,6 +6,7 @@
 #define GEAR_G2D_H
 
 #include <cstddef>
+#include <gear/gapi.h>
 
 namespace gear {
 
@@ -25,8 +26,9 @@ namespace gear {
         size_t batchSize;
     };
 
-    struct G2DInstance {
+    const Gapi* g2dGetGapi();
 
+    struct G2DInstance {
         explicit G2DInstance(const G2DInstanceCreateInfo &createInfo);
         ~G2DInstance();
 

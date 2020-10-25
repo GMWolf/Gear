@@ -8,8 +8,23 @@
 #include "Texture.h"
 #include "PrimDraw.h"
 #include "FontCache.h"
+#include <glad/glad.h>
 
 namespace gear {
+
+    const Gapi* g2dGetGapi()
+    {
+        static Gapi g2dGapi {
+                .api = Gapi::Ogl{
+                        .version_major = 3,
+                        .version_minor = 3,
+                        .loadGLLoader = gladLoadGLLoader,
+                }
+        };
+
+        return &g2dGapi;
+    }
+
 
     G2DInstance::G2DInstance(const G2DInstanceCreateInfo &createInfo) {
         spriteBatch = new SpriteBatch(*createInfo.spriteBatchCreateInfo);

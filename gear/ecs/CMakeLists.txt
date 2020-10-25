@@ -8,6 +8,7 @@ set(GEAR_ECS_HEADERS
         include/gear/ecs/Core.h
         include/gear/ecs/ECS.h
         include/gear/ecs/System.h
+        include/gear/ecs/Serde.h
         )
 
 set(GEAR_ECS_SOURCES
@@ -15,6 +16,7 @@ set(GEAR_ECS_SOURCES
         src/CommandBuffer.cpp
         src/Component.cpp
         src/Core.cpp
+        src/Serde.cpp
         )
 
 
