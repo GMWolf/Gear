@@ -4,18 +4,22 @@
 
 #include <Serde.h>
 #include <unordered_map>
+#include <string>
+
 
 class gear::ecs::serde::SerdeRegistry::Impl {
-
-    std::unordered_map<ComponentId,
+public:
+    std::unordered_map<ComponentId, SerializeFunction> serialize;
+    std::unordered_map<ComponentId, DeserializeFunction> deserialize;
+    std::unordered_map<ComponentId, std::string> name;
 
 };
 
 
-void gear::ecs::serde::SerdeRegistry::registerComponent(gear::ecs::ComponentId compoId, std::string &name,
+void gear::ecs::serde::SerdeRegistry::registerComponent(gear::ecs::ComponentId compId, std::string &name,
                                                         gear::ecs::serde::SerializeFunction serializeFunction,
                                                         gear::ecs::serde::DeserializeFunction deserializeFunction) {
-
+    impl->serialize[compId] = serializeFunction;
+    impl->deserialize[compId] = deserializeFunction;
+    impl->name[compId] = name;
 }
-
-

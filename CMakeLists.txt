@@ -8,7 +8,6 @@ include(cmake/glfw.cmake)
 include(cmake/stb.cmake)
 include(cmake/imgui.cmake)
 
-add_subdirectory(deps/glad)
 add_subdirectory(deps/glm)
 add_subdirectory(deps/Lyra)
 set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
@@ -44,3 +43,4 @@ add_subdirectory(tools)
 
 add_subdirectory(examples/shmup)
 add_subdirectory(examples/breakout)
+add_subdirectory(examples/3d)

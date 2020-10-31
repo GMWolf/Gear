@@ -17,5 +17,5 @@ add_library(imgui_ogl3
         deps/imgui/examples/imgui_impl_opengl3.h
         deps/imgui/examples/imgui_impl_opengl3.cpp)
 target_include_directories(imgui_ogl3 PUBLIC deps/imgui/examples)
-target_link_libraries(imgui_ogl3 PUBLIC imgui glad)
+target_link_libraries(imgui_ogl3 PUBLIC imgui)
 target_compile_definitions(imgui_ogl3 PUBLIC IMGUI_IMPL_OPENGL_LOADER_GLAD)

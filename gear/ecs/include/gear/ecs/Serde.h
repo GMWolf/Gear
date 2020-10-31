@@ -22,16 +22,9 @@ namespace gear::ecs::serde {
     class SerdeRegistry {
         class Impl;
         std::unique_ptr<Impl> impl;
-
     public:
-
-        SerdeRegistry();
-        ~SerdeRegistry();
-
         void registerComponent(ComponentId compoId, std::string& name, SerializeFunction serializeFunction, DeserializeFunction deserializeFunction);
     };
-
-
 }
 
 

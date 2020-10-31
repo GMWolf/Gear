@@ -30,12 +30,17 @@ set(GEAR_G2D_SOURCES
         src/FontCache.h
         src/FontCache.cpp)
 
+add_library(g2d-glad glad/src/glad.c glad/include/glad/glad.h glad/include/KHR/khrplatform.h)
+target_include_directories(g2d-glad PUBLIC glad/include)
+
 add_library(gear-g2d ${GEAR_G2D_PUBLIC} ${GEAR_G2D_HEADERS} ${GEAR_G2D_SOURCES})
+
+target_link_libraries(imgui_ogl3 PRIVATE g2d-glad)
 
 target_link_libraries(gear-g2d
         PRIVATE imgui imgui_glfw imgui_ogl3 libzstd_static freetype)
 target_link_libraries(gear-g2d
-        PUBLIC gear-core gear-assets glad gear-gapi
+        PUBLIC gear-core gear-assets g2d-glad gear-gapi
         )
 target_include_directories(gear-g2d
         PUBLIC include
