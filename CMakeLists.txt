@@ -37,6 +37,8 @@ add_subdirectory(deps/zstd/build/cmake)
 
 add_subdirectory(deps/freetype)
 
+add_subdirectory(deps/spirv-tools)
+add_subdirectory(deps/glslang)
 set(SHADERC_SKIP_TESTS ON CACHE BOOL "" FORCE)
 add_subdirectory(deps/shaderc)
 
