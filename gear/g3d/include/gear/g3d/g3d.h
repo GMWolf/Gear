@@ -6,12 +6,19 @@
 #define GEAR_G3D_H
 
 #include <gear/gapi.h>
+#include <memory>
 
 namespace gear {
     const Gapi* g3dGetGapi();
 
-    struct G3DInstance {
+    namespace g3d {
+        struct TextureCache;
+    }
 
+    struct G3DInstance {
+        G3DInstance();
+
+        std::unique_ptr<g3d::TextureCache> textureCache;
     };
 
 }

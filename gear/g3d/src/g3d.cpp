@@ -3,6 +3,7 @@
 //
 #include <g3d.h>
 #include <glad/glad.h>
+#include "Texture.h"
 
 namespace gear {
     const Gapi *g3dGetGapi() {
@@ -16,4 +17,6 @@ namespace gear {
 
         return &g2dGapi;
     }
+
+    G3DInstance::G3DInstance() = default;
 }

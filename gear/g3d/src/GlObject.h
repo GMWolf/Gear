@@ -21,7 +21,7 @@ namespace gear::g3d {
         GlObject(const GlObject &) = delete;
         GlObject &operator=(const GlObject &) = delete;
 
-        ~GlObject() requires Releasable<DERIVED> {
+        ~GlObject() {
             static_cast<DERIVED*>(this)->release();
         }
 
@@ -29,7 +29,7 @@ namespace gear::g3d {
             other.id = 0;
         }
 
-        GlObject& operator=(GlObject&& other) noexcept requires Releasable<DERIVED> {
+        GlObject& operator=(GlObject&& other) noexcept {
             if (this != &other) {
                 static_cast<DERIVED*>(this)->release();
                 id = other.id;

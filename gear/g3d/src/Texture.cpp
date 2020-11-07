@@ -28,9 +28,10 @@ void gear::g3d::Texture::subimage(GLint level_, GLint xoffset_, GLint yoffset_, 
     glTextureSubImage2D(id, level_, xoffset_, yoffset_, width_, height_, format_, type_, data);
 }
 
+gear::g3d::Texture::~Texture() = default;
 gear::g3d::Texture::Texture() = default;
 
-gear::g3d::Texture gear::g3d::createTextureFromAsset(gear::assets::Texture *texDef) {
+gear::g3d::Texture gear::g3d::createTextureFromAsset(const gear::assets::Texture *texDef) {
     Texture texture;
     texture.create();
     texture.storage(texDef->width(), texDef->height(), 1, GL_SRGB8);
@@ -58,4 +59,12 @@ gear::g3d::Texture gear::g3d::createTextureFromAsset(gear::assets::Texture *texD
     texture.subimage(0, 0, 0, texDef->width(), texDef->height(), format, type, buffer.data());
 
     return texture;
+}
+
+const gear::g3d::Texture &gear::g3d::TextureCache::get(const gear::assets::Texture *tex) {
+    auto it = textures.find(tex);
+    if(it == textures.end()) {
+        it = textures.insert({tex, createTextureFromAsset(tex)}).first;
+    }
+    return it->second;
 }
