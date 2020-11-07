@@ -37,6 +37,9 @@ add_subdirectory(deps/zstd/build/cmake)
 
 add_subdirectory(deps/freetype)
 
+set(SHADERC_SKIP_TESTS ON CACHE BOOL "" FORCE)
+add_subdirectory(deps/shaderc)
+
 add_subdirectory(gear)
 
 add_subdirectory(tools)
