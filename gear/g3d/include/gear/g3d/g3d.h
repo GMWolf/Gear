@@ -15,10 +15,15 @@ namespace gear {
         struct TextureCache;
     }
 
+    namespace assets {
+        struct Texture;
+    }
+
     struct G3DInstance {
         G3DInstance();
-
         std::unique_ptr<g3d::TextureCache> textureCache;
+        void debugTexture(const assets::Texture* texture);
+
     };
 
 }
