@@ -36,12 +36,11 @@ namespace gear::ecs {
             return t;
         }
 
-        bool operator==(const ChunkIterator& o) {
-            return (std::get<0>(ptr)+idx == std::get<0>(o.ptr)+o.idx);
+        bool operator==(const ChunkIterator& o) const {
+            return ((std::get<0>(ptr)+idx) == (std::get<0>(o.ptr)+o.idx));
         }
-
-        bool operator!=(const ChunkIterator& o) {
-            return !(*this == o);
+        auto operator<=>(const ChunkIterator& o) const {
+            return (std::get<0>(ptr)+idx <=> std::get<0>(o.ptr)+o.idx);
         }
     };
 

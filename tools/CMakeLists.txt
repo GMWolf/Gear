@@ -2,7 +2,7 @@ add_subdirectory(texture)
 
 add_subdirectory(font_pack)
 add_subdirectory(shader_pack)
-add_subdirectory(texture_pack)
+add_subdirectory(sprite_pack)
 add_subdirectory(tileset_pack)
 add_subdirectory(map_pack)
 add_subdirectory(bundler)
