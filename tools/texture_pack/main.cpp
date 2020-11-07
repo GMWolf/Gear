@@ -4,7 +4,6 @@
 
 #include <lyra/lyra.hpp>
 #include <iostream>
-#include <memory>
 #include <vector>
 #include <string>
 #include <filesystem>

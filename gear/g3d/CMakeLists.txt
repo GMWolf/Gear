@@ -2,10 +2,11 @@
 set(GEAR_G3D_PUBLIC
         include/gear/g3d/g3d.h)
 
-set(GEAR_G3D_HEADERS )
+set(GEAR_G3D_HEADERS
+        src/GlObject.h )
 
 set(GEAR_G3D_SOURCES
-        src/g3d.cpp)
+        src/g3d.cpp src/Texture.h src/Texture.cpp )
 
 add_library(gear-g3d ${GEAR_G3D_PUBLIC} ${GEAR_G3D_HEADERS} ${GEAR_G3D_SOURCES})
 
