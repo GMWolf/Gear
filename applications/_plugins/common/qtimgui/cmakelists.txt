@@ -1,0 +1,50 @@
+# =======================================================================
+
+add_library(Plugin_Common_QtImgui_DX12 INTERFACE)
+
+target_sources(Plugin_Common_QtImgui_DX12 INTERFACE
+
+    imgui_dx12.h
+    imgui_dx12renderer.cpp
+    imgui_dx12renderer.h
+)
+
+target_link_libraries(Plugin_Common_QtImgui_DX12 INTERFACE
+    ExtQt5
+)
+
+target_include_directories(Plugin_Common_QtImgui_DX12 INTERFACE
+    ./
+)
+
+#set_target_properties(Plugin_Common_QtImgui PROPERTIES FOLDER ${FOLDER_NAME})
+
+# =======================================================================
+
+add_library(Plugin_Common_QtImgui_OpenGL INTERFACE)
+
+target_sources(Plugin_Common_QtImgui_OpenGL INTERFACE
+
+    imgui_opengl.h
+    imgui_openglrenderer.cpp
+    imgui_openglrenderer.h
+    # demowindow.cpp
+    # demowindow.h
+)
+
+target_include_directories(Plugin_Common_QtImgui_OpenGL INTERFACE
+    ./
+)
+
+#set_target_properties(Plugin_Common_QtImgui PROPERTIES FOLDER ${FOLDER_NAME})
+
+# =======================================================================
+
+add_library(Plugin_Common_QtImgui INTERFACE)
+
+target_link_libraries(Plugin_Common_QtImgui INTERFACE
+    Plugin_Common_QtImgui_DX12
+    Plugin_Common_QtImgui_OpenGL
+)
+
+#set_target_properties(Plugin_Common_QtImgui PROPERTIES FOLDER ${FOLDER_NAME})

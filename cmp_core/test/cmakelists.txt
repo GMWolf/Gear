@@ -1,0 +1,26 @@
+
+add_executable(CMP_Core_Tests_BIN)
+
+target_sources(CMP_Core_Tests_BIN 
+    PRIVATE
+        blockconstants.h
+        compressonatortests.cpp
+        compressonatortests.h
+        testsmain.cpp
+)
+
+target_include_directories(CMP_Core_Tests_BIN PUBLIC
+    ${PROJECT_SOURCE_DIR}/../common/lib/ext/catch2
+)
+
+target_link_libraries(CMP_Core_Tests_BIN 
+    PRIVATE 
+        CMP_Core
+        Plugin_Common_UtilFuncs
+)
+
+set_target_properties(CMP_Core_Tests_BIN PROPERTIES FOLDER Tests)
+
+add_test(NAME CMP_Core_Tests
+    COMMAND $<TARGET_FILE:CMP_Core_Tests_BIN>
+)
