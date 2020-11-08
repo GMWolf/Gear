@@ -1,0 +1,6 @@
+/build
+.cmake
+.idea
+.vscode
+*.swp
+*.user
