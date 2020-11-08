@@ -10,12 +10,14 @@
 #include <fstream>
 #include <ios>
 #include <gear/assets_generated.h>
-#include <stb_image.h>
 #include <flatbuffers/hash.h>
 #include "texture.h"
 #include <yaml-cpp/yaml.h>
+#include <cuttlefish/Image.h>
+#include <cuttlefish/Texture.h>
 
 namespace fs = std::filesystem;
+namespace cf = cuttlefish;
 
 int main(int argc, char* argv[]) {
 
@@ -52,13 +54,30 @@ int main(int argc, char* argv[]) {
 
     flatbuffers::FlatBufferBuilder fbb(2048);
 
-    int w, h, c;
-    stbi_set_flip_vertically_on_load(1);
-    auto imageData = (uint8_t*) stbi_load((reldir / source).c_str(), &w, &h, &c, 4);
 
-    auto tex = gear::buildTexture(fbb, w, h, gear::assets::PixelFormat::RGBA8, imageData);
+    cf::Image image;
+    image.load((reldir/source).c_str(), cf::ColorSpace::Linear);
+    image.flipVertical();
+    if (!image.isValid()) {
+        std::cerr << "error loading image " << source << "\n";
+        return 1;
+    }
 
-    stbi_image_free(imageData);
+    cf::Texture texture(cf::Texture::Dimension::Dim2D, image.width(), image.height());
+    texture.setImage(image);
+    if (!texture.convert(cf::Texture::Format::R8G8B8A8, cf::Texture::Type::UNorm)) {
+        std::cerr << "error converting image " << source << ".\n";
+        if (!texture.imagesComplete()) {
+            std::cerr << "\t image incomplete." << "\n";
+        }
+        if (!cf::Texture::isFormatValid(cf::Texture::Format::R8G8B8A8, cf::Texture::Type::UNorm)) {
+            std::cerr << "\t format invalid." << "\n";
+        }
+        return 1;
+    }
+    std::cout << image.width() << std::endl;
+    auto tex = gear::buildTexture(fbb, image.width(), image.height(), gear::assets::PixelFormat::RGBA8, (uint8_t*)texture.data());
+
 
     std::vector<flatbuffers::Offset<gear::assets::AssetEntry>> entries;
     entries.push_back(gear::assets::CreateAssetEntry(fbb, flatbuffers::HashFnv1<uint64_t>(fs::path(inputPath).stem().c_str()),

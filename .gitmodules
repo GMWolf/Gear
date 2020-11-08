@@ -1,0 +1,3 @@
+[submodule "Cuttlefish"]
+	path = deps/Cuttlefish
+	url = https://github.com/akb825/Cuttlefish.git

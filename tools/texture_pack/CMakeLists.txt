@@ -1,5 +1,5 @@
 add_executable(texture_packer main.cpp)
-target_link_libraries(texture_packer PUBLIC gear_tools_texture stb yaml-cpp bfg_lyra)
+target_link_libraries(texture_packer PUBLIC gear_tools_texture yaml-cpp bfg_lyra cuttlefish_lib)
 target_include_directories(texture_packer PUBLIC ../..)
 
 function(add_texture input)
