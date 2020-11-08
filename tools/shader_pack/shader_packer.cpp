@@ -40,6 +40,7 @@ std::vector<uint32_t> compileShader(const std::string& sourceName, shaderc_shade
         return {};
     }
 
+
     return {result.cbegin(), result.cend()};
 }
 
@@ -85,6 +86,7 @@ int main(int argc, char* argv[]) {
     std::string header = "#version " + std::to_string(version) + " core\n";
     options.SetForcedVersionProfile(version, shaderc_profile_core);
     options.SetTargetEnvironment(shaderc_target_env_opengl, shaderc_env_version_opengl_4_5);
+
     auto vertexText = preprocessShader(vertexFileName, shaderc_vertex_shader, header + vertexSource, options);
     auto fragmentText = preprocessShader(fragmentFileName, shaderc_fragment_shader, header + fragmentSource, options);
 
