@@ -32,7 +32,7 @@ static GLuint createShaderStage(GLenum shaderType, const uint32_t* data, size_t 
     return shd;
 }
 
-gear::g3d::Shader::Shader(const gear::assets::Shader *shaderDef) : GlObject(0){
+gear::g3d::Shader::Shader(const gear::assets::Shader *shaderDef) : GlObject(0), shaderDef(shaderDef){
 
     auto vert = createShaderStage(GL_VERTEX_SHADER, shaderDef->vertexText()->bin()->data(), shaderDef->vertexText()->bin()->size());
     auto frag = createShaderStage(GL_FRAGMENT_SHADER, shaderDef->fragmentText()->bin()->data(), shaderDef->fragmentText()->bin()->size());

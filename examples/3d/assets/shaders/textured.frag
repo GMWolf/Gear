@@ -1,10 +1,11 @@
 
 layout(location = 0) in vec2 texCoord;
 
-uniform sampler2D tex;
+layout(binding = 0) uniform sampler2D tex;
 
 layout(location = 0) out vec4 outColor;
 
 void main() {
-    outColor = vec4(texCoord.xy, 0.0, 1.0);
+    vec3 col = texture(tex, texCoord.xy).rgb;
+    outColor = vec4(col, 1.0);
 }

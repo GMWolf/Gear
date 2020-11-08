@@ -12,6 +12,8 @@
 #include <filesystem>
 #include <flatbuffers/hash.h>
 #include <shaderc/shaderc.hpp>
+#include <spirv_cross.hpp>
+#include <spirv_glsl.hpp>
 
 namespace fs = std::filesystem;
 
@@ -40,8 +42,25 @@ std::vector<uint32_t> compileShader(const std::string& sourceName, shaderc_shade
         return {};
     }
 
-
     return {result.cbegin(), result.cend()};
+}
+
+
+flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<gear::assets::ShaderResource>>>
+        createReflectionData( flatbuffers::FlatBufferBuilder& fbb,  const std::vector<uint32_t>& data) {
+    spirv_cross::Compiler compiler(data);
+    spirv_cross::ShaderResources resources = compiler.get_shader_resources();
+    std::vector<flatbuffers::Offset<gear::assets::ShaderResource>> resourceVec;
+    for(auto &resource : resources.sampled_images) {
+        auto name = fbb.CreateString(resource.name);
+        gear::assets::ShaderResourceBuilder shaderResourceBuilder(fbb);
+        shaderResourceBuilder.add_name(name);
+        shaderResourceBuilder.add_binding(compiler.get_decoration(resource.id, spv::DecorationBinding));
+        shaderResourceBuilder.add_type(gear::assets::ShaderResourceType::sampler);
+        resourceVec.push_back(shaderResourceBuilder.Finish());
+    }
+
+    return fbb.CreateVectorOfSortedTables(&resourceVec);
 }
 
 
@@ -81,6 +100,8 @@ int main(int argc, char* argv[]) {
                            std::istreambuf_iterator<char>());
 
     shaderc::CompileOptions options;
+    options.SetGenerateDebugInfo();
+    options.SetAutoBindUniforms(true);
     options.SetOptimizationLevel(shaderc_optimization_level_performance);
 
     std::string header = "#version " + std::to_string(version) + " core\n";
@@ -99,10 +120,12 @@ int main(int argc, char* argv[]) {
         auto fragmentTextModule = compileShader(fragmentFileName, shaderc_fragment_shader, fragmentText, options);
         auto vertTextOffset = gear::assets::CreateShaderTextDirect(fbb, nullptr, &vertexTextModule);
         auto fragTextOffset = gear::assets::CreateShaderTextDirect(fbb, nullptr, &fragmentTextModule);
+        auto resources = createReflectionData(fbb, fragmentTextModule);
         gear::assets::ShaderBuilder shaderBuilder(fbb);
         shaderBuilder.add_vertexText(vertTextOffset);
         shaderBuilder.add_fragmentText(fragTextOffset);
         shaderBuilder.add_isBinary(true);
+        shaderBuilder.add_resources(resources);
         shader = shaderBuilder.Finish();
     }
     else

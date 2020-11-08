@@ -36,7 +36,13 @@ namespace gear {
 
         glViewport(0, 0, 720, 720);
         glBindVertexArray(vao);
-        glUseProgram(shaderCache->get(shader).id);
+        auto& shd = shaderCache->get(shader);
+        glUseProgram(shd.id);
+        auto loc = shd.shaderDef->resources()->LookupByKey("tex")->binding();
+        glBindTextureUnit(0, textureCache->get(texture).id);
+        glProgramUniform1i(shd.id, loc, 0);
+
+
 
 
         glDrawArrays( GL_TRIANGLES, 0, 3 );

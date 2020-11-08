@@ -5,10 +5,21 @@ table ShaderText {
     bin: [uint32];
 }
 
+enum ShaderResourceType : byte{
+    sampler,
+}
+
+table ShaderResource {
+    name: string (key);
+    binding: int;
+    type: ShaderResourceType;
+}
+
 table Shader {
     isBinary: bool;
     vertexText: ShaderText;
     fragmentText: ShaderText;
+    resources: [ShaderResource];
 }
 
 root_type Shader;

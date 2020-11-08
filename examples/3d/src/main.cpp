@@ -18,7 +18,7 @@ public:
     }
 
     void update() override {
-        g3d->debugTexture(nullptr, assets->getShader("testshd"));
+        g3d->debugTexture(assets->getTexture("Fabric_Boucle"), assets->getShader("testshd"));
     }
 
     void end() override {

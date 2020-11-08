@@ -15,7 +15,7 @@ namespace gear::g3d {
     public:
         explicit Shader(const assets::Shader* shaderDef);
         void release();
-
+        const assets::Shader* shaderDef{nullptr};
     };
 
     class ShaderCache {
