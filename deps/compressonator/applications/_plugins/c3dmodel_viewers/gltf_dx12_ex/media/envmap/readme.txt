@@ -1,1 +1,0 @@
-"brdf.dds generated using https://github.com/HectorMF/BRDFGenerator" 
