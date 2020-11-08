@@ -12,7 +12,7 @@ namespace gear {
 
     flatbuffers::Offset<gear::assets::Texture>
     buildTexture(flatbuffers::FlatBufferBuilder& builder, int width, int height, gear::assets::PixelFormat format,
-                 const uint8_t *data);
+                 const uint8_t *data, size_t dataSize);
 
 }
 #endif //TBTG_TEXTURE_H

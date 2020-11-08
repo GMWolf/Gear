@@ -63,8 +63,6 @@ gear::g3d::Shader::Shader(const gear::assets::Shader *shaderDef) : GlObject(0), 
     }
     glDeleteShader(vert);
     glDeleteShader(frag);
-
-    std::cout << id << "\n";
 }
 
 gear::g3d::Shader &gear::g3d::ShaderCache::get(const gear::assets::Shader * shd) {

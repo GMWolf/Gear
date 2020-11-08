@@ -183,7 +183,7 @@ int main(int argc, char* argv[]) {
             auto texName = std::string(tilesetName) + "_texture";
             auto texNameHash = flatbuffers::HashFnv1<uint64_t>(texName.c_str());
             auto texoffset = gear::buildTexture(builder, pageWidth, pageHeight, gear::assets::PixelFormat::RGBA8,
-                                                reinterpret_cast<const uint8_t *>(textureData.data()));
+                                                reinterpret_cast<const uint8_t *>(textureData.data()), 4 * pageWidth * pageHeight);
             auto texRef = gear::assets::CreateRef(builder, (uint8_t)gear::assets::Asset::Texture, texNameHash);
             references.push_back(texRef);
             entries.push_back(gear::assets::CreateAssetEntry(builder, flatbuffers::HashFnv1<uint64_t>(texName.c_str()), gear::assets::Asset::Texture, texoffset.Union()));

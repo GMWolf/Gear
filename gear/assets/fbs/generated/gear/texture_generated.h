@@ -13,34 +13,40 @@ struct Texture;
 struct TextureBuilder;
 
 enum class PixelFormat : uint8_t {
-  R8 = 0,
-  RGB8 = 1,
-  RGBA8 = 2,
-  MIN = R8,
-  MAX = RGBA8
+  Invalid = 0,
+  R8 = 1,
+  RGB8 = 2,
+  RGBA8 = 3,
+  BC7 = 4,
+  MIN = Invalid,
+  MAX = BC7
 };
 
-inline const PixelFormat (&EnumValuesPixelFormat())[3] {
+inline const PixelFormat (&EnumValuesPixelFormat())[5] {
   static const PixelFormat values[] = {
+    PixelFormat::Invalid,
     PixelFormat::R8,
     PixelFormat::RGB8,
-    PixelFormat::RGBA8
+    PixelFormat::RGBA8,
+    PixelFormat::BC7
   };
   return values;
 }
 
 inline const char * const *EnumNamesPixelFormat() {
-  static const char * const names[4] = {
+  static const char * const names[6] = {
+    "Invalid",
     "R8",
     "RGB8",
     "RGBA8",
+    "BC7",
     nullptr
   };
   return names;
 }
 
 inline const char *EnumNamePixelFormat(PixelFormat e) {
-  if (flatbuffers::IsOutRange(e, PixelFormat::R8, PixelFormat::RGBA8)) return "";
+  if (flatbuffers::IsOutRange(e, PixelFormat::Invalid, PixelFormat::BC7)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesPixelFormat()[index];
 }
@@ -121,7 +127,7 @@ inline flatbuffers::Offset<Texture> CreateTexture(
     flatbuffers::FlatBufferBuilder &_fbb,
     int16_t width = 0,
     int16_t height = 0,
-    gear::assets::PixelFormat format = gear::assets::PixelFormat::R8,
+    gear::assets::PixelFormat format = gear::assets::PixelFormat::Invalid,
     flatbuffers::Offset<flatbuffers::Vector<uint8_t>> data = 0) {
   TextureBuilder builder_(_fbb);
   builder_.add_data(data);
@@ -140,7 +146,7 @@ inline flatbuffers::Offset<Texture> CreateTextureDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
     int16_t width = 0,
     int16_t height = 0,
-    gear::assets::PixelFormat format = gear::assets::PixelFormat::R8,
+    gear::assets::PixelFormat format = gear::assets::PixelFormat::Invalid,
     const std::vector<uint8_t> *data = nullptr) {
   auto data__ = data ? _fbb.CreateVector<uint8_t>(*data) : 0;
   return gear::assets::CreateTexture(

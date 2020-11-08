@@ -54,7 +54,6 @@ int main(int argc, char* argv[]) {
 
     flatbuffers::FlatBufferBuilder fbb(2048);
 
-
     cf::Image image;
     image.load((reldir/source).c_str(), cf::ColorSpace::Linear);
     image.flipVertical();
@@ -63,21 +62,50 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    cf::Texture::Format cfFormat;
+    gear::assets::PixelFormat gearFormat = gear::assets::PixelFormat::Invalid;
+
+    for(auto f : gear::assets::EnumValuesPixelFormat()) {
+        if (strcmp(gear::assets::EnumNamePixelFormat(f), format.c_str()) == 0) {
+            gearFormat = f;
+            break;
+        }
+    }
+
+    switch (gearFormat) {
+        case gear::assets::PixelFormat::Invalid:
+            std::cerr << "Invalid pixel format " << format << ".\n";
+            return 1;
+        case gear::assets::PixelFormat::R8:
+            cfFormat = cf::Texture::Format::R8;
+            break;
+        case gear::assets::PixelFormat::RGB8:
+            cfFormat = cf::Texture::Format::R8G8B8;
+            break;
+        case gear::assets::PixelFormat::RGBA8:
+            cfFormat = cf::Texture::Format::R8G8B8A8;
+            break;
+        case gear::assets::PixelFormat::BC7:
+            cfFormat = cf::Texture::Format::BC7;
+            break;
+    }
+
+
     cf::Texture texture(cf::Texture::Dimension::Dim2D, image.width(), image.height());
+
     texture.setImage(image);
-    if (!texture.convert(cf::Texture::Format::R8G8B8A8, cf::Texture::Type::UNorm)) {
+    if (!texture.convert(cfFormat, cf::Texture::Type::UNorm, cf::Texture::Quality::Normal )) {
         std::cerr << "error converting image " << source << ".\n";
         if (!texture.imagesComplete()) {
             std::cerr << "\t image incomplete." << "\n";
         }
-        if (!cf::Texture::isFormatValid(cf::Texture::Format::R8G8B8A8, cf::Texture::Type::UNorm)) {
+        if (!cf::Texture::isFormatValid(cfFormat, cf::Texture::Type::UNorm)) {
             std::cerr << "\t format invalid." << "\n";
         }
         return 1;
     }
-    std::cout << image.width() << std::endl;
-    auto tex = gear::buildTexture(fbb, image.width(), image.height(), gear::assets::PixelFormat::RGBA8, (uint8_t*)texture.data());
 
+    auto tex = gear::buildTexture(fbb, image.width(), image.height(), gearFormat, (uint8_t*)texture.data(), texture.dataSize());
 
     std::vector<flatbuffers::Offset<gear::assets::AssetEntry>> entries;
     entries.push_back(gear::assets::CreateAssetEntry(fbb, flatbuffers::HashFnv1<uint64_t>(fs::path(inputPath).stem().c_str()),

@@ -113,7 +113,7 @@ int main(int argc, char* argv[]) {
                 glyphs.push_back(glyph);
             }
             auto tex = gear::buildTexture(builder, bitmapWidth, bitmapHeight, gear::assets::PixelFormat::R8,
-                                          bitmap.data());
+                                          bitmap.data(), bitmapWidth * bitmapHeight);
             auto texName = name + "_texture";
             auto texNameHash = flatbuffers::HashFnv1<uint64_t>(texName.c_str());
             auto texRef = gear::assets::CreateRef(builder, (uint8_t) gear::assets::Asset::Texture, texNameHash);

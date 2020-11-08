@@ -1,9 +1,11 @@
 namespace gear.assets;
 
 enum PixelFormat : ubyte{
+    Invalid,
     R8,
     RGB8,
     RGBA8,
+    BC7
 }
 
 table Texture {

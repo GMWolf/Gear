@@ -23,7 +23,7 @@ namespace gear::g3d {
         void release();
         void create();
         void storage(GLsizei width_, GLsizei height_, GLsizei levels_, GLenum internalFormat_);
-        void subimage(GLint level_, GLint xoffset_, GLint yoffset_, GLsizei width_, GLsizei height_, GLenum format_, GLenum type_, const void* data);
+        void subimage(GLint level_, GLint xoffset_, GLint yoffset_, GLsizei width_, GLsizei height_, GLenum format_, GLenum type_, size_t dataSize, const void* data);
 
         GLsizei width{};
         GLsizei height{};

@@ -23,25 +23,32 @@ void gear::g3d::Texture::storage(GLsizei width_, GLsizei height_, GLsizei levels
     glTextureStorage2D(id, levels, format, width, height);
 }
 
-void gear::g3d::Texture::subimage(GLint level_, GLint xoffset_, GLint yoffset_, GLsizei width_, GLsizei height_,
-                                  GLenum format_, GLenum type_, const void *data) {
-    glTextureSubImage2D(id, level_, xoffset_, yoffset_, width_, height_, format_, type_, data);
+static bool formatIsCompressed(GLenum format) {
+    switch (format) {
+        case GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM:
+            return true;
+        default:
+            return false;
+    }
 }
-
+void gear::g3d::Texture::subimage(GLint level_, GLint xoffset_, GLint yoffset_, GLsizei width_, GLsizei height_,
+                                  GLenum format_, GLenum type_, size_t dataSize, const void *data) {
+    if (formatIsCompressed(format_)) {
+        glCompressedTextureSubImage2D(id, level_, xoffset_, yoffset_, width_, height_, format_, dataSize, data);
+    } else {
+        glTextureSubImage2D(id, level_, xoffset_, yoffset_, width_, height_, format_, type_, data);
+    }
+}
 gear::g3d::Texture::~Texture() = default;
 gear::g3d::Texture::Texture() = default;
 
 gear::g3d::Texture gear::g3d::createTextureFromAsset(const gear::assets::Texture *texDef) {
-    Texture texture;
-    texture.create();
-    texture.storage(texDef->width(), texDef->height(), 1, GL_SRGB8_ALPHA8);
-
-    std::vector<char> buffer(ZSTD_getFrameContentSize(texDef->data()->data(), texDef->data()->size()));
-    ZSTD_decompress(buffer.data(), buffer.size(), texDef->data()->data(), texDef->data()->size());
 
     auto format = 0;
     auto type = 0;
     switch(texDef->format()) {
+        case assets::PixelFormat::Invalid:
+            break;
         case gear::assets::PixelFormat::R8:
             format = GL_RED;
             type = GL_UNSIGNED_BYTE;
@@ -54,9 +61,20 @@ gear::g3d::Texture gear::g3d::createTextureFromAsset(const gear::assets::Texture
             format = GL_RGBA;
             type = GL_UNSIGNED_BYTE;
             break;
+        case assets::PixelFormat::BC7:
+            format = GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM;
+            type = GL_UNSIGNED_BYTE;
+            break;
     }
 
-    texture.subimage(0, 0, 0, texDef->width(), texDef->height(), format, type, buffer.data());
+    Texture texture;
+    texture.create();
+    texture.storage(texDef->width(), texDef->height(), 1, format);
+
+    std::vector<char> buffer(ZSTD_getFrameContentSize(texDef->data()->data(), texDef->data()->size()));
+    ZSTD_decompress(buffer.data(), buffer.size(), texDef->data()->data(), texDef->data()->size());
+
+    texture.subimage(0, 0, 0, texDef->width(), texDef->height(), format, type, buffer.size(), buffer.data());
 
     return texture;
 }

@@ -8,14 +8,17 @@
 #include <gear/tileset_generated.h>
 #include <gear/assets_generated.h>
 #include <ios>
-#include <stb_image.h>
 #include <texture.h>
 #include <filesystem>
 #include <flatbuffers/hash.h>
 #include <gear/common_generated.h>
+#include <cuttlefish/Image.h>
+#include <cuttlefish/Texture.h>
+#include <iostream>
 
 namespace xml = tinyxml2;
 namespace fs = std::filesystem;
+namespace cf = cuttlefish;
 
 int main(int charc, char* argv[]) {
 
@@ -34,10 +37,24 @@ int main(int charc, char* argv[]) {
     auto xImage = xTileset->FirstChildElement("image");
     auto source = xImage->Attribute("source");
 
-    int w, h, c;
-    //stbi_set_flip_vertically_on_load(1);
-    auto imageData = (uint8_t*) stbi_load((reldir / source).c_str(), &w, &h, &c, 4);
+    cf::Image image;
+    image.load((reldir/source).c_str(), cf::ColorSpace::Linear);
+    if (!image.isValid()) {
+        std::cerr << "error loading image " << source << "\n";
+        return 1;
+    }
 
+    cf::Texture::Format cfFormat = cf::Texture::Format::R8G8B8A8;
+
+    cf::Texture texture(cf::Texture::Dimension::Dim2D, image.width(), image.height());
+    texture.setImage(image);
+    if (!texture.convert(cfFormat, cf::Texture::Type::UNorm)) {
+        std::cerr << "error converting image " << source << ".\n";
+        if (!texture.imagesComplete()) {
+            std::cerr << "\t image incomplete." << "\n";
+        }
+        return 1;
+    }
 
     std::vector<flatbuffers::Offset<gear::assets::AssetEntry>> entries;
     std::vector<flatbuffers::Offset<gear::assets::Ref>> references;
@@ -45,12 +62,12 @@ int main(int charc, char* argv[]) {
     std::string tilesetName = xTileset->Attribute("name");
 
     //Add texture asset
-    auto texture = gear::buildTexture(builder, w, h, gear::assets::PixelFormat::RGBA8, imageData);
+    auto textureBin = gear::buildTexture(builder, texture.width(), texture.height(), gear::assets::PixelFormat::RGBA8, (uint8_t*)texture.data(), texture.dataSize());
     auto textureName = tilesetName + "_texture";
     auto textureHash = flatbuffers::HashFnv1<uint64_t>(textureName.c_str());
     auto textureRef = gear::assets::CreateRef(builder, (uint8_t)gear::assets::Asset::Texture, textureHash);
     references.push_back(textureRef);
-    entries.push_back(gear::assets::CreateAssetEntry(builder, flatbuffers::HashFnv1<uint64_t>(textureName.c_str()),gear::assets::Asset::Texture, texture.Union()));
+    entries.push_back(gear::assets::CreateAssetEntry(builder, flatbuffers::HashFnv1<uint64_t>(textureName.c_str()),gear::assets::Asset::Texture, textureBin.Union()));
 
     //add tileset asset
     auto tileset = gear::assets::CreateTileSet(builder, textureRef,

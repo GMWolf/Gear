@@ -1,6 +1,6 @@
 
 add_executable(tileset_pack tileset_pack.cpp)
-target_link_libraries(tileset_pack PUBLIC stb tinyxml2 gear_tools_texture gear-assets-fbs)
+target_link_libraries(tileset_pack PUBLIC tinyxml2 gear_tools_texture gear-assets-fbs cuttlefish_lib)
 target_include_directories(tileset_pack PUBLIC ../../)
 
 function(add_tileset_pack input)

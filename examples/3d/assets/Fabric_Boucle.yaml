@@ -1,3 +1,2 @@
-image: Fabric_Boucle_512_albedo.png
-format: rgba8
-
+image: TexturesCom_Fabric_Boucle_512_albedo.tif
+format: BC7
