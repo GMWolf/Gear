@@ -34,7 +34,7 @@ gear::g3d::Texture::Texture() = default;
 gear::g3d::Texture gear::g3d::createTextureFromAsset(const gear::assets::Texture *texDef) {
     Texture texture;
     texture.create();
-    texture.storage(texDef->width(), texDef->height(), 1, GL_SRGB8);
+    texture.storage(texDef->width(), texDef->height(), 1, GL_SRGB8_ALPHA8);
 
     std::vector<char> buffer(ZSTD_getFrameContentSize(texDef->data()->data(), texDef->data()->size()));
     ZSTD_decompress(buffer.data(), buffer.size(), texDef->data()->data(), texDef->data()->size());
