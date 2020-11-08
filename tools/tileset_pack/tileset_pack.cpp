@@ -62,7 +62,9 @@ int main(int charc, char* argv[]) {
     std::string tilesetName = xTileset->Attribute("name");
 
     //Add texture asset
-    auto textureBin = gear::buildTexture(builder, texture.width(), texture.height(), gear::assets::PixelFormat::RGBA8, (uint8_t*)texture.data(), texture.dataSize());
+    const uint8_t* textureData = (uint8_t*)texture.data();
+    size_t textureDataSize = texture.dataSize();
+    auto textureBin = gear::buildTexture(builder, texture.width(), texture.height(), gear::assets::PixelFormat::RGBA8, &textureData, &textureDataSize, 1);
     auto textureName = tilesetName + "_texture";
     auto textureHash = flatbuffers::HashFnv1<uint64_t>(textureName.c_str());
     auto textureRef = gear::assets::CreateRef(builder, (uint8_t)gear::assets::Asset::Texture, textureHash);

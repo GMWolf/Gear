@@ -69,12 +69,17 @@ gear::g3d::Texture gear::g3d::createTextureFromAsset(const gear::assets::Texture
 
     Texture texture;
     texture.create();
-    texture.storage(texDef->width(), texDef->height(), 1, format);
+    texture.storage(texDef->width(), texDef->height(), texDef->mips()->size(), format);
 
-    std::vector<char> buffer(ZSTD_getFrameContentSize(texDef->data()->data(), texDef->data()->size()));
-    ZSTD_decompress(buffer.data(), buffer.size(), texDef->data()->data(), texDef->data()->size());
+    std::vector<char> buffer;
 
-    texture.subimage(0, 0, 0, texDef->width(), texDef->height(), format, type, buffer.size(), buffer.data());
+    for(size_t level = 0; level < texDef->mips()->size(); level++) {
+        auto mipData = texDef->mips()->Get(level)->data();
+        buffer.resize(ZSTD_getFrameContentSize(mipData->data(), mipData->size()));
+        ZSTD_decompress(buffer.data(), buffer.size(), mipData->data(), mipData->size());
+
+        texture.subimage(level, 0, 0, texDef->width() >> level, texDef->height() >> level, format, type, buffer.size(), buffer.data());
+    }
 
     return texture;
 }

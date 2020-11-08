@@ -8,10 +8,14 @@ enum PixelFormat : ubyte{
     BC7
 }
 
+table MipData {
+    data: [ubyte];
+}
+
 table Texture {
     width: short;
     height: short;
     format: PixelFormat;
-    data: [ubyte];
+    mips: [MipData];
 }
 root_type Texture;

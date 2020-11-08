@@ -112,8 +112,11 @@ int main(int argc, char* argv[]) {
                 };
                 glyphs.push_back(glyph);
             }
+
+            const uint8_t* textureDataPtr = (uint8_t*)bitmap.data();
+            size_t textureDataSize = bitmapWidth * bitmapHeight;
             auto tex = gear::buildTexture(builder, bitmapWidth, bitmapHeight, gear::assets::PixelFormat::R8,
-                                          bitmap.data(), bitmapWidth * bitmapHeight);
+                                          &textureDataPtr, &textureDataSize, 1);
             auto texName = name + "_texture";
             auto texNameHash = flatbuffers::HashFnv1<uint64_t>(texName.c_str());
             auto texRef = gear::assets::CreateRef(builder, (uint8_t) gear::assets::Asset::Texture, texNameHash);

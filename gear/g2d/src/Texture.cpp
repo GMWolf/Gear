@@ -55,8 +55,10 @@ gear::Texture gear::createTexture(const gear::assets::Texture* texDef, const cha
     if (name)
         glObjectLabel(GL_TEXTURE, tex, -1, name);
 
-    std::vector<char> buffer(ZSTD_getFrameContentSize(texDef->data()->data(), texDef->data()->size()));
-    ZSTD_decompress(buffer.data(), buffer.size(), texDef->data()->data(), texDef->data()->size());
+    auto texData = texDef->mips()->Get(0)->data();
+
+    std::vector<char> buffer(ZSTD_getFrameContentSize(texData->data(), texData->size()));
+    ZSTD_decompress(buffer.data(), buffer.size(), texData->data(), texData->size());
 
     auto internalFormat = 0;
     auto format = 0;

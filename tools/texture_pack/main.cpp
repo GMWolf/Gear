@@ -51,6 +51,7 @@ int main(int argc, char* argv[]) {
     auto yaml = YAML::LoadFile(inputPath);
     auto source = yaml["image"].as<std::string>();
     auto format = yaml["format"].as<std::string>();
+    auto generateMips = yaml["generate_mips"].as<bool>(false);
 
     flatbuffers::FlatBufferBuilder fbb(2048);
 
@@ -90,10 +91,16 @@ int main(int argc, char* argv[]) {
             break;
     }
 
+    int mipLevels = generateMips ? cf::Texture::maxMipmapLevels(cf::Texture::Dimension::Dim2D, image.width(), image.height()) : 1;
 
-    cf::Texture texture(cf::Texture::Dimension::Dim2D, image.width(), image.height());
+    cf::Texture texture(cf::Texture::Dimension::Dim2D, image.width(), image.height(), 1, mipLevels);
 
     texture.setImage(image);
+
+    if (mipLevels > 1) {
+        texture.generateMipmaps();
+    }
+
     if (!texture.convert(cfFormat, cf::Texture::Type::UNorm, cf::Texture::Quality::Normal )) {
         std::cerr << "error converting image " << source << ".\n";
         if (!texture.imagesComplete()) {
@@ -105,7 +112,13 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    auto tex = gear::buildTexture(fbb, image.width(), image.height(), gearFormat, (uint8_t*)texture.data(), texture.dataSize());
+    std::vector<const uint8_t*> textureData;
+    std::vector<size_t> textureDataSize;
+    for(int i = 0; i < texture.mipLevelCount(); i++) {
+        textureData.push_back((uint8_t*)texture.data(i));
+        textureDataSize.push_back(texture.dataSize(i));
+    }
+    auto tex = gear::buildTexture(fbb, texture.width(), texture.height(), gearFormat, textureData.data(), textureDataSize.data(), texture.mipLevelCount());
 
     std::vector<flatbuffers::Offset<gear::assets::AssetEntry>> entries;
     entries.push_back(gear::assets::CreateAssetEntry(fbb, flatbuffers::HashFnv1<uint64_t>(fs::path(inputPath).stem().c_str()),
