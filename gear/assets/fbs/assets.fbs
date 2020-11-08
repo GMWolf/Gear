@@ -6,6 +6,7 @@ include "shader.fbs";
 include "tileset.fbs";
 include "map.fbs";
 include "texture.fbs";
+include "mesh.fbs";
 
 namespace gear.assets;
 
@@ -21,6 +22,7 @@ union Asset {
     Shader,
     TileSet,
     Map,
+    Mesh,
 }
 
 table AssetEntry {

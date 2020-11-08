@@ -6,12 +6,13 @@ add_subdirectory(sprite_pack)
 add_subdirectory(texture_pack)
 add_subdirectory(tileset_pack)
 add_subdirectory(map_pack)
+add_subdirectory(mesh_packer)
 add_subdirectory(bundler)
 
 
 function(add_assets target)
     set(oneValueArgs FILE)
-    set(multiValueArgs TEXTURE ATLAS SHADER FONT TILESET MAP)
+    set(multiValueArgs TEXTURE ATLAS SHADER FONT TILESET MAP MESH)
     cmake_parse_arguments(PARSE_ARGV 1 ADD_ASSETS "" "${oneValueArgs}" "${multiValueArgs}")
 
     foreach(file ${ADD_ASSETS_TEXTURE})
@@ -48,6 +49,12 @@ function(add_assets target)
         add_map(${file})
         list(APPEND ASSETS ${ADD_MAP_OUT_FILES})
         list(APPEND BUNDLES ${ADD_MAP_BUNDLES})
+    endforeach()
+
+    foreach(file ${ADD_ASSETS_MESH})
+        add_mesh(${file})
+        list(APPEND ASSETS ${ADD_MESH_OUT_FILES})
+        list(APPEND BUNDLES ${ADD_MESH_BUNDLES})
     endforeach()
 
     add_custom_target(${target}_ASSETS DEPENDS ${ASSETS})

@@ -10,6 +10,7 @@
 #include "common_generated.h"
 #include "font_generated.h"
 #include "map_generated.h"
+#include "mesh_generated.h"
 #include "shader_generated.h"
 #include "sprite_generated.h"
 #include "texture_generated.h"
@@ -36,11 +37,12 @@ enum class Asset : uint8_t {
   Shader = 5,
   TileSet = 6,
   Map = 7,
+  Mesh = 8,
   MIN = NONE,
-  MAX = Map
+  MAX = Mesh
 };
 
-inline const Asset (&EnumValuesAsset())[8] {
+inline const Asset (&EnumValuesAsset())[9] {
   static const Asset values[] = {
     Asset::NONE,
     Asset::Texture,
@@ -49,13 +51,14 @@ inline const Asset (&EnumValuesAsset())[8] {
     Asset::Font,
     Asset::Shader,
     Asset::TileSet,
-    Asset::Map
+    Asset::Map,
+    Asset::Mesh
   };
   return values;
 }
 
 inline const char * const *EnumNamesAsset() {
-  static const char * const names[9] = {
+  static const char * const names[10] = {
     "NONE",
     "Texture",
     "Sprite",
@@ -64,13 +67,14 @@ inline const char * const *EnumNamesAsset() {
     "Shader",
     "TileSet",
     "Map",
+    "Mesh",
     nullptr
   };
   return names;
 }
 
 inline const char *EnumNameAsset(Asset e) {
-  if (flatbuffers::IsOutRange(e, Asset::NONE, Asset::Map)) return "";
+  if (flatbuffers::IsOutRange(e, Asset::NONE, Asset::Mesh)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesAsset()[index];
 }
@@ -105,6 +109,10 @@ template<> struct AssetTraits<gear::assets::TileSet> {
 
 template<> struct AssetTraits<gear::assets::Map> {
   static const Asset enum_value = Asset::Map;
+};
+
+template<> struct AssetTraits<gear::assets::Mesh> {
+  static const Asset enum_value = Asset::Mesh;
 };
 
 bool VerifyAsset(flatbuffers::Verifier &verifier, const void *obj, Asset type);
@@ -222,6 +230,9 @@ struct AssetEntry FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const gear::assets::Map *asset_as_Map() const {
     return asset_type() == gear::assets::Asset::Map ? static_cast<const gear::assets::Map *>(asset()) : nullptr;
   }
+  const gear::assets::Mesh *asset_as_Mesh() const {
+    return asset_type() == gear::assets::Asset::Mesh ? static_cast<const gear::assets::Mesh *>(asset()) : nullptr;
+  }
   void *mutable_asset() {
     return GetPointer<void *>(VT_ASSET);
   }
@@ -261,6 +272,10 @@ template<> inline const gear::assets::TileSet *AssetEntry::asset_as<gear::assets
 
 template<> inline const gear::assets::Map *AssetEntry::asset_as<gear::assets::Map>() const {
   return asset_as_Map();
+}
+
+template<> inline const gear::assets::Mesh *AssetEntry::asset_as<gear::assets::Mesh>() const {
+  return asset_as_Mesh();
 }
 
 struct AssetEntryBuilder {
@@ -434,6 +449,10 @@ inline bool VerifyAsset(flatbuffers::Verifier &verifier, const void *obj, Asset 
     }
     case Asset::Map: {
       auto ptr = reinterpret_cast<const gear::assets::Map *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case Asset::Mesh: {
+      auto ptr = reinterpret_cast<const gear::assets::Mesh *>(obj);
       return verifier.VerifyTable(ptr);
     }
     default: return true;

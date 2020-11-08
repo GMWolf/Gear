@@ -5,6 +5,7 @@ add_assets(3dexample_assets
         FILE assets.bin
         TEXTURE assets/Fabric_Boucle.yaml
         SHADER assets/shaders/testshd.yaml
+        MESH assets/models/SciFiHelmet/SciFiHelmet.gltf
         )
 
 add_dependencies(3dexample 3dexample_assets)

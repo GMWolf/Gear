@@ -14,7 +14,8 @@ local schemas = {
     "shader.fbs",
     "assets.fbs",
     "tileset.fbs",
-    "texture.fbs"
+    "texture.fbs",
+    "mesh.fbs"
 }
 
 

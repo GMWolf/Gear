@@ -1,0 +1,17 @@
+include "common.fbs";
+
+namespace gear.assets;
+
+
+table MeshPrimitive {
+    indices: [ubyte];
+    position: [ubyte];
+    texcoord: [ubyte];
+    normals: [ubyte];
+}
+
+table Mesh {
+    primitives: [MeshPrimitive];
+}
+
+root_type Mesh;

@@ -1,3 +1,6 @@
 [submodule "Cuttlefish"]
 	path = deps/Cuttlefish
 	url = https://github.com/akb825/Cuttlefish.git
+[submodule "deps/tinygltf"]
+	path = deps/tinygltf
+	url = https://github.com/syoyo/tinygltf.git

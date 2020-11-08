@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD 20)
 include(cmake/glfw.cmake)
 include(cmake/stb.cmake)
 include(cmake/imgui.cmake)
+include(cmake/tinygltf.cmake)
 
 add_subdirectory(deps/glm)
 add_subdirectory(deps/Lyra)
@@ -46,6 +47,7 @@ add_subdirectory(deps/spirv-cross)
 
 set(CUTTLEFISH_SHARED OFF CACHE BOOL "" FORCE)
 add_subdirectory(deps/Cuttlefish)
+add_subdirectory(deps/tinygltf)
 
 add_subdirectory(gear)
 
