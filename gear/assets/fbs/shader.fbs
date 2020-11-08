@@ -1,8 +1,14 @@
 namespace gear.assets;
 
+table ShaderText {
+    source: string;
+    bin: [uint32];
+}
+
 table Shader {
-    vertex: string;
-    fragment: string;
+    isBinary: bool;
+    vertexText: ShaderText;
+    fragmentText: ShaderText;
 }
 
 root_type Shader;

@@ -9,34 +9,123 @@
 namespace gear {
 namespace assets {
 
+struct ShaderText;
+struct ShaderTextBuilder;
+
 struct Shader;
 struct ShaderBuilder;
+
+struct ShaderText FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef ShaderTextBuilder Builder;
+  struct Traits;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_SOURCE = 4,
+    VT_BIN = 6
+  };
+  const flatbuffers::String *source() const {
+    return GetPointer<const flatbuffers::String *>(VT_SOURCE);
+  }
+  flatbuffers::String *mutable_source() {
+    return GetPointer<flatbuffers::String *>(VT_SOURCE);
+  }
+  const flatbuffers::Vector<uint32_t> *bin() const {
+    return GetPointer<const flatbuffers::Vector<uint32_t> *>(VT_BIN);
+  }
+  flatbuffers::Vector<uint32_t> *mutable_bin() {
+    return GetPointer<flatbuffers::Vector<uint32_t> *>(VT_BIN);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_SOURCE) &&
+           verifier.VerifyString(source()) &&
+           VerifyOffset(verifier, VT_BIN) &&
+           verifier.VerifyVector(bin()) &&
+           verifier.EndTable();
+  }
+};
+
+struct ShaderTextBuilder {
+  typedef ShaderText Table;
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_source(flatbuffers::Offset<flatbuffers::String> source) {
+    fbb_.AddOffset(ShaderText::VT_SOURCE, source);
+  }
+  void add_bin(flatbuffers::Offset<flatbuffers::Vector<uint32_t>> bin) {
+    fbb_.AddOffset(ShaderText::VT_BIN, bin);
+  }
+  explicit ShaderTextBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ShaderTextBuilder &operator=(const ShaderTextBuilder &);
+  flatbuffers::Offset<ShaderText> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<ShaderText>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<ShaderText> CreateShaderText(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    flatbuffers::Offset<flatbuffers::String> source = 0,
+    flatbuffers::Offset<flatbuffers::Vector<uint32_t>> bin = 0) {
+  ShaderTextBuilder builder_(_fbb);
+  builder_.add_bin(bin);
+  builder_.add_source(source);
+  return builder_.Finish();
+}
+
+struct ShaderText::Traits {
+  using type = ShaderText;
+  static auto constexpr Create = CreateShaderText;
+};
+
+inline flatbuffers::Offset<ShaderText> CreateShaderTextDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    const char *source = nullptr,
+    const std::vector<uint32_t> *bin = nullptr) {
+  auto source__ = source ? _fbb.CreateString(source) : 0;
+  auto bin__ = bin ? _fbb.CreateVector<uint32_t>(*bin) : 0;
+  return gear::assets::CreateShaderText(
+      _fbb,
+      source__,
+      bin__);
+}
 
 struct Shader FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef ShaderBuilder Builder;
   struct Traits;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_VERTEX = 4,
-    VT_FRAGMENT = 6
+    VT_ISBINARY = 4,
+    VT_VERTEXTEXT = 6,
+    VT_FRAGMENTTEXT = 8
   };
-  const flatbuffers::String *vertex() const {
-    return GetPointer<const flatbuffers::String *>(VT_VERTEX);
+  bool isBinary() const {
+    return GetField<uint8_t>(VT_ISBINARY, 0) != 0;
   }
-  flatbuffers::String *mutable_vertex() {
-    return GetPointer<flatbuffers::String *>(VT_VERTEX);
+  bool mutate_isBinary(bool _isBinary) {
+    return SetField<uint8_t>(VT_ISBINARY, static_cast<uint8_t>(_isBinary), 0);
   }
-  const flatbuffers::String *fragment() const {
-    return GetPointer<const flatbuffers::String *>(VT_FRAGMENT);
+  const gear::assets::ShaderText *vertexText() const {
+    return GetPointer<const gear::assets::ShaderText *>(VT_VERTEXTEXT);
   }
-  flatbuffers::String *mutable_fragment() {
-    return GetPointer<flatbuffers::String *>(VT_FRAGMENT);
+  gear::assets::ShaderText *mutable_vertexText() {
+    return GetPointer<gear::assets::ShaderText *>(VT_VERTEXTEXT);
+  }
+  const gear::assets::ShaderText *fragmentText() const {
+    return GetPointer<const gear::assets::ShaderText *>(VT_FRAGMENTTEXT);
+  }
+  gear::assets::ShaderText *mutable_fragmentText() {
+    return GetPointer<gear::assets::ShaderText *>(VT_FRAGMENTTEXT);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyOffset(verifier, VT_VERTEX) &&
-           verifier.VerifyString(vertex()) &&
-           VerifyOffset(verifier, VT_FRAGMENT) &&
-           verifier.VerifyString(fragment()) &&
+           VerifyField<uint8_t>(verifier, VT_ISBINARY) &&
+           VerifyOffset(verifier, VT_VERTEXTEXT) &&
+           verifier.VerifyTable(vertexText()) &&
+           VerifyOffset(verifier, VT_FRAGMENTTEXT) &&
+           verifier.VerifyTable(fragmentText()) &&
            verifier.EndTable();
   }
 };
@@ -45,11 +134,14 @@ struct ShaderBuilder {
   typedef Shader Table;
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
-  void add_vertex(flatbuffers::Offset<flatbuffers::String> vertex) {
-    fbb_.AddOffset(Shader::VT_VERTEX, vertex);
+  void add_isBinary(bool isBinary) {
+    fbb_.AddElement<uint8_t>(Shader::VT_ISBINARY, static_cast<uint8_t>(isBinary), 0);
   }
-  void add_fragment(flatbuffers::Offset<flatbuffers::String> fragment) {
-    fbb_.AddOffset(Shader::VT_FRAGMENT, fragment);
+  void add_vertexText(flatbuffers::Offset<gear::assets::ShaderText> vertexText) {
+    fbb_.AddOffset(Shader::VT_VERTEXTEXT, vertexText);
+  }
+  void add_fragmentText(flatbuffers::Offset<gear::assets::ShaderText> fragmentText) {
+    fbb_.AddOffset(Shader::VT_FRAGMENTTEXT, fragmentText);
   }
   explicit ShaderBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -65,11 +157,13 @@ struct ShaderBuilder {
 
 inline flatbuffers::Offset<Shader> CreateShader(
     flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<flatbuffers::String> vertex = 0,
-    flatbuffers::Offset<flatbuffers::String> fragment = 0) {
+    bool isBinary = false,
+    flatbuffers::Offset<gear::assets::ShaderText> vertexText = 0,
+    flatbuffers::Offset<gear::assets::ShaderText> fragmentText = 0) {
   ShaderBuilder builder_(_fbb);
-  builder_.add_fragment(fragment);
-  builder_.add_vertex(vertex);
+  builder_.add_fragmentText(fragmentText);
+  builder_.add_vertexText(vertexText);
+  builder_.add_isBinary(isBinary);
   return builder_.Finish();
 }
 
@@ -77,18 +171,6 @@ struct Shader::Traits {
   using type = Shader;
   static auto constexpr Create = CreateShader;
 };
-
-inline flatbuffers::Offset<Shader> CreateShaderDirect(
-    flatbuffers::FlatBufferBuilder &_fbb,
-    const char *vertex = nullptr,
-    const char *fragment = nullptr) {
-  auto vertex__ = vertex ? _fbb.CreateString(vertex) : 0;
-  auto fragment__ = fragment ? _fbb.CreateString(fragment) : 0;
-  return gear::assets::CreateShader(
-      _fbb,
-      vertex__,
-      fragment__);
-}
 
 inline const gear::assets::Shader *GetShader(const void *buf) {
   return flatbuffers::GetRoot<gear::assets::Shader>(buf);

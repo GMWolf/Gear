@@ -1,6 +1,6 @@
 
 add_executable(shader_packer shader_packer.cpp)
-target_link_libraries(shader_packer PUBLIC yaml-cpp bfg_lyra gear-assets-fbs)
+target_link_libraries(shader_packer PUBLIC yaml-cpp bfg_lyra gear-assets-fbs shaderc)
 target_include_directories(shader_packer PUBLIC ../../)
 
 function(add_shader input)

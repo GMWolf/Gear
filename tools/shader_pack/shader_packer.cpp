@@ -11,8 +11,38 @@
 #include <iostream>
 #include <filesystem>
 #include <flatbuffers/hash.h>
+#include <shaderc/shaderc.hpp>
 
 namespace fs = std::filesystem;
+
+
+std::string preprocessShader(const std::string& sourceName, shaderc_shader_kind kind, const std::string& source, const shaderc::CompileOptions& options)
+{
+    shaderc::Compiler compiler;
+
+    auto result = compiler.PreprocessGlsl(source, kind, sourceName.c_str(), options);
+    if (result.GetCompilationStatus() != shaderc_compilation_status_success) {
+        std::cerr << result.GetErrorMessage();
+        return "";
+    }
+
+    return {result.cbegin(), result.cend()};
+}
+
+
+std::vector<uint32_t> compileShader(const std::string& sourceName, shaderc_shader_kind kind, const std::string& source, const shaderc::CompileOptions& options)
+{
+    shaderc::Compiler compiler;
+
+    auto result = compiler.CompileGlslToSpv(source, kind, sourceName.c_str(), options);
+    if (result.GetCompilationStatus() != shaderc_compilation_status_success) {
+        std::cerr << result.GetErrorMessage();
+        return {};
+    }
+
+    return {result.cbegin(), result.cend()};
+}
+
 
 int main(int argc, char* argv[]) {
     std::string inputPath;
@@ -29,13 +59,12 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-
-
     const auto config = YAML::LoadFile(inputPath);
 
     auto name = config["name"].as<std::string>();
     auto vertexFileName = config["vertex"].as<std::string>();
     auto fragmentFileName = config["fragment"].as<std::string>();
+    auto version = config["version"].as<int>();
 
     auto pathRelDir = fs::path(inputPath).parent_path();
 
@@ -43,32 +72,57 @@ int main(int argc, char* argv[]) {
     auto fragmentPath = pathRelDir / fragmentFileName;
 
     std::ifstream vertexStream(vertexPath);
-    std::string vertexText((std::istreambuf_iterator<char>(vertexStream)),
+    std::string vertexSource((std::istreambuf_iterator<char>(vertexStream)),
                     std::istreambuf_iterator<char>());
 
     std::ifstream fragmentStream(fragmentPath);
-    std::string fragmentText((std::istreambuf_iterator<char>(fragmentStream)),
+    std::string fragmentSource((std::istreambuf_iterator<char>(fragmentStream)),
                            std::istreambuf_iterator<char>());
 
-    std::string header = "#version 330 core\n";
+    shaderc::CompileOptions options;
+    options.SetOptimizationLevel(shaderc_optimization_level_performance);
 
-    flatbuffers::FlatBufferBuilder builder(1000 + fragmentText.size() + vertexText.size());
-    auto vertTextBin = builder.CreateString(header + vertexText);
-    auto fragTextBin = builder.CreateString(header + fragmentText);
-    gear::assets::ShaderBuilder shaderBuilder(builder);
-    shaderBuilder.add_vertex(vertTextBin);
-    shaderBuilder.add_fragment(fragTextBin);
-    auto shader = shaderBuilder.Finish();
+    std::string header = "#version " + std::to_string(version) + " core\n";
+    options.SetForcedVersionProfile(version, shaderc_profile_core);
+    options.SetTargetEnvironment(shaderc_target_env_opengl, shaderc_env_version_opengl_4_5);
+    auto vertexText = preprocessShader(vertexFileName, shaderc_vertex_shader, header + vertexSource, options);
+    auto fragmentText = preprocessShader(fragmentFileName, shaderc_fragment_shader, header + fragmentSource, options);
+
+    flatbuffers::FlatBufferBuilder fbb(1000 + fragmentText.size() + vertexText.size());
+
+    flatbuffers::Offset<gear::assets::Shader> shader;
+    if (config["compile"].IsDefined())
+    {
+        auto vertexTextModule = compileShader(vertexFileName, shaderc_vertex_shader, vertexText, options);
+        auto fragmentTextModule = compileShader(fragmentFileName, shaderc_fragment_shader, fragmentText, options);
+        auto vertTextOffset = gear::assets::CreateShaderTextDirect(fbb, nullptr, &vertexTextModule);
+        auto fragTextOffset = gear::assets::CreateShaderTextDirect(fbb, nullptr, &fragmentTextModule);
+        gear::assets::ShaderBuilder shaderBuilder(fbb);
+        shaderBuilder.add_vertexText(vertTextOffset);
+        shaderBuilder.add_fragmentText(fragTextOffset);
+        shaderBuilder.add_isBinary(true);
+        shader = shaderBuilder.Finish();
+    }
+    else
+    {
+        auto vertTextOffset = gear::assets::CreateShaderTextDirect(fbb, vertexText.c_str(), nullptr);
+        auto fragTextOffset = gear::assets::CreateShaderTextDirect(fbb, fragmentText.c_str(), nullptr);
+        gear::assets::ShaderBuilder shaderBuilder(fbb);
+        shaderBuilder.add_vertexText(vertTextOffset);
+        shaderBuilder.add_fragmentText(fragTextOffset);
+        shaderBuilder.add_isBinary(false);
+        shader = shaderBuilder.Finish();
+    }
 
     std::vector<flatbuffers::Offset<gear::assets::AssetEntry>> entries;
-    entries.push_back(gear::assets::CreateAssetEntry(builder, flatbuffers::HashFnv1<uint64_t>(name.c_str()), gear::assets::Asset::Shader, shader.Union()));
-    auto assetVec = builder.CreateVectorOfSortedTables(&entries);
-    auto bundle = gear::assets::CreateBundle(builder, assetVec);
-    builder.Finish(bundle);
+    entries.push_back(gear::assets::CreateAssetEntry(fbb, flatbuffers::HashFnv1<uint64_t>(name.c_str()), gear::assets::Asset::Shader, shader.Union()));
+    auto assetVec = fbb.CreateVectorOfSortedTables(&entries);
+    auto bundle = gear::assets::CreateBundle(fbb, assetVec);
+    fbb.Finish(bundle);
 
     {
-        auto buf = builder.GetBufferPointer();
-        auto bufSize = builder.GetSize();
+        auto buf = fbb.GetBufferPointer();
+        auto bufSize = fbb.GetSize();
         std::ofstream ofs(outFileName, std::ios::out | std::ios::binary);
         ofs.write((char*)buf, bufSize);
     }

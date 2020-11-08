@@ -86,7 +86,7 @@ gear::Shader &gear::Shader::operator=(gear::Shader &&o) noexcept {
 
 
 gear::Shader gear::createShader(const assets::Shader *shaderDef) {
-    return Shader(shaderDef->vertex()->c_str(), shaderDef->fragment()->c_str());
+    return Shader(shaderDef->vertexText()->source()->c_str(), shaderDef->fragmentText()->source()->c_str());
 }
 
 gear::Shader *gear::ShaderStore::getShader(const gear::assets::Shader *shader) {

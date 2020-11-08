@@ -3,7 +3,9 @@
 //
 #include <g3d.h>
 #include <glad/glad.h>
+#include <iostream>
 #include "Texture.h"
+#include "Shader.h"
 
 namespace gear {
     const Gapi *g3dGetGapi() {
@@ -18,23 +20,26 @@ namespace gear {
         return &g2dGapi;
     }
 
-    G3DInstance::G3DInstance() = default;
-
-    void G3DInstance::debugTexture(const assets::Texture *texture) {
-        const char* vertText = "out vec2 texCoord;\n"
-                               " \n"
-                               "void main()\n"
-                               "{\n"
-                               "    float x = -1.0 + float((gl_VertexID & 1) << 2);\n"
-                               "    float y = -1.0 + float((gl_VertexID & 2) << 1);\n"
-                               "    texCoord.x = (x+1.0)*0.5;\n"
-                               "    texCoord.y = (y+1.0)*0.5;\n"
-                               "    gl_Position = vec4(x, y, 0, 1);\n"
-                               "}";
+    G3DInstance::G3DInstance() {
+        shaderCache = std::make_unique<g3d::ShaderCache>();
+        textureCache = std::make_unique<g3d::TextureCache>();
+    }
+    G3DInstance::~G3DInstance() = default;
 
 
+    void G3DInstance::debugTexture(const assets::Texture *texture, const assets::Shader *shader) {
+
+        static GLuint vao = 0;
+        if (vao == 0) {
+            glCreateVertexArrays(1, &vao);
+        }
+
+        glViewport(0, 0, 720, 720);
+        glBindVertexArray(vao);
+        glUseProgram(shaderCache->get(shader).id);
 
 
         glDrawArrays( GL_TRIANGLES, 0, 3 );
     }
+
 }

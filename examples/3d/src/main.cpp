@@ -5,28 +5,38 @@
 #include <gear/Application.h>
 #include <gear/ApplicationAdapter.h>
 #include <gear/g3d/g3d.h>
+#include <gear/Assets.h>
+#include <optional>
 
 class Game : public gear::ApplicationAdapter {
 public:
 
     void init(gear::Application *_app) override {
+        assets.emplace();
+        assets->loadBundle("assets.bin");
+        g3d = new gear::G3DInstance();
     }
 
     void update() override {
-
+        g3d->debugTexture(nullptr, assets->getShader("testshd"));
     }
 
     void end() override {
+        assets.reset();
+        delete g3d;
     }
 
 private:
+
+    gear::G3DInstance* g3d;
+    std::optional<gear::AssetRegistry> assets;
 
 };
 
 int main() {
 
     gear::AppConfig config {
-            .width = 480,
+            .width = 720,
             .height = 720,
             .title ="3d",
             .gapi = gear::g3dGetGapi()

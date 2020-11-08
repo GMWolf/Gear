@@ -13,16 +13,20 @@ namespace gear {
 
     namespace g3d {
         struct TextureCache;
+        struct ShaderCache;
     }
 
     namespace assets {
         struct Texture;
+        struct Shader;
     }
 
     struct G3DInstance {
         G3DInstance();
+        ~G3DInstance();
         std::unique_ptr<g3d::TextureCache> textureCache;
-        void debugTexture(const assets::Texture* texture);
+        std::unique_ptr<g3d::ShaderCache> shaderCache;
+        void debugTexture(const assets::Texture* texture, const assets::Shader* shader);
 
     };
 

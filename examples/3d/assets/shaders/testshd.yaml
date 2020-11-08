@@ -1,0 +1,5 @@
+name: testshd
+vertex: fullscreen.vert
+fragment: textured.frag
+version: 450
+compile: true
