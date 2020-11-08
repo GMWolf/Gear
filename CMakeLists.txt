@@ -43,6 +43,8 @@ add_subdirectory(deps/glslang)
 set(SHADERC_SKIP_TESTS ON CACHE BOOL "" FORCE)
 add_subdirectory(deps/shaderc)
 add_subdirectory(deps/spirv-cross)
+add_subdirectory(deps/compressonator)
+
 
 add_subdirectory(gear)
 
