@@ -1,0 +1,18 @@
+
+add_library(CMP_MeshCompressor)
+
+file(GLOB_RECURSE DRACO_SRC
+    draco/*.h
+    draco/*.cc
+)
+
+target_sources(CMP_MeshCompressor PRIVATE
+    ${DRACO_SRC}
+)
+
+target_include_directories(CMP_MeshCompressor PUBLIC
+    ./draco/src/
+    ./
+)
+
+set_target_properties(CMP_MeshCompressor PROPERTIES FOLDER ${FOLDER_NAME})

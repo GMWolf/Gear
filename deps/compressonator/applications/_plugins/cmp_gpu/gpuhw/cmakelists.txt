@@ -1,0 +1,39 @@
+
+add_library(Plugin_CMP_GPU_HW SHARED )
+
+target_sources(Plugin_CMP_GPU_HW PUBLIC
+    compute_gpuhw.cpp
+    compute_gpuhw.h
+    cgpuhw.cpp
+    cgpuhw.h
+    ${PROJECT_SOURCE_DIR}/external/glad/include/glad/glad.h
+    ${PROJECT_SOURCE_DIR}/external/glad/src/glad.c
+)
+
+target_include_directories(Plugin_CMP_GPU_HW PRIVATE
+    ${PROJECT_SOURCE_DIR}/cmp_framework             # compute_base.h
+    ${PROJECT_SOURCE_DIR}/cmp_core/shaders          # common_def.h
+    ${PROJECT_SOURCE_DIR}/cmp_core/source           # cmp_math_vec4.h
+    ${PROJECT_SOURCE_DIR}/applications/_libs/cmp_math #cmp_math_common.h
+    ${PROJECT_SOURCE_DIR}/external/glad/include/
+    ${PROJECT_SOURCE_DIR}/external/glad/include/glad
+)
+
+target_link_libraries(Plugin_CMP_GPU_HW 
+PRIVATE
+    ExtGLM 
+    ExtGLFW
+    CMP_Framework
+    CompressonatorLIB
+    Plugin_PluginManager
+    Plugin_TCPluginAPI
+    GPU_Decode
+)
+
+set(BUILD_PLUGIN_TARGET ${CMAKE_BINARY_DIR}/bin/debug/plugin)
+
+set_target_properties(Plugin_CMP_GPU_HW PROPERTIES 
+    FOLDER ${FOLDER_NAME}
+    RUNTIME_OUTPUT_DIRECTORY_DEBUG   "${CMAKE_BINARY_DIR}/bin/debug/plugins"
+    RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/bin/release/plugins"
+    )
