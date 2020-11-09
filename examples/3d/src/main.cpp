@@ -18,7 +18,8 @@ public:
     }
 
     void update() override {
-        g3d->debugTexture(assets->getTexture("Fabric_Boucle"), assets->getShader("testshd"));
+        //g3d->debugTexture(assets->getTexture("Fabric_Boucle"), assets->getShader("testshd"));
+        g3d->debugMesh(assets->getMesh("SciFiHelmet"), assets->getTexture("Fabric_Boucle"), assets->getShader("defaultShd"));
     }
 
     void end() override {

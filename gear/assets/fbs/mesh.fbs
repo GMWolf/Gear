@@ -4,6 +4,8 @@ namespace gear.assets;
 
 
 table MeshPrimitive {
+    indexCount: uint32;
+    vertexCount: uint32;
     indices: [ubyte];
     position: [ubyte];
     texcoord: [ubyte];

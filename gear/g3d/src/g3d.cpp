@@ -6,6 +6,7 @@
 #include <iostream>
 #include "Texture.h"
 #include "Shader.h"
+#include "Mesh.h"
 
 namespace gear {
     const Gapi *g3dGetGapi() {
@@ -23,6 +24,7 @@ namespace gear {
     G3DInstance::G3DInstance() {
         shaderCache = std::make_unique<g3d::ShaderCache>();
         textureCache = std::make_unique<g3d::TextureCache>();
+        meshCache = std::make_unique<g3d::MeshCache>();
     }
     G3DInstance::~G3DInstance() = default;
 
@@ -42,10 +44,24 @@ namespace gear {
         glBindTextureUnit(0, textureCache->get(texture).id);
         glProgramUniform1i(shd.id, loc, 0);
 
-
-
-
         glDrawArrays( GL_TRIANGLES, 0, 3 );
+    }
+
+    void
+    G3DInstance::debugMesh(const assets::Mesh *mesh, const assets::Texture *texture, const assets::Shader *shader) {
+        const auto& m = meshCache->get(mesh);
+        const auto& t = textureCache->get(texture);
+        const auto& s = shaderCache->get(shader);
+
+        glBindVertexArray(meshCache->vao);
+        glUseProgram(s.id);
+        auto loc = s.shaderDef->resources()->LookupByKey("tex")->binding();
+        glBindTextureUnit(0, t.id);
+        glProgramUniform1i(s.id, loc, 0);
+
+        for(const auto& prim : m.primitives) {
+            glDrawElements(GL_TRIANGLES, prim.indexCount, GL_UNSIGNED_SHORT, nullptr);
+        }
     }
 
 }

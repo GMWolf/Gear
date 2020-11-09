@@ -1,0 +1,5 @@
+name: defaultShd
+vertex: default.vert
+fragment: textured.frag
+version: 450
+compile: true

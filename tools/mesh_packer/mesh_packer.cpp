@@ -100,7 +100,9 @@ int main(int argc, char* argv[]) {
             std::vector<uint8_t> positions = accessorRead<float>(model, model.accessors[primitive.attributes["POSITION"]]);
             std::vector<uint8_t> normals = accessorRead<float>(model, model.accessors[primitive.attributes["NORMAL"]]);
             std::vector<uint8_t> texcoords = accessorRead<float>(model, model.accessors[primitive.attributes["TEXCOORD"]]);
-            primitives.push_back(gear::assets::CreateMeshPrimitiveDirect(fbb, &indices, &positions, &texcoords, &normals));
+            primitives.push_back(gear::assets::CreateMeshPrimitiveDirect(fbb, model.accessors[primitive.indices].count,
+                                                                         model.accessors[primitive.attributes["POSITION"]].count,
+                                                                         &indices, &positions, &texcoords, &normals));
         }
 
         auto meshBin = gear::assets::CreateMeshDirect(fbb, &primitives);

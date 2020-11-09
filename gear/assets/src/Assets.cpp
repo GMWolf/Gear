@@ -118,4 +118,7 @@ const gear::assets::Font *gear::AssetRegistry::getFont(const uint64_t name) {
     return entry ? entry->asset_as_Font() : nullptr;
 }
 
-
+const gear::assets::Mesh *gear::AssetRegistry::getMesh(uint64_t name) {
+    auto entry = store->getAssetEntry(name);
+    return entry ? entry->asset_as_Mesh() : nullptr;
+}

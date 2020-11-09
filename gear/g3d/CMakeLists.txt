@@ -6,7 +6,7 @@ set(GEAR_G3D_HEADERS
         src/GlObject.h )
 
 set(GEAR_G3D_SOURCES
-        src/g3d.cpp src/Texture.h src/Texture.cpp src/Shader.cpp src/Shader.h)
+        src/g3d.cpp src/Texture.h src/Texture.cpp src/Shader.cpp src/Shader.h src/Mesh.cpp src/Mesh.h)
 
 add_library(gear-g3d ${GEAR_G3D_PUBLIC} ${GEAR_G3D_HEADERS} ${GEAR_G3D_SOURCES})
 
