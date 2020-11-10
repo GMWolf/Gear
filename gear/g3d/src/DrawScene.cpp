@@ -20,9 +20,6 @@ namespace gear {
     static void renderSceneCamera(G3DInstance &g3d, ecs::Registry &registry, Camera &camera,
                                   Transform3 &cameraTransform) {
 
-
-        glEnable(GL_DEPTH_TEST);
-
         glViewport(camera.viewPort.pos.x, camera.viewPort.pos.y, camera.viewPort.size.x, camera.viewPort.size.y);
 
         static GLuint ubo = 0;
@@ -61,9 +58,8 @@ namespace gear {
                     glBindBufferBase(GL_UNIFORM_BUFFER, binding, ubo);
                 }
 
-
                 for(const auto& prim : mesh.primitives) {
-                    glDrawElements(GL_TRIANGLES, prim.indexCount, GL_UNSIGNED_SHORT, nullptr);
+                    glDrawElements(GL_TRIANGLES, prim.indexCount, GL_UNSIGNED_INT, nullptr);
                 }
 
             }
@@ -72,6 +68,8 @@ namespace gear {
     }
 
     void G3DInstance::renderScene(ecs::Registry &registry) {
+
+        glEnable(GL_DEPTH_TEST);
 
         auto cameraQuery = registry.query().all<Transform3, Camera>();
 

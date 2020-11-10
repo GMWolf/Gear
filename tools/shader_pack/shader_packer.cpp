@@ -128,7 +128,6 @@ int main(int argc, char* argv[]) {
         auto fragmentTextModule = compileShader(fragmentFileName, shaderc_fragment_shader, fragmentText, options);
 
 
-
         auto vertTextOffset = gear::assets::CreateShaderTextDirect(fbb, nullptr, &vertexTextModule);
         auto fragTextOffset = gear::assets::CreateShaderTextDirect(fbb, nullptr, &fragmentTextModule);
         std::vector<flatbuffers::Offset<gear::assets::ShaderResource>> resources;

@@ -15,6 +15,12 @@ function(add_assets target)
     set(multiValueArgs TEXTURE ATLAS SHADER FONT TILESET MAP MESH)
     cmake_parse_arguments(PARSE_ARGV 1 ADD_ASSETS "" "${oneValueArgs}" "${multiValueArgs}")
 
+    foreach(file ${ADD_ASSETS_MESH})
+        add_mesh(${file})
+        list(APPEND ASSETS ${ADD_MESH_OUT_FILES})
+        list(APPEND BUNDLES ${ADD_MESH_BUNDLES})
+    endforeach()
+
     foreach(file ${ADD_ASSETS_TEXTURE})
         add_texture(${file})
         list(APPEND ASSETS ${ADD_TEXTURE_OUT_FILES})
@@ -51,13 +57,9 @@ function(add_assets target)
         list(APPEND BUNDLES ${ADD_MAP_BUNDLES})
     endforeach()
 
-    foreach(file ${ADD_ASSETS_MESH})
-        add_mesh(${file})
-        list(APPEND ASSETS ${ADD_MESH_OUT_FILES})
-        list(APPEND BUNDLES ${ADD_MESH_BUNDLES})
-    endforeach()
+    message("${BUNDLES}")
 
-    add_custom_target(${target}_ASSETS DEPENDS ${ASSETS})
+    add_custom_target(${target}_ASSETS DEPENDS "${BUNDLES}")
 
     add_bundle(${ADD_ASSETS_FILE} ${target} ${BUNDLES})
 

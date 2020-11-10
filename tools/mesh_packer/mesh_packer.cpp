@@ -96,7 +96,7 @@ int main(int argc, char* argv[]) {
         std::vector<flatbuffers::Offset<gear::assets::MeshPrimitive>> primitives;
         for(auto& primitive : mesh.primitives) {
             auto& indexAccessor = model.accessors[primitive.indices];
-            std::vector<uint8_t> indices = accessorRead<uint16_t>(model, model.accessors[primitive.indices]);
+            std::vector<uint8_t> indices = accessorRead<uint32_t>(model, model.accessors[primitive.indices]);
             std::vector<uint8_t> positions = accessorRead<float>(model, model.accessors[primitive.attributes["POSITION"]]);
             std::vector<uint8_t> normals = accessorRead<float>(model, model.accessors[primitive.attributes["NORMAL"]]);
             std::vector<uint8_t> texcoords = accessorRead<float>(model, model.accessors[primitive.attributes["TEXCOORD"]]);
@@ -106,10 +106,8 @@ int main(int argc, char* argv[]) {
         }
 
         auto meshBin = gear::assets::CreateMeshDirect(fbb, &primitives);
-
         entries.push_back(gear::assets::CreateAssetEntry(fbb, flatbuffers::HashFnv1<uint64_t>(mesh.name.c_str()), gear::assets::Asset::Mesh, meshBin.Union()));
     }
-
     auto assetVec = fbb.CreateVectorOfSortedTables(&entries);
     auto bundle = gear::assets::CreateBundle(fbb, assetVec);
     fbb.Finish(bundle);

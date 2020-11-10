@@ -101,6 +101,7 @@ int main(int argc, char* argv[]) {
         texture.generateMipmaps();
     }
 
+
     if (!texture.convert(cfFormat, cf::Texture::Type::UNorm, cf::Texture::Quality::Normal )) {
         std::cerr << "error converting image " << source << ".\n";
         if (!texture.imagesComplete()) {
