@@ -26,6 +26,7 @@ void gear::g3d::Texture::storage(GLsizei width_, GLsizei height_, GLsizei levels
 static bool formatIsCompressed(GLenum format) {
     switch (format) {
         case GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM:
+        case GL_COMPRESSED_RGBA_BPTC_UNORM:
             return true;
         default:
             return false;
@@ -62,7 +63,7 @@ gear::g3d::Texture gear::g3d::createTextureFromAsset(const gear::assets::Texture
             type = GL_UNSIGNED_BYTE;
             break;
         case assets::PixelFormat::BC7:
-            format = GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM;
+            format = GL_COMPRESSED_RGBA_BPTC_UNORM;
             type = GL_UNSIGNED_BYTE;
             break;
     }

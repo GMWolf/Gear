@@ -18,15 +18,32 @@ namespace gear {
     };
 
     struct TextureBindings {
-        GLuint albedo;
-        GLuint occlusion;
+        int albedo;
+        int occlusion;
+        int normal;
     };
 
+    static void bindTexture(int binding, const assets::Texture* tex, g3d::TextureCache& textureCache) {
+        if (binding >= 0) {
+            glBindTextureUnit(binding, textureCache.get(tex).id);
+        }
+    }
+
+    static int getShaderBinding(const g3d::Shader& shd, const char* name) {
+        auto resource = shd.shaderDef->resources()->LookupByKey(name);
+        if (resource) {
+            return resource->binding();
+        }
+        return -1;
+    }
+
     static void bindMaterial(const assets::Material* material, g3d::TextureCache& textureCache, const TextureBindings& textureBindings) {
-        auto& albedoTex = textureCache.get((const assets::Texture *)material->baseColor()->ptr());
-        glBindTextureUnit(textureBindings.albedo, albedoTex.id);
-        auto& occlusionTex = textureCache.get((const assets::Texture *)material->AmbientOcclusion()->ptr());
-        glBindTextureUnit(textureBindings.occlusion, occlusionTex.id);
+        auto albedoTex = (const assets::Texture *)material->baseColor()->ptr();
+        bindTexture(textureBindings.albedo, albedoTex, textureCache);
+        auto occlusionTex = (const assets::Texture *)material->AmbientOcclusion()->ptr();
+        bindTexture(textureBindings.occlusion, occlusionTex, textureCache);
+        auto normalTex = (const assets::Texture *)material->normal()->ptr();
+        bindTexture(textureBindings.normal, normalTex, textureCache);
     }
 
     static void renderSceneCamera(G3DInstance &g3d, ecs::Registry &registry, Camera &camera,
@@ -52,8 +69,9 @@ namespace gear {
 
                 glUseProgram(shader.id);
                 TextureBindings textureBindings{};
-                textureBindings.albedo = shader.shaderDef->resources()->LookupByKey("albedo")->binding();
-                textureBindings.occlusion = shader.shaderDef->resources()->LookupByKey("occlusion")->binding();
+                textureBindings.albedo = getShaderBinding(shader, "albedo");
+                textureBindings.occlusion = getShaderBinding(shader, "occlusion");
+                textureBindings.normal = getShaderBinding(shader, "normalMap");
 
                 { // update scene buffer
                     auto sceneBuffer = static_cast<SceneBuffer *>(glMapNamedBuffer(ubo, GL_WRITE_ONLY));

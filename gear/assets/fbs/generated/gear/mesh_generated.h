@@ -124,7 +124,8 @@ struct MeshPrimitive FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_POSITION = 10,
     VT_TEXCOORD = 12,
     VT_NORMALS = 14,
-    VT_MATERIAL = 16
+    VT_TANGENTS = 16,
+    VT_MATERIAL = 18
   };
   uint32_t indexCount() const {
     return GetField<uint32_t>(VT_INDEXCOUNT, 0);
@@ -162,6 +163,12 @@ struct MeshPrimitive FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   flatbuffers::Vector<uint8_t> *mutable_normals() {
     return GetPointer<flatbuffers::Vector<uint8_t> *>(VT_NORMALS);
   }
+  const flatbuffers::Vector<uint8_t> *tangents() const {
+    return GetPointer<const flatbuffers::Vector<uint8_t> *>(VT_TANGENTS);
+  }
+  flatbuffers::Vector<uint8_t> *mutable_tangents() {
+    return GetPointer<flatbuffers::Vector<uint8_t> *>(VT_TANGENTS);
+  }
   const gear::assets::Ref *material() const {
     return GetPointer<const gear::assets::Ref *>(VT_MATERIAL);
   }
@@ -180,6 +187,8 @@ struct MeshPrimitive FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            verifier.VerifyVector(texcoord()) &&
            VerifyOffset(verifier, VT_NORMALS) &&
            verifier.VerifyVector(normals()) &&
+           VerifyOffset(verifier, VT_TANGENTS) &&
+           verifier.VerifyVector(tangents()) &&
            VerifyOffset(verifier, VT_MATERIAL) &&
            verifier.VerifyTable(material()) &&
            verifier.EndTable();
@@ -208,6 +217,9 @@ struct MeshPrimitiveBuilder {
   void add_normals(flatbuffers::Offset<flatbuffers::Vector<uint8_t>> normals) {
     fbb_.AddOffset(MeshPrimitive::VT_NORMALS, normals);
   }
+  void add_tangents(flatbuffers::Offset<flatbuffers::Vector<uint8_t>> tangents) {
+    fbb_.AddOffset(MeshPrimitive::VT_TANGENTS, tangents);
+  }
   void add_material(flatbuffers::Offset<gear::assets::Ref> material) {
     fbb_.AddOffset(MeshPrimitive::VT_MATERIAL, material);
   }
@@ -231,9 +243,11 @@ inline flatbuffers::Offset<MeshPrimitive> CreateMeshPrimitive(
     flatbuffers::Offset<flatbuffers::Vector<uint8_t>> position = 0,
     flatbuffers::Offset<flatbuffers::Vector<uint8_t>> texcoord = 0,
     flatbuffers::Offset<flatbuffers::Vector<uint8_t>> normals = 0,
+    flatbuffers::Offset<flatbuffers::Vector<uint8_t>> tangents = 0,
     flatbuffers::Offset<gear::assets::Ref> material = 0) {
   MeshPrimitiveBuilder builder_(_fbb);
   builder_.add_material(material);
+  builder_.add_tangents(tangents);
   builder_.add_normals(normals);
   builder_.add_texcoord(texcoord);
   builder_.add_position(position);
@@ -256,11 +270,13 @@ inline flatbuffers::Offset<MeshPrimitive> CreateMeshPrimitiveDirect(
     const std::vector<uint8_t> *position = nullptr,
     const std::vector<uint8_t> *texcoord = nullptr,
     const std::vector<uint8_t> *normals = nullptr,
+    const std::vector<uint8_t> *tangents = nullptr,
     flatbuffers::Offset<gear::assets::Ref> material = 0) {
   auto indices__ = indices ? _fbb.CreateVector<uint8_t>(*indices) : 0;
   auto position__ = position ? _fbb.CreateVector<uint8_t>(*position) : 0;
   auto texcoord__ = texcoord ? _fbb.CreateVector<uint8_t>(*texcoord) : 0;
   auto normals__ = normals ? _fbb.CreateVector<uint8_t>(*normals) : 0;
+  auto tangents__ = tangents ? _fbb.CreateVector<uint8_t>(*tangents) : 0;
   return gear::assets::CreateMeshPrimitive(
       _fbb,
       indexCount,
@@ -269,6 +285,7 @@ inline flatbuffers::Offset<MeshPrimitive> CreateMeshPrimitiveDirect(
       position__,
       texcoord__,
       normals__,
+      tangents__,
       material);
 }
 

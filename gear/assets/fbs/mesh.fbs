@@ -16,6 +16,7 @@ table MeshPrimitive {
     position: [ubyte];
     texcoord: [ubyte];
     normals: [ubyte];
+    tangents: [ubyte];
     material: Ref;
 }
 

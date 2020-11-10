@@ -37,6 +37,7 @@ namespace gear::g3d {
         Buffer positions;
         Buffer texcoord;
         Buffer normals;
+        Buffer tangents;
         Buffer indices;
         GLuint vao;
         size_t vertexOffset;

@@ -130,10 +130,11 @@ int main(int argc, char* argv[]) {
             std::vector<uint8_t> positions = accessorRead<float>(model, model.accessors[primitive.attributes["POSITION"]]);
             std::vector<uint8_t> normals = accessorRead<float>(model, model.accessors[primitive.attributes["NORMAL"]]);
             std::vector<uint8_t> texcoords = accessorRead<float>(model, model.accessors[primitive.attributes["TEXCOORD_0"]]);
+            std::vector<uint8_t> tangents = accessorRead<float>(model, model.accessors[primitive.attributes["TANGENT"]]);
             auto matRef = materialReferences[primitive.material];
             primitives.push_back(gear::assets::CreateMeshPrimitiveDirect(fbb, model.accessors[primitive.indices].count,
                                                                          model.accessors[primitive.attributes["POSITION"]].count,
-                                                                         &indices, &positions, &texcoords, &normals,
+                                                                         &indices, &positions, &texcoords, &normals, &tangents,
                                                                          matRef));
         }
 
