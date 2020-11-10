@@ -8,7 +8,7 @@ add_subdirectory(tileset_pack)
 add_subdirectory(map_pack)
 add_subdirectory(mesh_packer)
 add_subdirectory(bundler)
-
+add_subdirectory(asset_build)
 
 function(add_assets target)
     set(oneValueArgs FILE)
@@ -56,8 +56,6 @@ function(add_assets target)
         list(APPEND ASSETS ${ADD_MAP_OUT_FILES})
         list(APPEND BUNDLES ${ADD_MAP_BUNDLES})
     endforeach()
-
-    message("${BUNDLES}")
 
     add_custom_target(${target}_ASSETS DEPENDS "${BUNDLES}")
 
