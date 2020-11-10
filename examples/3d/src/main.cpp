@@ -11,6 +11,7 @@
 #include <gear/Transform.h>
 #include <gear/View.h>
 #include <gear/Input.h>
+#include <gear/mesh_generated.h>
 
 class Game : public gear::ApplicationAdapter {
 public:
@@ -19,8 +20,8 @@ public:
         application = app;
         assets.emplace();
         assets->loadBundle("assets.bin");
+        assets->loadBundle("assets/models/SciFiHelmet/SciFiHelmet.bundle");
         g3d = new gear::G3DInstance();
-
 
         {
             gear::Camera camera{};
@@ -43,7 +44,6 @@ public:
 
             gear::MeshInstance meshInstance{};
             meshInstance.mesh = assets->getMesh("SciFiHelmet");
-            meshInstance.texture = assets->getTexture("Fabric_Boucle");
             meshInstance.shader = assets->getShader("defaultShd");
 
             mesh = cmd.createEntity(transform, meshInstance);

@@ -1,0 +1,3 @@
+image: SciFiHelmet_Normal.png
+format: BC7
+generate_mips: true

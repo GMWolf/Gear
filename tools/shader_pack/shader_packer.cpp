@@ -52,7 +52,6 @@ void createReflectionData( flatbuffers::FlatBufferBuilder& fbb,  const std::vect
     spirv_cross::ShaderResources resources = compiler.get_shader_resources();
     for(auto &resource : resources.sampled_images) {
         auto name = fbb.CreateString(resource.name);
-        std::cout << resource.name << std::endl;
         gear::assets::ShaderResourceBuilder shaderResourceBuilder(fbb);
         shaderResourceBuilder.add_name(name);
         shaderResourceBuilder.add_binding(compiler.get_decoration(resource.id, spv::DecorationBinding));
@@ -62,7 +61,6 @@ void createReflectionData( flatbuffers::FlatBufferBuilder& fbb,  const std::vect
 
     for(auto &resource : resources.uniform_buffers) {
         auto name = fbb.CreateString(resource.name);
-        std::cout << resource.name << std::endl;
         gear::assets::ShaderResourceBuilder shaderResourceBuilder(fbb);
         shaderResourceBuilder.add_name(name);
         shaderResourceBuilder.add_binding(compiler.get_decoration(resource.id, spv::DecorationBinding));

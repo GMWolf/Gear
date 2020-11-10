@@ -22,6 +22,7 @@ vec3 rotate(vec3 vec, vec4 quat) {
 
 void main() {
     texCoord = texCoordin;
+    texCoord.y = -texCoord.y;
     normal = rotate(normalIn, transform.rotation);
     vec3 tPos = rotate(position, transform.rotation) + transform.position;
     gl_Position = projection * vec4(tPos, 1.0);

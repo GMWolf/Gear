@@ -2,6 +2,12 @@ include "common.fbs";
 
 namespace gear.assets;
 
+table Material {
+    baseColor: Ref;
+    normal: Ref;
+    MetallicRoughness: Ref;
+    AmbientOcclusion: Ref;
+}
 
 table MeshPrimitive {
     indexCount: uint32;
@@ -10,6 +16,7 @@ table MeshPrimitive {
     position: [ubyte];
     texcoord: [ubyte];
     normals: [ubyte];
+    material: Ref;
 }
 
 table Mesh {

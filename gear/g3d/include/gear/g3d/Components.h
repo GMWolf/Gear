@@ -18,7 +18,6 @@ namespace gear {
     struct MeshInstance {
         const assets::Mesh* mesh;
         const assets::Shader* shader;
-        const assets::Texture* texture;
     };
 
 }

@@ -68,19 +68,21 @@ void gear::AssetRegistry::patchPointers(const gear::assets::Bundle* bundle) {
 void gear::AssetRegistry::loadBundle(const std::string & fileName) {
 
     std::ifstream in(fileName, std::ios::binary);
-    in.seekg(0, std::ios::end);
-    size_t bufferSize = in.tellg();
-    in.seekg(0, std::ios::beg);
+    if (in) {
+        in.seekg(0, std::ios::end);
+        size_t bufferSize = in.tellg();
+        in.seekg(0, std::ios::beg);
 
-    auto buffer = std::make_unique<char[]>(bufferSize);
-    in.read(buffer.get(), bufferSize);
-    auto bundle = gear::assets::GetBundle(buffer.get());
+        auto buffer = std::make_unique<char[]>(bufferSize);
+        in.read(buffer.get(), bufferSize);
+        auto bundle = gear::assets::GetBundle(buffer.get());
 
-    registerBundleRecursive(bundle);
+        registerBundleRecursive(bundle);
 
-    patchPointers(bundle);
+        patchPointers(bundle);
 
-    store->fileData.insert({fileName, std::move(buffer)});
+        store->fileData.insert({fileName, std::move(buffer)});
+    }
 }
 
 const gear::assets::Texture* gear::AssetRegistry::getTexture(uint64_t name) {

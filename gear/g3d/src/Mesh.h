@@ -29,6 +29,7 @@ namespace gear::g3d {
                 uint32_t offset;
                 uint32_t first;
                 uint32_t indexCount;
+                const assets::Material* material;
             };
             std::vector<Primitive> primitives;
         };

@@ -23,6 +23,7 @@ union Asset {
     TileSet,
     Map,
     Mesh,
+    Material,
 }
 
 table AssetEntry {

@@ -8,7 +8,9 @@
 #include <gear/mesh_generated.h>
 #include <gear/assets_generated.h>
 #include <flatbuffers/hash.h>
+#include <filesystem>
 
+namespace fs = std::filesystem;
 
 template<class T>
 T readComponent(const void* ptr, int componentType) {
@@ -62,6 +64,10 @@ std::vector<std::uint8_t> accessorRead(const tinygltf::Model& model, const tinyg
     return vec;
 }
 
+std::string getImageUri(const tinygltf::Model& model, int index) {
+    auto& image = model.images[index];
+    return image.uri;
+}
 
 int main(int argc, char* argv[]) {
 
@@ -90,26 +96,55 @@ int main(int argc, char* argv[]) {
     flatbuffers::FlatBufferBuilder fbb(2048);
 
     std::vector<flatbuffers::Offset<gear::assets::AssetEntry>> entries;
+    std::vector<flatbuffers::Offset<gear::assets::Ref>> references;
+
+    std::vector<flatbuffers::Offset<gear::assets::Ref>> textureReferences;
+    std::vector<flatbuffers::Offset<gear::assets::Ref>> materialReferences;
+
+    for(auto& texture : model.textures) {
+        auto uri = getImageUri(model, texture.source);
+        auto nameHash = flatbuffers::HashFnv1<uint64_t>(fs::path(uri).stem().c_str());
+        auto ref = gear::assets::CreateRef(fbb, (uint8_t)gear::assets::Asset::Texture, nameHash);
+        references.push_back(ref);
+        textureReferences.push_back(ref);
+    }
+
+    for(auto& material : model.materials) {
+        auto albedoRef = textureReferences[material.pbrMetallicRoughness.baseColorTexture.index];
+        auto metallicRoughnessRef = textureReferences[material.pbrMetallicRoughness.metallicRoughnessTexture.index];
+        auto normalRef = textureReferences[material.normalTexture.index];
+        auto aoRef = textureReferences[material.occlusionTexture.index];
+        auto materialFb = gear::assets::CreateMaterial(fbb, albedoRef, normalRef, metallicRoughnessRef, aoRef);
+        auto nameHash = flatbuffers::HashFnv1<uint64_t>(material.name.c_str());
+        entries.push_back(gear::assets::CreateAssetEntry(fbb, nameHash, gear::assets::Asset::Material, materialFb.Union()));
+        auto ref = gear::assets::CreateRef(fbb, (uint8_t)gear::assets::Asset::Material, nameHash);
+        references.push_back(ref);
+        materialReferences.push_back(ref);
+    }
 
     for(auto& mesh : model.meshes) {
-
         std::vector<flatbuffers::Offset<gear::assets::MeshPrimitive>> primitives;
         for(auto& primitive : mesh.primitives) {
             auto& indexAccessor = model.accessors[primitive.indices];
             std::vector<uint8_t> indices = accessorRead<uint32_t>(model, model.accessors[primitive.indices]);
             std::vector<uint8_t> positions = accessorRead<float>(model, model.accessors[primitive.attributes["POSITION"]]);
             std::vector<uint8_t> normals = accessorRead<float>(model, model.accessors[primitive.attributes["NORMAL"]]);
-            std::vector<uint8_t> texcoords = accessorRead<float>(model, model.accessors[primitive.attributes["TEXCOORD"]]);
+            std::vector<uint8_t> texcoords = accessorRead<float>(model, model.accessors[primitive.attributes["TEXCOORD_0"]]);
+            auto matRef = materialReferences[primitive.material];
             primitives.push_back(gear::assets::CreateMeshPrimitiveDirect(fbb, model.accessors[primitive.indices].count,
                                                                          model.accessors[primitive.attributes["POSITION"]].count,
-                                                                         &indices, &positions, &texcoords, &normals));
+                                                                         &indices, &positions, &texcoords, &normals,
+                                                                         matRef));
         }
 
         auto meshBin = gear::assets::CreateMeshDirect(fbb, &primitives);
         entries.push_back(gear::assets::CreateAssetEntry(fbb, flatbuffers::HashFnv1<uint64_t>(mesh.name.c_str()), gear::assets::Asset::Mesh, meshBin.Union()));
     }
+
+
     auto assetVec = fbb.CreateVectorOfSortedTables(&entries);
-    auto bundle = gear::assets::CreateBundle(fbb, assetVec);
+    auto refVec = fbb.CreateVector(references);
+    auto bundle = gear::assets::CreateBundle(fbb, assetVec, 0, refVec);
     fbb.Finish(bundle);
     {
         auto buf = fbb.GetBufferPointer();
