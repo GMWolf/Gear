@@ -14,6 +14,7 @@
 #include <shaderc/shaderc.hpp>
 #include <spirv_cross.hpp>
 #include <spirv_glsl.hpp>
+#include <regex>
 
 namespace fs = std::filesystem;
 
@@ -71,6 +72,49 @@ void createReflectionData( flatbuffers::FlatBufferBuilder& fbb,  const std::vect
 }
 
 
+struct ShaderIncluder : public shaderc::CompileOptions::IncluderInterface {
+
+
+    struct ResultContainer {
+        shaderc_include_result result;
+        std::string sourceName;
+        std::string contents;
+    };
+
+    shaderc_include_result *
+    GetInclude(const char *requested_source, shaderc_include_type type, const char *requesting_source,
+               size_t include_depth) override {
+        auto path = fs::path(requesting_source).parent_path() / requested_source;
+        std::ifstream stream(path);
+
+        auto result = new ResultContainer;
+        result->sourceName = path.filename().string();
+
+        if (stream) {
+            result->contents = std::string((std::istreambuf_iterator<char>(stream)), std::istreambuf_iterator<char>());
+            result->result.content = result->contents.c_str();
+            result->result.content_length = result->contents.length();
+            result->result.source_name = result->sourceName.c_str();
+            result->result.source_name_length = result->sourceName.length();
+        } else {
+            result->result.content = nullptr;
+            result->result.content_length = 0;
+            result->result.source_name = nullptr;
+            result->result.source_name_length = 0;
+        }
+
+        result->result.user_data = result;
+
+
+        return &result->result;
+    }
+
+    void ReleaseInclude(shaderc_include_result *data) override {
+        delete (ResultContainer*)data->user_data;
+    }
+};
+
+
 int main(int argc, char* argv[]) {
     std::string inputPath;
     std::string outFileName = "out";
@@ -110,12 +154,14 @@ int main(int argc, char* argv[]) {
     options.SetGenerateDebugInfo();
     options.SetOptimizationLevel(shaderc_optimization_level_performance);
 
+    options.SetIncluder(std::make_unique<ShaderIncluder>());
+
     std::string header = "#version " + std::to_string(version) + " core\n";
     options.SetForcedVersionProfile(version, shaderc_profile_core);
     options.SetTargetEnvironment(shaderc_target_env_opengl, shaderc_env_version_opengl_4_5);
 
-    auto vertexText = preprocessShader(vertexFileName, shaderc_vertex_shader, header + vertexSource, options);
-    auto fragmentText = preprocessShader(fragmentFileName, shaderc_fragment_shader, header + fragmentSource, options);
+    auto vertexText = preprocessShader(vertexPath, shaderc_vertex_shader, header + vertexSource, options);
+    auto fragmentText = preprocessShader(fragmentPath, shaderc_fragment_shader, header + fragmentSource, options);
 
     flatbuffers::FlatBufferBuilder fbb(1000 + fragmentText.size() + vertexText.size());
 
@@ -166,7 +212,10 @@ int main(int argc, char* argv[]) {
     {
         //write depfile
         std::ofstream ofs(outFileName + ".d");
-        ofs << outFileName << ": " << vertexPath << " " << fragmentPath;
+        std::regex whitespaceRegex("\\s");
+        auto escapedVertexPath = std::regex_replace(vertexPath.string(), whitespaceRegex, "\\$&");
+        auto escapedFragmentPath = std::regex_replace(fragmentPath.string(), whitespaceRegex, "\\$&");
+        ofs << outFileName << ": " << escapedVertexPath << " " << escapedFragmentPath;
     }
 
     return 0;
