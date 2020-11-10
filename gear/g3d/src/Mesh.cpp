@@ -64,7 +64,7 @@ gear::g3d::MeshCache::Mesh::Primitive gear::g3d::MeshCache::addPrimitive(const g
     return meshPrim;
 }
 
-gear::g3d::MeshCache::Mesh gear::g3d::MeshCache::get(const assets::Mesh* mesh) {
+gear::g3d::MeshCache::Mesh& gear::g3d::MeshCache::get(const assets::Mesh* mesh) {
     auto it = meshes.find(mesh);
     if(it == meshes.end()) {
         it = meshes.insert({mesh, addMesh(mesh)}).first;

@@ -6,7 +6,7 @@ set(GEAR_G3D_HEADERS
         src/GlObject.h )
 
 set(GEAR_G3D_SOURCES
-        src/g3d.cpp src/Texture.h src/Texture.cpp src/Shader.cpp src/Shader.h src/Mesh.cpp src/Mesh.h)
+        src/g3d.cpp src/Texture.h src/Texture.cpp src/Shader.cpp src/Shader.h src/Mesh.cpp src/Mesh.h include/gear/g3d/Components.h src/DrawScene.cpp)
 
 add_library(gear-g3d ${GEAR_G3D_PUBLIC} ${GEAR_G3D_HEADERS} ${GEAR_G3D_SOURCES})
 
@@ -18,7 +18,7 @@ target_link_libraries(imgui_ogl3 PRIVATE g3d-glad)
 target_link_libraries(gear-g3d
         PRIVATE imgui imgui_glfw  libzstd_static freetype)
 target_link_libraries(gear-g3d
-        PUBLIC gear-core gear-assets g3d-glad gear-gapi
+        PUBLIC gear-core gear-assets g3d-glad gear-gapi gear-ecs glm
         )
 target_include_directories(gear-g3d
         PUBLIC include

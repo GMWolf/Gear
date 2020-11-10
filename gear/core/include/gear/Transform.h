@@ -5,12 +5,24 @@
 #ifndef GEAR_TRANSFORM_H
 #define GEAR_TRANSFORM_H
 
-#include <glm/vec2.hpp>
+#include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 namespace gear {
 
     struct Transform {
         glm::vec2 pos;
+    };
+
+    struct Transform3 {
+        glm::vec3 position {}; float padding;
+        glm::quat orientation {};
+
+
+        glm::mat4x3 matrix() const;
+
+        Transform3 apply(const Transform3& transform3) const;
+        Transform3 inverse() const;
     };
 
 }

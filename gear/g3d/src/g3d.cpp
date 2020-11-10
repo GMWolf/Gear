@@ -40,9 +40,8 @@ namespace gear {
         glBindVertexArray(vao);
         auto& shd = shaderCache->get(shader);
         glUseProgram(shd.id);
-        auto loc = shd.shaderDef->resources()->LookupByKey("tex")->binding();
-        glBindTextureUnit(0, textureCache->get(texture).id);
-        glProgramUniform1i(shd.id, loc, 0);
+        auto bind = shd.shaderDef->resources()->LookupByKey("tex")->binding();
+        glBindTextureUnit(bind, textureCache->get(texture).id);
 
         glDrawArrays( GL_TRIANGLES, 0, 3 );
     }
@@ -63,5 +62,16 @@ namespace gear {
             glDrawElements(GL_TRIANGLES, prim.indexCount, GL_UNSIGNED_SHORT, nullptr);
         }
     }
+
+    void G3DInstance::clearBuffer(glm::vec4 color, float depth) {
+        glClearColor(color.r, color.g, color.b, color.a);
+        glClearDepthf(depth);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    }
+
+
+
+
+
 
 }

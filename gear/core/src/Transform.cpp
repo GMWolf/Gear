@@ -4,6 +4,7 @@
 
 #include <gear/Transform.h>
 #include <flatbuffers/flexbuffers.h>
+#include <glm/gtx/quaternion.hpp>
 
 
 namespace gear {
@@ -19,4 +20,27 @@ namespace gear {
         t->pos.y = v[1].AsFloat();
     }
 
+    glm::mat4x3 Transform3::matrix() const {
+        auto r = glm::toMat3(orientation);
+        glm::mat4x3 mat;
+        mat[0] = r[0];
+        mat[1] = r[1];
+        mat[2] = r[2];
+        mat[3] = position;
+        return mat;
+    }
+
+    Transform3 Transform3::apply(const Transform3& base) const{
+        Transform3 result;
+        result.position = position + orientation * base.position;
+        result.orientation = orientation * base.orientation;
+        return result;
+    }
+
+    Transform3 Transform3::inverse() const {
+        Transform3 result;
+        result.position = glm::inverse(orientation) * -position;
+        result.orientation = glm::inverse(orientation);
+        return result;
+    }
 }

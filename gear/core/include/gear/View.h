@@ -16,7 +16,16 @@ namespace gear {
         glm::mat4 matrix();
     };
 
+    struct ViewPort {
+        glm::ivec2 pos;
+        glm::ivec2 size;
+    };
 
+    struct Camera {
+        ViewPort viewPort;
+        float near, far;
+        float fov;
+    };
 
 }
 

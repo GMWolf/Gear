@@ -43,7 +43,7 @@ namespace gear::g3d {
 
         std::unordered_map<const assets::Mesh*, Mesh> meshes;
 
-        Mesh get(const assets::Mesh* mesh);
+        Mesh& get(const assets::Mesh* mesh);
 
     private:
         Mesh::Primitive addPrimitive(const assets::MeshPrimitive* prim);

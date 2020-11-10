@@ -20,27 +20,30 @@ struct ShaderBuilder;
 
 enum class ShaderResourceType : int8_t {
   sampler = 0,
+  uniform_buffer = 1,
   MIN = sampler,
-  MAX = sampler
+  MAX = uniform_buffer
 };
 
-inline const ShaderResourceType (&EnumValuesShaderResourceType())[1] {
+inline const ShaderResourceType (&EnumValuesShaderResourceType())[2] {
   static const ShaderResourceType values[] = {
-    ShaderResourceType::sampler
+    ShaderResourceType::sampler,
+    ShaderResourceType::uniform_buffer
   };
   return values;
 }
 
 inline const char * const *EnumNamesShaderResourceType() {
-  static const char * const names[2] = {
+  static const char * const names[3] = {
     "sampler",
+    "uniform_buffer",
     nullptr
   };
   return names;
 }
 
 inline const char *EnumNameShaderResourceType(ShaderResourceType e) {
-  if (flatbuffers::IsOutRange(e, ShaderResourceType::sampler, ShaderResourceType::sampler)) return "";
+  if (flatbuffers::IsOutRange(e, ShaderResourceType::sampler, ShaderResourceType::uniform_buffer)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesShaderResourceType()[index];
 }

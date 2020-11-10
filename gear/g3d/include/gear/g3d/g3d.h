@@ -5,8 +5,10 @@
 #ifndef GEAR_G3D_H
 #define GEAR_G3D_H
 
+#include "Components.h"
 #include <gear/gapi.h>
 #include <memory>
+#include <glm/vec4.hpp>
 
 namespace gear {
     const Gapi* g3dGetGapi();
@@ -15,6 +17,11 @@ namespace gear {
         struct TextureCache;
         struct ShaderCache;
         struct MeshCache;
+    }
+
+    namespace ecs {
+        class Registry;
+        class CommandBuffer;
     }
 
     namespace assets {
@@ -31,6 +38,9 @@ namespace gear {
         std::unique_ptr<g3d::MeshCache> meshCache;
         void debugTexture(const assets::Texture* texture, const assets::Shader* shader);
         void debugMesh(const assets::Mesh* mesh, const assets::Texture* texture, const assets::Shader* shader);
+        void clearBuffer(glm::vec4 color, float depth);
+
+        void renderScene(ecs::Registry& registry);
     };
 
 }
