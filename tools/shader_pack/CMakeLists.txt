@@ -8,6 +8,7 @@ function(add_shader input)
             COMMAND shader_packer ARGS -o ${input}.bin ${CMAKE_CURRENT_LIST_DIR}/${input}
             OUTPUT ${input}.bin
             DEPENDS "${input}" shader_packer
+            DEPFILE ${input}.bin.d
             USES_TERMINAL
     )
 

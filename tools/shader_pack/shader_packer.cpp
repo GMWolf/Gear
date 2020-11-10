@@ -163,5 +163,11 @@ int main(int argc, char* argv[]) {
         ofs.write((char*)buf, bufSize);
     }
 
+    {
+        //write depfile
+        std::ofstream ofs(outFileName + ".d");
+        ofs << outFileName << ": " << vertexPath << " " << fragmentPath;
+    }
+
     return 0;
 }
