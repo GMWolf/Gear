@@ -86,9 +86,16 @@ int main(int argc, char* argv[]) {
         case gear::assets::PixelFormat::RGBA8:
             cfFormat = cf::Texture::Format::R8G8B8A8;
             break;
+        case gear::assets::PixelFormat::BC4:
+            cfFormat = cf::Texture::Format::BC4;
+            break;
+        case gear::assets::PixelFormat::BC5:
+            cfFormat = cf::Texture::Format::BC5;
+            break;
         case gear::assets::PixelFormat::BC7:
             cfFormat = cf::Texture::Format::BC7;
             break;
+
     }
 
     int mipLevels = generateMips ? cf::Texture::maxMipmapLevels(cf::Texture::Dimension::Dim2D, image.width(), image.height()) : 1;
@@ -100,7 +107,6 @@ int main(int argc, char* argv[]) {
     if (mipLevels > 1) {
         texture.generateMipmaps();
     }
-
 
     if (!texture.convert(cfFormat, cf::Texture::Type::UNorm, cf::Texture::Quality::Normal )) {
         std::cerr << "error converting image " << source << ".\n";

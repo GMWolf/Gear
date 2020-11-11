@@ -23,10 +23,15 @@ mat3 computeTBN() {
     return mat3(T, B, N);
 }
 
+vec3 reconstructZ(vec2 v) {
+    return vec3(v, 1.0 - dot(v,v));
+}
+
 void main() {
 
     mat3 TBN = computeTBN();
-    vec3 normalVec = TBN * normalize((texture(normalMap, texCoord.xy).rgb - 0.5) * 2.0);
+    vec3 n = reconstructZ((texture(normalMap, texCoord.xy).rg - 0.5) * 2.0);
+    vec3 normalVec = TBN * n;
 
     PBRFragment pbrFrag;
     pbrFrag.albedo = texture(albedo, texCoord.xy).rgb;

@@ -20,28 +20,34 @@ enum class PixelFormat : uint8_t {
   R8 = 1,
   RGB8 = 2,
   RGBA8 = 3,
-  BC7 = 4,
+  BC4 = 4,
+  BC5 = 5,
+  BC7 = 6,
   MIN = Invalid,
   MAX = BC7
 };
 
-inline const PixelFormat (&EnumValuesPixelFormat())[5] {
+inline const PixelFormat (&EnumValuesPixelFormat())[7] {
   static const PixelFormat values[] = {
     PixelFormat::Invalid,
     PixelFormat::R8,
     PixelFormat::RGB8,
     PixelFormat::RGBA8,
+    PixelFormat::BC4,
+    PixelFormat::BC5,
     PixelFormat::BC7
   };
   return values;
 }
 
 inline const char * const *EnumNamesPixelFormat() {
-  static const char * const names[6] = {
+  static const char * const names[8] = {
     "Invalid",
     "R8",
     "RGB8",
     "RGBA8",
+    "BC4",
+    "BC5",
     "BC7",
     nullptr
   };

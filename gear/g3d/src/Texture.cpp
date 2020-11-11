@@ -27,6 +27,8 @@ static bool formatIsCompressed(GLenum format) {
     switch (format) {
         case GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM:
         case GL_COMPRESSED_RGBA_BPTC_UNORM:
+        case GL_COMPRESSED_RG_RGTC2:
+        case GL_COMPRESSED_RED_RGTC1:
             return true;
         default:
             return false;
@@ -62,15 +64,26 @@ gear::g3d::Texture gear::g3d::createTextureFromAsset(const gear::assets::Texture
             format = GL_RGBA;
             type = GL_UNSIGNED_BYTE;
             break;
+        case assets::PixelFormat::BC4:
+            format = GL_COMPRESSED_RED_RGTC1;
+            type = GL_UNSIGNED_BYTE;
+            break;
+        case assets::PixelFormat::BC5:
+            format = GL_COMPRESSED_RG_RGTC2;
+            type = GL_UNSIGNED_BYTE;
+            break;
         case assets::PixelFormat::BC7:
             format = GL_COMPRESSED_RGBA_BPTC_UNORM;
             type = GL_UNSIGNED_BYTE;
             break;
+
     }
 
     Texture texture;
     texture.create();
     texture.storage(texDef->width(), texDef->height(), texDef->mips()->size(), format);
+    glTextureParameterf(texture.id, GL_TEXTURE_MAX_ANISOTROPY, 8.0f);
+    glTextureParameteri(texture.id, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
     std::vector<char> buffer;
 

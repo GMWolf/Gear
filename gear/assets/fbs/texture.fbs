@@ -5,6 +5,8 @@ enum PixelFormat : ubyte{
     R8,
     RGB8,
     RGBA8,
+    BC4,
+    BC5,
     BC7
 }
 

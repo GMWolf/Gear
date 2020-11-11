@@ -18,12 +18,13 @@ public:
 
     void init(gear::Application *app) override {
         application = app;
+
+        g3d = new gear::G3DInstance();
         assets.emplace();
+
         assets->loadBundle("assets.bin");
         assets->loadBundle("assets/models/SciFiHelmet/SciFiHelmet.bundle");
         assets->loadBundle("assets/models/Corset/Corset.bundle");
-
-        g3d = new gear::G3DInstance();
         {
             gear::Camera camera{};
             camera.near = 0.1;
@@ -125,8 +126,8 @@ private:
 int main() {
 
     gear::AppConfig config {
-            .width = 720,
-            .height = 720,
+            .width = 1920,
+            .height = 1080,
             .title ="3d",
             .gapi = gear::g3dGetGapi()
     };

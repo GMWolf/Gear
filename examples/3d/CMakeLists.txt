@@ -6,7 +6,6 @@ add_subdirectory(assets/models/Corset)
 
 add_assets(3dexample_assets
         FILE assets.bin
-        TEXTURE assets/Fabric_Boucle.yaml
         SHADER
             assets/shaders/testshd.yaml
             assets/shaders/default.yaml
