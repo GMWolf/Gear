@@ -83,6 +83,9 @@ void gear::AssetRegistry::loadBundle(const std::string & fileName) {
 
         store->fileData.insert({fileName, std::move(buffer)});
     }
+    else{
+        throw std::runtime_error("could not load file" + fileName);
+    }
 }
 
 const gear::assets::Texture* gear::AssetRegistry::getTexture(uint64_t name) {

@@ -15,7 +15,7 @@ namespace gear {
     };
 
     struct Transform3 {
-        glm::vec3 position {}; float padding;
+        glm::vec3 position {}; float scale{};
         glm::quat orientation {};
 
 

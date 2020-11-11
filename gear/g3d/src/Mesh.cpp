@@ -60,10 +60,10 @@ gear::g3d::MeshCache::Mesh::Primitive gear::g3d::MeshCache::addPrimitive(const g
 
     Mesh::Primitive meshPrim{};
     meshPrim.indexCount = prim->indexCount();
-    meshPrim.offset = vertexOffset;
+    meshPrim.baseVertex = vertexOffset;
     vertexOffset += prim->vertexCount();
-    meshPrim.first = indexOffset;
-    indexOffset += prim->indexCount();
+    meshPrim.indexOffset = indexOffset;
+    indexOffset = indices.offset;
     meshPrim.material = (const assets::Material*)prim->material()->ptr();
 
     return meshPrim;

@@ -1,16 +1,18 @@
 
 #include "srgb.glsl"
+#include "pbr.glsl"
 
 layout(location = 0) in vec2 texCoord;
 layout(location = 1) in vec3 normal;
 layout(location = 2) in vec4 tangent;
+layout(location = 3) in vec3 viewDir;
 
 layout(binding = 0) uniform sampler2D albedo;
 layout(binding = 1) uniform sampler2D occlusion;
 layout(binding = 2) uniform sampler2D normalMap;
+layout(binding = 3) uniform sampler2D metallicRoughness;
 
 layout(location = 0) out vec4 outColor;
-
 
 
 mat3 computeTBN() {
@@ -25,11 +27,23 @@ void main() {
 
     mat3 TBN = computeTBN();
     vec3 normalVec = TBN * normalize((texture(normalMap, texCoord.xy).rgb - 0.5) * 2.0);
-    float light = max(0, dot(normalize(normalVec), -normalize(vec3(0.75,-1,0))));
-    light += 0.1 * texture(occlusion, texCoord.xy).r;
 
-    vec3 col = texture(albedo, texCoord.xy).rgb; //tex assumed to be linear (use srgb format)
-    col *= light;
+    PBRFragment pbrFrag;
+    pbrFrag.albedo = texture(albedo, texCoord.xy).rgb;
+    pbrFrag.metalicity = texture(metallicRoughness, texCoord.xy).b;
+    pbrFrag.roughness = texture(metallicRoughness, texCoord.xy).g;
+    pbrFrag.emmisivity = vec3(0.0);
+    pbrFrag.normal = normalVec;
+
+    LightFragment lightFrag;
+    lightFrag.lightDirection = -normalize(vec3(0.75,-1,0));
+    lightFrag.radiance = vec3(1.0f);
+
+    vec3 col = pbrColor(pbrFrag, lightFrag, normalize(viewDir));
+
+    float AO = texture(occlusion, texCoord.xy).r;
+    col += 0.03 * pbrFrag.albedo * AO;
+
     col = encodeSRGB(col);
-    outColor = vec4(col.rgb, 1.0);
+    outColor = vec4(col, 1.0);
 }

@@ -1,0 +1,3 @@
+image: Corset_occlusionRoughnessMetallic.png
+format: BC7
+generate_mips: true

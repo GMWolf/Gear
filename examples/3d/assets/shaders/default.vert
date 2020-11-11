@@ -6,13 +6,16 @@ layout(location = 3) in vec4 tangentIn;
 layout(location = 0) out vec2 texCoord;
 layout(location = 1) out vec3 normal;
 layout(location = 2) out vec4 tangent;
+layout(location = 3) out vec3 viewDir;
 
 struct Transform {
-    vec3 position; float padding;
+    vec3 position;
+    float scale;
     vec4 rotation;
 };
 
 layout(binding = 0) uniform SceneBuffer {
+    Transform cameraTransform;
     Transform transform;
     mat4 projection;
 };
@@ -22,12 +25,30 @@ vec3 rotate(vec3 vec, vec4 quat) {
     return vec + quat.w * t + cross(quat.xyz, t);
 }
 
+vec4 conjugate(vec4 quat) {
+    return vec4(-quat.xyz, quat.w);
+}
+
+vec3 applyTransform(vec3 pos, Transform transform) {
+    return (rotate(pos, transform.rotation) * transform.scale) + transform.position;
+}
+
+Transform inverseTransform(Transform transform) {
+    Transform result;
+    result.position = rotate(-transform.position, conjugate(transform.rotation));
+    result.rotation = conjugate(transform.rotation);
+    result.scale = 1.0; //TODO: scale
+    return result;
+}
+
 void main() {
     texCoord = texCoordin;
     texCoord.y = -texCoord.y;
     normal = rotate(normalIn, transform.rotation);
     tangent.xyz = rotate(tangentIn.xyz, transform.rotation);
     tangent.w = tangentIn.w;
-    vec3 tPos = rotate(position, transform.rotation) + transform.position;
-    gl_Position = projection * vec4(tPos, 1.0);
+    vec3 tPos = applyTransform(position, transform);
+    vec3 vPos = applyTransform(tPos, inverseTransform(cameraTransform));
+    gl_Position = projection * vec4(vPos, 1.0);
+    viewDir = cameraTransform.position - tPos;
 }

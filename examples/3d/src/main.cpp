@@ -21,8 +21,9 @@ public:
         assets.emplace();
         assets->loadBundle("assets.bin");
         assets->loadBundle("assets/models/SciFiHelmet/SciFiHelmet.bundle");
-        g3d = new gear::G3DInstance();
+        assets->loadBundle("assets/models/Corset/Corset.bundle");
 
+        g3d = new gear::G3DInstance();
         {
             gear::Camera camera{};
             camera.near = 0.1;
@@ -33,6 +34,7 @@ public:
 
             gear::Transform3 transform;
             transform.position = {0, 0, 5};
+            transform.scale = 1;
             transform.orientation = glm::quatLookAt(glm::normalize(glm::vec3{0,0,-1}), glm::vec3{0, 1, 0});
             cam = cmd.createEntity(transform, camera);
         }
@@ -40,10 +42,24 @@ public:
         {
             gear::Transform3 transform{};
             transform.position = {0,0,0};
-            transform.orientation = glm::quatLookAt(glm::vec3{0,0,1}, glm::vec3{0,1,0});
+            transform.scale = 1;
+            transform.orientation = glm::quatLookAt(glm::vec3{0,0,-1}, glm::vec3{0,1,0});
 
             gear::MeshInstance meshInstance{};
             meshInstance.mesh = assets->getMesh("SciFiHelmet");
+            meshInstance.shader = assets->getShader("defaultShd");
+
+            mesh = cmd.createEntity(transform, meshInstance);
+        }
+
+        {
+            gear::Transform3 transform{};
+            transform.position = {5,-2,0};
+            transform.scale = 75;
+            transform.orientation = glm::quatLookAt(glm::vec3{0,0,1}, glm::vec3{0,1,0});
+
+            gear::MeshInstance meshInstance{};
+            meshInstance.mesh = assets->getMesh("pCube49");
             meshInstance.shader = assets->getShader("defaultShd");
 
             mesh = cmd.createEntity(transform, meshInstance);
@@ -79,7 +95,7 @@ public:
             }
             ct.orientation = glm::quat(glm::vec3(0, yaw, 0));
         }
-        {
+        if (false){
             auto [t] = mesh.get<gear::Transform3>();
             static float yaw = 0;
             yaw += 0.002f;

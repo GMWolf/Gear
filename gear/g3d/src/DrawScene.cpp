@@ -13,6 +13,7 @@ namespace gear {
 
 
     struct SceneBuffer {
+        Transform3 cameraTransform;
         Transform3 transform;
         glm::mat4 projection;
     };
@@ -21,6 +22,7 @@ namespace gear {
         int albedo;
         int occlusion;
         int normal;
+        int metallicRoughness;
     };
 
     static void bindTexture(int binding, const assets::Texture* tex, g3d::TextureCache& textureCache) {
@@ -44,6 +46,8 @@ namespace gear {
         bindTexture(textureBindings.occlusion, occlusionTex, textureCache);
         auto normalTex = (const assets::Texture *)material->normal()->ptr();
         bindTexture(textureBindings.normal, normalTex, textureCache);
+        auto metalRoughnessTex = (const assets::Texture *)material->MetallicRoughness()->ptr();
+        bindTexture(textureBindings.metallicRoughness, metalRoughnessTex, textureCache);
     }
 
     static void renderSceneCamera(G3DInstance &g3d, ecs::Registry &registry, Camera &camera,
@@ -72,10 +76,12 @@ namespace gear {
                 textureBindings.albedo = getShaderBinding(shader, "albedo");
                 textureBindings.occlusion = getShaderBinding(shader, "occlusion");
                 textureBindings.normal = getShaderBinding(shader, "normalMap");
+                textureBindings.metallicRoughness = getShaderBinding(shader, "metallicRoughness");
 
                 { // update scene buffer
                     auto sceneBuffer = static_cast<SceneBuffer *>(glMapNamedBuffer(ubo, GL_WRITE_ONLY));
-                    sceneBuffer->transform = cameraTransform.inverse().apply(transform);
+                    sceneBuffer->cameraTransform = cameraTransform;
+                    sceneBuffer->transform = transform;
                     float aspect = camera.viewPort.size.x / (float) camera.viewPort.size.y;
                     sceneBuffer->projection = glm::perspective(camera.fov, aspect, camera.near, camera.far);
                     glUnmapNamedBuffer(ubo);
@@ -87,7 +93,7 @@ namespace gear {
 
                 for(const auto& prim : mesh.primitives) {
                     bindMaterial(prim.material, *g3d.textureCache, textureBindings);
-                    glDrawElements(GL_TRIANGLES, prim.indexCount, GL_UNSIGNED_INT, nullptr);
+                    glDrawElementsBaseVertex(GL_TRIANGLES, prim.indexCount, GL_UNSIGNED_INT, (void*)prim.indexOffset, prim.baseVertex);
                 }
 
             }

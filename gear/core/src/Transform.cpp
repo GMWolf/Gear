@@ -21,6 +21,7 @@ namespace gear {
     }
 
     glm::mat4x3 Transform3::matrix() const {
+        //TODO: scale
         auto r = glm::toMat3(orientation);
         glm::mat4x3 mat;
         mat[0] = r[0];
@@ -31,16 +32,20 @@ namespace gear {
     }
 
     Transform3 Transform3::apply(const Transform3& base) const{
+        //TODO scale
         Transform3 result;
         result.position = position + orientation * base.position;
         result.orientation = orientation * base.orientation;
+        result.scale = 1.0f;
         return result;
     }
 
     Transform3 Transform3::inverse() const {
+        //TODO scale
         Transform3 result;
         result.position = glm::inverse(orientation) * -position;
         result.orientation = glm::inverse(orientation);
+        result.scale = 1.0f;
         return result;
     }
 }
