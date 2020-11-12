@@ -93,7 +93,7 @@ namespace gear {
 
                 for(const auto& prim : mesh.primitives) {
                     bindMaterial(prim.material, *g3d.textureCache, textureBindings);
-                    glDrawElementsBaseVertex(GL_TRIANGLES, prim.indexCount, GL_UNSIGNED_INT, (void*)prim.indexOffset, prim.baseVertex);
+                    glDrawElementsBaseVertex(GL_TRIANGLES, prim.indexCount, GL_UNSIGNED_SHORT, (void*)prim.indexOffset, prim.baseVertex);
                 }
 
             }

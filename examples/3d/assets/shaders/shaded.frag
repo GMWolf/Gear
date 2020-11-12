@@ -51,5 +51,6 @@ void main() {
 
     col = encodeSRGB(col);
     outColor = vec4(col, 1.0);
+    //outColor.rgb = tangent.xyz * 0.5 + 0.5;
 
 }

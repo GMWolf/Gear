@@ -137,6 +137,23 @@ struct packedVec3 {
     }
 };
 
+
+std::vector<glm::vec4> &
+remapTangentAverages(std::vector<glm::vec4> &tangents, unsigned long inputVertexCount, const std::vector<uint32_t> &remap,
+                          size_t remapVertexCount) {
+    std::vector<glm::vec4> outTangent(remapVertexCount, glm::vec4(0, 0, 0, 0));
+    for(int i = 0; i < inputVertexCount; i++) {
+        outTangent[remap[i]] += tangents[i];
+    }
+    for(int i = 0; i < remapVertexCount; i++) {
+        glm::vec3 vec(outTangent[i]);
+        vec = glm::normalize(vec);
+        tangents[i] = glm::vec4(vec, 1);
+    }
+    tangents.resize(remapVertexCount);
+    return tangents;
+}
+
 int main(int argc, char* argv[]) {
 
     auto sourceFile = argv[1];
@@ -210,7 +227,8 @@ int main(int argc, char* argv[]) {
 
             auto inputVertexCount = positions.size();
             std::vector<uint32_t> remap(indices.size());
-            size_t remapVertexCount = meshopt_generateVertexRemapMulti(remap.data(), indices.data(), indices.size(), inputVertexCount, streams, 4);
+            size_t remapVertexCount = meshopt_generateVertexRemapMulti(remap.data(), indices.data(), indices.size(), inputVertexCount, streams, 3);
+
             meshopt_remapIndexBuffer(indices.data(), indices.data(), indices.size(), remap.data());
             meshopt_remapVertexBuffer(positions.data(), positions.data(), inputVertexCount, sizeof(glm::vec3), remap.data());
             positions.resize(remapVertexCount);
@@ -218,8 +236,12 @@ int main(int argc, char* argv[]) {
             normals.resize(remapVertexCount);
             meshopt_remapVertexBuffer(texcoords.data(), texcoords.data(), inputVertexCount, sizeof(glm::vec2), remap.data());
             texcoords.resize(remapVertexCount);
-            meshopt_remapVertexBuffer(tangents.data(), tangents.data(), inputVertexCount, sizeof(glm::vec4), remap.data());
-            tangents.resize(remapVertexCount);
+            tangents = remapTangentAverages(tangents, inputVertexCount, remap, remapVertexCount);
+
+            std::vector<uint16_t> packedIndices(indices.size());
+            std::transform(indices.begin(), indices.end(), packedIndices.begin(), [](uint32_t i) {
+                return (uint16_t)i;
+            });
 
             std::vector<packedVec3> packedNormals(normals.size());
             std::transform(normals.cbegin(), normals.cend(), packedNormals.begin(), [](glm::vec3 n) {
@@ -236,7 +258,7 @@ int main(int argc, char* argv[]) {
                 return packedVec3(t);
             });
 
-            auto indexBuffer = fbb.CreateVector((uint8_t*)indices.data(), indices.size() * sizeof(uint32_t));
+            auto indexBuffer = fbb.CreateVector((uint8_t*)packedIndices.data(), packedIndices.size() * sizeof(uint16_t));
             auto positionBuffer = fbb.CreateVector((uint8_t*)positions.data(), positions.size() * sizeof(glm::vec3));
             auto normalBuffer = fbb.CreateVector((uint8_t*)packedNormals.data(), packedNormals.size() * sizeof(uint32_t));
             auto texcoordBuffer = fbb.CreateVector((uint8_t*)packedTexcoods.data(), packedTexcoods.size() * sizeof(uint32_t));
