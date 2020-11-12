@@ -50,6 +50,31 @@ namespace gear {
         bindTexture(textureBindings.metallicRoughness, metalRoughnessTex, textureCache);
     }
 
+
+
+    static void submitMeshlets(G3DInstance& g3d, const assets::MeshPrimitive* prim) {
+
+        auto thingy = g3d.meshCache->getMeshletPrimitive(prim);
+
+        glMultiDrawElementsBaseVertex(
+                GL_TRIANGLES,
+                thingy.count.data(),
+                GL_UNSIGNED_BYTE,
+                thingy.indices.data(),
+                thingy.count.size(),
+                thingy.baseVertex.data()
+                );
+
+        //for(int i = 0; i < thingy.count.size(); i++) {
+        //glDrawElementsBaseVertex(GL_TRIANGLES,
+        //               thingy.count[i],
+        //               GL_UNSIGNED_BYTE,
+        //               thingy.indices[i],
+        //               thingy.baseVertex[i]);
+        //}
+
+    }
+
     static void renderSceneCamera(G3DInstance &g3d, ecs::Registry &registry, Camera &camera,
                                   Transform3 &cameraTransform) {
 
@@ -62,7 +87,8 @@ namespace gear {
         }
 
 
-        glBindVertexArray(g3d.meshCache->vao);
+        //glBindVertexArray(g3d.meshCache->vao);
+        glBindVertexArray(g3d.meshCache->meshletVAO);
 
         auto meshQuery = registry.query().all<Transform3, MeshInstance>();
         for(auto meshChunk : meshQuery) {
@@ -91,9 +117,15 @@ namespace gear {
                     glBindBufferBase(GL_UNIFORM_BUFFER, binding, ubo);
                 }
 
+                for(const auto& prim : *meshInstance.mesh->primitives()) {
+
+                    bindMaterial((const assets::Material*)prim->material()->ptr(), *g3d.textureCache, textureBindings);
+                    submitMeshlets(g3d, prim);
+                }
+
                 for(const auto& prim : mesh.primitives) {
                     bindMaterial(prim.material, *g3d.textureCache, textureBindings);
-                    glDrawElementsBaseVertex(GL_TRIANGLES, prim.indexCount, GL_UNSIGNED_SHORT, (void*)prim.indexOffset, prim.baseVertex);
+                    //glDrawElementsBaseVertex(GL_TRIANGLES, prim.indexCount, GL_UNSIGNED_SHORT, (void*)prim.indexOffset, prim.baseVertex);
                 }
 
             }

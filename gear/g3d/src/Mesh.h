@@ -34,6 +34,27 @@ namespace gear::g3d {
             std::vector<Primitive> primitives;
         };
 
+
+        struct MeshletBuffer {
+            Buffer positions {10 * 1024 * 1024};
+            Buffer texcoord {10 * 1024 * 1024};
+            Buffer normals {10 * 1024 * 1024};
+            Buffer tangents {10 * 1024 * 1024};
+            Buffer indices {10 * 1024 * 1024};
+        } meshletBuffer;
+
+
+        GLuint meshletVAO;
+
+        struct MeshletPrimitive {
+            std::vector<GLsizei> count;
+            std::vector<const void*> indices;
+            std::vector<GLint> baseVertex;
+        };
+
+        uint32_t meshletVertexOffset = 0;
+        uint32_t meshletIndexOffset = 0;
+
         Buffer positions;
         Buffer texcoord;
         Buffer normals;
@@ -44,12 +65,15 @@ namespace gear::g3d {
         size_t indexOffset;
 
         std::unordered_map<const assets::Mesh*, Mesh> meshes;
+        std::unordered_map<const assets::MeshPrimitive*, MeshletPrimitive> meshletPrimitives;
 
         Mesh& get(const assets::Mesh* mesh);
+        MeshletPrimitive& getMeshletPrimitive(const assets::MeshPrimitive* meshPrimitive);
 
     private:
         Mesh::Primitive addPrimitive(const assets::MeshPrimitive* prim);
         Mesh addMesh(const assets::Mesh* mesh);
+        MeshletPrimitive addMeshlets(const assets::MeshPrimitive* meshPrimitive);
     };
 
 }

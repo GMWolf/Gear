@@ -14,6 +14,9 @@ namespace assets {
 struct Material;
 struct MaterialBuilder;
 
+struct MeshletBuffer;
+struct MeshletBufferBuilder;
+
 struct MeshPrimitive;
 struct MeshPrimitiveBuilder;
 
@@ -114,6 +117,201 @@ struct Material::Traits {
   static auto constexpr Create = CreateMaterial;
 };
 
+struct MeshletBuffer FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  typedef MeshletBufferBuilder Builder;
+  struct Traits;
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_INDICES = 4,
+    VT_POSITIONS = 6,
+    VT_TEXCOORDS = 8,
+    VT_NORMALS = 10,
+    VT_TANGENTS = 12,
+    VT_VERTEXCOUNT = 14,
+    VT_VERTEXOFFSETS = 16,
+    VT_INDEXOFFSETS = 18,
+    VT_INDEXCOUNTS = 20
+  };
+  const flatbuffers::Vector<uint8_t> *indices() const {
+    return GetPointer<const flatbuffers::Vector<uint8_t> *>(VT_INDICES);
+  }
+  flatbuffers::Vector<uint8_t> *mutable_indices() {
+    return GetPointer<flatbuffers::Vector<uint8_t> *>(VT_INDICES);
+  }
+  const flatbuffers::Vector<uint8_t> *positions() const {
+    return GetPointer<const flatbuffers::Vector<uint8_t> *>(VT_POSITIONS);
+  }
+  flatbuffers::Vector<uint8_t> *mutable_positions() {
+    return GetPointer<flatbuffers::Vector<uint8_t> *>(VT_POSITIONS);
+  }
+  const flatbuffers::Vector<uint8_t> *texcoords() const {
+    return GetPointer<const flatbuffers::Vector<uint8_t> *>(VT_TEXCOORDS);
+  }
+  flatbuffers::Vector<uint8_t> *mutable_texcoords() {
+    return GetPointer<flatbuffers::Vector<uint8_t> *>(VT_TEXCOORDS);
+  }
+  const flatbuffers::Vector<uint8_t> *normals() const {
+    return GetPointer<const flatbuffers::Vector<uint8_t> *>(VT_NORMALS);
+  }
+  flatbuffers::Vector<uint8_t> *mutable_normals() {
+    return GetPointer<flatbuffers::Vector<uint8_t> *>(VT_NORMALS);
+  }
+  const flatbuffers::Vector<uint8_t> *tangents() const {
+    return GetPointer<const flatbuffers::Vector<uint8_t> *>(VT_TANGENTS);
+  }
+  flatbuffers::Vector<uint8_t> *mutable_tangents() {
+    return GetPointer<flatbuffers::Vector<uint8_t> *>(VT_TANGENTS);
+  }
+  uint16_t vertexCount() const {
+    return GetField<uint16_t>(VT_VERTEXCOUNT, 0);
+  }
+  bool mutate_vertexCount(uint16_t _vertexCount) {
+    return SetField<uint16_t>(VT_VERTEXCOUNT, _vertexCount, 0);
+  }
+  const flatbuffers::Vector<int32_t> *vertexOffsets() const {
+    return GetPointer<const flatbuffers::Vector<int32_t> *>(VT_VERTEXOFFSETS);
+  }
+  flatbuffers::Vector<int32_t> *mutable_vertexOffsets() {
+    return GetPointer<flatbuffers::Vector<int32_t> *>(VT_VERTEXOFFSETS);
+  }
+  const flatbuffers::Vector<uint32_t> *indexOffsets() const {
+    return GetPointer<const flatbuffers::Vector<uint32_t> *>(VT_INDEXOFFSETS);
+  }
+  flatbuffers::Vector<uint32_t> *mutable_indexOffsets() {
+    return GetPointer<flatbuffers::Vector<uint32_t> *>(VT_INDEXOFFSETS);
+  }
+  const flatbuffers::Vector<int32_t> *indexCounts() const {
+    return GetPointer<const flatbuffers::Vector<int32_t> *>(VT_INDEXCOUNTS);
+  }
+  flatbuffers::Vector<int32_t> *mutable_indexCounts() {
+    return GetPointer<flatbuffers::Vector<int32_t> *>(VT_INDEXCOUNTS);
+  }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_INDICES) &&
+           verifier.VerifyVector(indices()) &&
+           VerifyOffset(verifier, VT_POSITIONS) &&
+           verifier.VerifyVector(positions()) &&
+           VerifyOffset(verifier, VT_TEXCOORDS) &&
+           verifier.VerifyVector(texcoords()) &&
+           VerifyOffset(verifier, VT_NORMALS) &&
+           verifier.VerifyVector(normals()) &&
+           VerifyOffset(verifier, VT_TANGENTS) &&
+           verifier.VerifyVector(tangents()) &&
+           VerifyField<uint16_t>(verifier, VT_VERTEXCOUNT) &&
+           VerifyOffset(verifier, VT_VERTEXOFFSETS) &&
+           verifier.VerifyVector(vertexOffsets()) &&
+           VerifyOffset(verifier, VT_INDEXOFFSETS) &&
+           verifier.VerifyVector(indexOffsets()) &&
+           VerifyOffset(verifier, VT_INDEXCOUNTS) &&
+           verifier.VerifyVector(indexCounts()) &&
+           verifier.EndTable();
+  }
+};
+
+struct MeshletBufferBuilder {
+  typedef MeshletBuffer Table;
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_indices(flatbuffers::Offset<flatbuffers::Vector<uint8_t>> indices) {
+    fbb_.AddOffset(MeshletBuffer::VT_INDICES, indices);
+  }
+  void add_positions(flatbuffers::Offset<flatbuffers::Vector<uint8_t>> positions) {
+    fbb_.AddOffset(MeshletBuffer::VT_POSITIONS, positions);
+  }
+  void add_texcoords(flatbuffers::Offset<flatbuffers::Vector<uint8_t>> texcoords) {
+    fbb_.AddOffset(MeshletBuffer::VT_TEXCOORDS, texcoords);
+  }
+  void add_normals(flatbuffers::Offset<flatbuffers::Vector<uint8_t>> normals) {
+    fbb_.AddOffset(MeshletBuffer::VT_NORMALS, normals);
+  }
+  void add_tangents(flatbuffers::Offset<flatbuffers::Vector<uint8_t>> tangents) {
+    fbb_.AddOffset(MeshletBuffer::VT_TANGENTS, tangents);
+  }
+  void add_vertexCount(uint16_t vertexCount) {
+    fbb_.AddElement<uint16_t>(MeshletBuffer::VT_VERTEXCOUNT, vertexCount, 0);
+  }
+  void add_vertexOffsets(flatbuffers::Offset<flatbuffers::Vector<int32_t>> vertexOffsets) {
+    fbb_.AddOffset(MeshletBuffer::VT_VERTEXOFFSETS, vertexOffsets);
+  }
+  void add_indexOffsets(flatbuffers::Offset<flatbuffers::Vector<uint32_t>> indexOffsets) {
+    fbb_.AddOffset(MeshletBuffer::VT_INDEXOFFSETS, indexOffsets);
+  }
+  void add_indexCounts(flatbuffers::Offset<flatbuffers::Vector<int32_t>> indexCounts) {
+    fbb_.AddOffset(MeshletBuffer::VT_INDEXCOUNTS, indexCounts);
+  }
+  explicit MeshletBufferBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  MeshletBufferBuilder &operator=(const MeshletBufferBuilder &);
+  flatbuffers::Offset<MeshletBuffer> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = flatbuffers::Offset<MeshletBuffer>(end);
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<MeshletBuffer> CreateMeshletBuffer(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    flatbuffers::Offset<flatbuffers::Vector<uint8_t>> indices = 0,
+    flatbuffers::Offset<flatbuffers::Vector<uint8_t>> positions = 0,
+    flatbuffers::Offset<flatbuffers::Vector<uint8_t>> texcoords = 0,
+    flatbuffers::Offset<flatbuffers::Vector<uint8_t>> normals = 0,
+    flatbuffers::Offset<flatbuffers::Vector<uint8_t>> tangents = 0,
+    uint16_t vertexCount = 0,
+    flatbuffers::Offset<flatbuffers::Vector<int32_t>> vertexOffsets = 0,
+    flatbuffers::Offset<flatbuffers::Vector<uint32_t>> indexOffsets = 0,
+    flatbuffers::Offset<flatbuffers::Vector<int32_t>> indexCounts = 0) {
+  MeshletBufferBuilder builder_(_fbb);
+  builder_.add_indexCounts(indexCounts);
+  builder_.add_indexOffsets(indexOffsets);
+  builder_.add_vertexOffsets(vertexOffsets);
+  builder_.add_tangents(tangents);
+  builder_.add_normals(normals);
+  builder_.add_texcoords(texcoords);
+  builder_.add_positions(positions);
+  builder_.add_indices(indices);
+  builder_.add_vertexCount(vertexCount);
+  return builder_.Finish();
+}
+
+struct MeshletBuffer::Traits {
+  using type = MeshletBuffer;
+  static auto constexpr Create = CreateMeshletBuffer;
+};
+
+inline flatbuffers::Offset<MeshletBuffer> CreateMeshletBufferDirect(
+    flatbuffers::FlatBufferBuilder &_fbb,
+    const std::vector<uint8_t> *indices = nullptr,
+    const std::vector<uint8_t> *positions = nullptr,
+    const std::vector<uint8_t> *texcoords = nullptr,
+    const std::vector<uint8_t> *normals = nullptr,
+    const std::vector<uint8_t> *tangents = nullptr,
+    uint16_t vertexCount = 0,
+    const std::vector<int32_t> *vertexOffsets = nullptr,
+    const std::vector<uint32_t> *indexOffsets = nullptr,
+    const std::vector<int32_t> *indexCounts = nullptr) {
+  auto indices__ = indices ? _fbb.CreateVector<uint8_t>(*indices) : 0;
+  auto positions__ = positions ? _fbb.CreateVector<uint8_t>(*positions) : 0;
+  auto texcoords__ = texcoords ? _fbb.CreateVector<uint8_t>(*texcoords) : 0;
+  auto normals__ = normals ? _fbb.CreateVector<uint8_t>(*normals) : 0;
+  auto tangents__ = tangents ? _fbb.CreateVector<uint8_t>(*tangents) : 0;
+  auto vertexOffsets__ = vertexOffsets ? _fbb.CreateVector<int32_t>(*vertexOffsets) : 0;
+  auto indexOffsets__ = indexOffsets ? _fbb.CreateVector<uint32_t>(*indexOffsets) : 0;
+  auto indexCounts__ = indexCounts ? _fbb.CreateVector<int32_t>(*indexCounts) : 0;
+  return gear::assets::CreateMeshletBuffer(
+      _fbb,
+      indices__,
+      positions__,
+      texcoords__,
+      normals__,
+      tangents__,
+      vertexCount,
+      vertexOffsets__,
+      indexOffsets__,
+      indexCounts__);
+}
+
 struct MeshPrimitive FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef MeshPrimitiveBuilder Builder;
   struct Traits;
@@ -125,7 +323,8 @@ struct MeshPrimitive FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_TEXCOORD = 12,
     VT_NORMALS = 14,
     VT_TANGENTS = 16,
-    VT_MATERIAL = 18
+    VT_MATERIAL = 18,
+    VT_MESHLETS = 20
   };
   uint32_t indexCount() const {
     return GetField<uint32_t>(VT_INDEXCOUNT, 0);
@@ -175,6 +374,12 @@ struct MeshPrimitive FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   gear::assets::Ref *mutable_material() {
     return GetPointer<gear::assets::Ref *>(VT_MATERIAL);
   }
+  const gear::assets::MeshletBuffer *meshlets() const {
+    return GetPointer<const gear::assets::MeshletBuffer *>(VT_MESHLETS);
+  }
+  gear::assets::MeshletBuffer *mutable_meshlets() {
+    return GetPointer<gear::assets::MeshletBuffer *>(VT_MESHLETS);
+  }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint32_t>(verifier, VT_INDEXCOUNT) &&
@@ -191,6 +396,8 @@ struct MeshPrimitive FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            verifier.VerifyVector(tangents()) &&
            VerifyOffset(verifier, VT_MATERIAL) &&
            verifier.VerifyTable(material()) &&
+           VerifyOffset(verifier, VT_MESHLETS) &&
+           verifier.VerifyTable(meshlets()) &&
            verifier.EndTable();
   }
 };
@@ -223,6 +430,9 @@ struct MeshPrimitiveBuilder {
   void add_material(flatbuffers::Offset<gear::assets::Ref> material) {
     fbb_.AddOffset(MeshPrimitive::VT_MATERIAL, material);
   }
+  void add_meshlets(flatbuffers::Offset<gear::assets::MeshletBuffer> meshlets) {
+    fbb_.AddOffset(MeshPrimitive::VT_MESHLETS, meshlets);
+  }
   explicit MeshPrimitiveBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
@@ -244,8 +454,10 @@ inline flatbuffers::Offset<MeshPrimitive> CreateMeshPrimitive(
     flatbuffers::Offset<flatbuffers::Vector<uint8_t>> texcoord = 0,
     flatbuffers::Offset<flatbuffers::Vector<uint8_t>> normals = 0,
     flatbuffers::Offset<flatbuffers::Vector<uint8_t>> tangents = 0,
-    flatbuffers::Offset<gear::assets::Ref> material = 0) {
+    flatbuffers::Offset<gear::assets::Ref> material = 0,
+    flatbuffers::Offset<gear::assets::MeshletBuffer> meshlets = 0) {
   MeshPrimitiveBuilder builder_(_fbb);
+  builder_.add_meshlets(meshlets);
   builder_.add_material(material);
   builder_.add_tangents(tangents);
   builder_.add_normals(normals);
@@ -271,7 +483,8 @@ inline flatbuffers::Offset<MeshPrimitive> CreateMeshPrimitiveDirect(
     const std::vector<uint8_t> *texcoord = nullptr,
     const std::vector<uint8_t> *normals = nullptr,
     const std::vector<uint8_t> *tangents = nullptr,
-    flatbuffers::Offset<gear::assets::Ref> material = 0) {
+    flatbuffers::Offset<gear::assets::Ref> material = 0,
+    flatbuffers::Offset<gear::assets::MeshletBuffer> meshlets = 0) {
   auto indices__ = indices ? _fbb.CreateVector<uint8_t>(*indices) : 0;
   auto position__ = position ? _fbb.CreateVector<uint8_t>(*position) : 0;
   auto texcoord__ = texcoord ? _fbb.CreateVector<uint8_t>(*texcoord) : 0;
@@ -286,7 +499,8 @@ inline flatbuffers::Offset<MeshPrimitive> CreateMeshPrimitiveDirect(
       texcoord__,
       normals__,
       tangents__,
-      material);
+      material,
+      meshlets);
 }
 
 struct Mesh FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {

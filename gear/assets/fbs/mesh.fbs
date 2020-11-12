@@ -9,6 +9,20 @@ table Material {
     AmbientOcclusion: Ref;
 }
 
+
+table MeshletBuffer {
+    indices: [ubyte];
+    positions: [ubyte];
+    texcoords: [ubyte];
+    normals: [ubyte];
+    tangents: [ubyte];
+
+    vertexCount: uint16;
+    vertexOffsets: [int32];
+    indexOffsets: [uint32];
+    indexCounts: [int32];
+}
+
 table MeshPrimitive {
     indexCount: uint32;
     vertexCount: uint32;
@@ -18,6 +32,8 @@ table MeshPrimitive {
     normals: [ubyte];
     tangents: [ubyte];
     material: Ref;
+
+    meshlets: MeshletBuffer;
 }
 
 table Mesh {

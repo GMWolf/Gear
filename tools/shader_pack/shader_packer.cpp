@@ -12,6 +12,7 @@
 #include <filesystem>
 #include <flatbuffers/hash.h>
 #include <shaderc/shaderc.hpp>
+#include <spirv_glsl.hpp>
 #include <spirv_cross.hpp>
 #include <spirv_glsl.hpp>
 #include <regex>
@@ -153,6 +154,7 @@ int main(int argc, char* argv[]) {
     shaderc::CompileOptions options;
     options.SetGenerateDebugInfo();
     options.SetOptimizationLevel(shaderc_optimization_level_performance);
+
 
     options.SetIncluder(std::make_unique<ShaderIncluder>());
 

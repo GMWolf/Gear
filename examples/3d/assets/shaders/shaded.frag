@@ -6,6 +6,7 @@ layout(location = 0) in vec2 texCoord;
 layout(location = 1) in vec3 normal;
 layout(location = 2) in vec4 tangent;
 layout(location = 3) in vec3 viewDir;
+layout(location = 4) in flat int drawID;
 
 layout(binding = 0) uniform sampler2D albedo;
 layout(binding = 1) uniform sampler2D occlusion;
@@ -25,6 +26,12 @@ mat3 computeTBN() {
 
 vec3 reconstructZ(vec2 v) {
     return vec3(v, 1.0 - dot(v,v));
+}
+
+float random (vec2 st) {
+    return fract(sin(dot(st.xy,
+    vec2(12.9898,78.233)))*
+    43758.5453123);
 }
 
 void main() {
@@ -52,5 +59,9 @@ void main() {
     col = encodeSRGB(col);
     outColor = vec4(col, 1.0);
     //outColor.rgb = tangent.xyz * 0.5 + 0.5;
+
+    //outColor.r = random(vec2(drawID, 0));
+    //outColor.g = random(vec2(drawID, 1));
+    //outColor.b = random(vec2(drawID, 2));
 
 }

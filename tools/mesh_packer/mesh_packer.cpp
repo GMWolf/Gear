@@ -154,6 +154,187 @@ remapTangentAverages(std::vector<glm::vec4> &tangents, unsigned long inputVertex
     return tangents;
 }
 
+
+
+struct MeshletBuffer {
+    std::vector<uint32_t> indices;
+    std::vector<glm::vec3> positions;
+    std::vector<glm::vec3> normals;
+    std::vector<glm::vec2> texcoords;
+    std::vector<glm::vec4> tangents;
+
+    std::vector<uint32_t> vertexOffsets;
+    std::vector<uint32_t> indexOffsets;
+    std::vector<uint32_t> triangleCounts;
+};
+
+struct PackedMeshletBuffer {
+    std::vector<uint8_t> indices;
+    std::vector<glm::vec3> positions;
+    std::vector<packedVec3> normals;
+    std::vector<uint32_t> texcoords;
+    std::vector<packedVec3> tangents;
+
+    std::vector<int32_t> vertexOffsets;
+    std::vector<uint32_t> indexOffsets;
+    std::vector<int32_t> indexCounts;
+};
+
+struct MeshData {
+    std::vector<uint32_t> indices;
+    std::vector<glm::vec3> positions;
+    std::vector<glm::vec3> normals;
+    std::vector<glm::vec2> texcoords;
+    std::vector<glm::vec4> tangents;
+};
+
+MeshletBuffer createMeshlets(const MeshData& meshData) {
+    size_t maxVertices = 64;
+    size_t maxTriangles = 126;
+
+    std::vector<meshopt_Meshlet> meshlets(meshopt_buildMeshletsBound(meshData.indices.size(), maxVertices, maxTriangles));
+    auto meshletCount = meshopt_buildMeshlets(meshlets.data(), meshData.indices.data(), meshData.indices.size(), meshData.positions.size(), maxVertices, maxTriangles);
+    meshlets.resize(meshletCount);
+
+    MeshletBuffer meshletBuffer;
+    meshletBuffer.indices.reserve(meshletCount * maxTriangles * 3);
+    meshletBuffer.positions.reserve(meshletCount * maxVertices);
+    meshletBuffer.normals.reserve(meshletCount * maxVertices);
+    meshletBuffer.texcoords.reserve(meshletCount * maxVertices);
+    meshletBuffer.tangents.reserve(meshletCount * maxVertices);
+    meshletBuffer.vertexOffsets.reserve(meshletCount);
+    meshletBuffer.indexOffsets.reserve(meshletCount);
+    meshletBuffer.triangleCounts.reserve(meshletCount);
+
+    for(auto& meshlet : meshlets) {
+        meshletBuffer.triangleCounts.push_back(meshlet.triangle_count);
+        meshletBuffer.indexOffsets.push_back(meshletBuffer.indices.size());
+        meshletBuffer.vertexOffsets.push_back(meshletBuffer.positions.size());
+
+        //write micro vertex buffer
+        for(int vert = 0; vert < meshlet.vertex_count; vert++) {
+            auto index = meshlet.vertices[vert];
+            meshletBuffer.positions.push_back(meshData.positions[index]);
+            meshletBuffer.normals.push_back(meshData.normals[index]);
+            meshletBuffer.texcoords.push_back(meshData.texcoords[index]);
+            meshletBuffer.tangents.push_back(meshData.tangents[index]);
+        }
+
+        //write indices
+        for(int tri = 0; tri < meshlet.triangle_count; tri++) {
+            for(int v = 0; v < 3; v++) {
+                auto index = meshlet.indices[tri][v];
+                meshletBuffer.indices.push_back(index);
+            }
+        }
+    }
+
+    return meshletBuffer;
+}
+
+
+PackedMeshletBuffer packMeshlets(const MeshletBuffer& meshletBuffer) {
+
+    PackedMeshletBuffer packedBuffer;
+
+    packedBuffer.indices.resize(meshletBuffer.indices.size());
+    std::transform(meshletBuffer.indices.begin(), meshletBuffer.indices.end(), packedBuffer.indices.begin(), [](uint32_t i) {
+        return (uint8_t)i;
+    });
+
+    packedBuffer.positions.resize(meshletBuffer.positions.size());
+    std::transform(meshletBuffer.positions.begin(), meshletBuffer.positions.end(), packedBuffer.positions.begin(), [](glm::vec3 pos) {
+        return pos;
+    });
+
+    packedBuffer.normals.resize(meshletBuffer.normals.size());
+    std::transform(meshletBuffer.normals.cbegin(), meshletBuffer.normals.cend(), packedBuffer.normals.begin(), [](glm::vec3 n) {
+        return packedVec3(n);
+    });
+
+    packedBuffer.texcoords.resize(meshletBuffer.texcoords.size());
+    std::transform(meshletBuffer.texcoords.cbegin(), meshletBuffer.texcoords.cend(), packedBuffer.texcoords.begin(), [](glm::vec2 t){
+        return glm::packUnorm2x16(t);
+    });
+
+    packedBuffer.tangents.resize(meshletBuffer.tangents.size());
+    std::transform(meshletBuffer.tangents.cbegin(), meshletBuffer.tangents.cend(), packedBuffer.tangents.begin(), [](glm::vec4 t) {
+        return packedVec3(t);
+    });
+
+    packedBuffer.indexCounts.resize(meshletBuffer.triangleCounts.size());
+    std::transform(meshletBuffer.triangleCounts.cbegin(), meshletBuffer.triangleCounts.cend(), packedBuffer.indexCounts.begin(), [](uint32_t i) {
+        return i * 3;
+    });
+
+    packedBuffer.indexOffsets.resize(meshletBuffer.indexOffsets.size());
+    std::transform(meshletBuffer.indexOffsets.cbegin(), meshletBuffer.indexOffsets.cend(), packedBuffer.indexOffsets.begin(), [](uint32_t i) {
+        return i;
+    });
+
+    packedBuffer.vertexOffsets.resize(meshletBuffer.vertexOffsets.size());
+    std::transform(meshletBuffer.vertexOffsets.cbegin(), meshletBuffer.vertexOffsets.cend(), packedBuffer.vertexOffsets.begin(), [](uint32_t i) {
+        return i;
+    });
+
+
+    return packedBuffer;
+}
+
+
+template<class T>
+flatbuffers::Offset<flatbuffers::Vector<uint8_t>> writeAsBytes(flatbuffers::FlatBufferBuilder& fbb, const std::vector<T>& vec) {
+    return fbb.CreateVector((uint8_t*)vec.data(), vec.size() * sizeof(T));
+}
+
+flatbuffers::Offset<gear::assets::MeshletBuffer> writeMeshletBuffer(flatbuffers::FlatBufferBuilder& fbb, const PackedMeshletBuffer& meshletBuffer) {
+    auto indexBuffer = writeAsBytes(fbb, meshletBuffer.indices);
+    auto positionBuffer = writeAsBytes(fbb, meshletBuffer.positions);
+    auto normalBuffer = writeAsBytes(fbb, meshletBuffer.normals);
+    auto texcoordBuffer = writeAsBytes(fbb, meshletBuffer.texcoords);
+    auto tangentBuffer = writeAsBytes(fbb, meshletBuffer.tangents);
+
+    auto indexOffsetsBuffer = fbb.CreateVector(meshletBuffer.indexOffsets);
+    auto vertexOffsetsBuffer = fbb.CreateVector(meshletBuffer.vertexOffsets);
+    auto indexCountsBuffer = fbb.CreateVector(meshletBuffer.indexCounts);
+
+    gear::assets::MeshletBufferBuilder builder(fbb);
+    builder.add_indices(indexBuffer);
+    builder.add_positions(positionBuffer);
+    builder.add_normals(normalBuffer);
+    builder.add_texcoords(texcoordBuffer);
+    builder.add_tangents(tangentBuffer);
+    builder.add_indexOffsets(indexOffsetsBuffer);
+    builder.add_vertexOffsets(vertexOffsetsBuffer);
+    builder.add_indexCounts(indexCountsBuffer);
+    builder.add_vertexCount(meshletBuffer.positions.size());
+    return builder.Finish();
+}
+
+
+uint32_t remapMesh(MeshData &mesh) {
+    std::vector<uint32_t> remap(mesh.indices.size());
+
+    meshopt_Stream streams[] {
+            vectorMeshoptStream(mesh.positions),
+            vectorMeshoptStream(mesh.normals),
+            vectorMeshoptStream(mesh.texcoords),
+            vectorMeshoptStream(mesh.tangents),
+    };
+
+    auto inputVertexCount = mesh.positions.size();
+    uint32_t remapVertexCount = meshopt_generateVertexRemapMulti(remap.data(), mesh.indices.data(), mesh.indices.size(), inputVertexCount, streams, 3);
+    meshopt_remapIndexBuffer(mesh.indices.data(), mesh.indices.data(), mesh.indices.size(), remap.data());
+    meshopt_remapVertexBuffer(mesh.positions.data(), mesh.positions.data(), inputVertexCount, sizeof(glm::vec3), remap.data());
+    mesh.positions.resize(remapVertexCount);
+    meshopt_remapVertexBuffer(mesh.normals.data(), mesh.normals.data(), inputVertexCount, sizeof(glm::vec3), remap.data());
+    mesh.normals.resize(remapVertexCount);
+    meshopt_remapVertexBuffer(mesh.texcoords.data(), mesh.texcoords.data(), inputVertexCount, sizeof(glm::vec2), remap.data());
+    mesh.texcoords.resize(remapVertexCount);
+    mesh.tangents = remapTangentAverages(mesh.tangents, inputVertexCount, remap, remapVertexCount);
+    return remapVertexCount;
+}
+
 int main(int argc, char* argv[]) {
 
     auto sourceFile = argv[1];
@@ -212,54 +393,47 @@ int main(int argc, char* argv[]) {
         for(auto& primitive : mesh.primitives) {
             auto& indexAccessor = model.accessors[primitive.indices];
 
-            auto indices = accessorReadScalar<uint32_t>(model, model.accessors[primitive.indices]);
-            auto positions = accessorReadVec<glm::vec3>(model, model.accessors[primitive.attributes["POSITION"]]);
-            auto normals = accessorReadVec<glm::vec3>(model, model.accessors[primitive.attributes["NORMAL"]]);
-            auto texcoords = accessorReadVec<glm::vec2>(model, model.accessors[primitive.attributes["TEXCOORD_0"]]);
-            auto tangents = accessorReadVec<glm::vec4>(model, model.accessors[primitive.attributes["TANGENT"]]);
+            MeshData meshData{};
+            meshData.indices = accessorReadScalar<uint32_t>(model, model.accessors[primitive.indices]);
+            meshData.positions = accessorReadVec<glm::vec3>(model, model.accessors[primitive.attributes["POSITION"]]);
+            meshData.normals = accessorReadVec<glm::vec3>(model, model.accessors[primitive.attributes["NORMAL"]]);
+            meshData.texcoords = accessorReadVec<glm::vec2>(model, model.accessors[primitive.attributes["TEXCOORD_0"]]);
+            meshData.tangents = accessorReadVec<glm::vec4>(model, model.accessors[primitive.attributes["TANGENT"]]);
 
-            meshopt_Stream streams[] {
-                    vectorMeshoptStream(positions),
-                    vectorMeshoptStream(normals),
-                    vectorMeshoptStream(texcoords),
-                    vectorMeshoptStream(tangents),
-            };
+            size_t remapVertexCount = remapMesh(meshData);
 
-            auto inputVertexCount = positions.size();
-            std::vector<uint32_t> remap(indices.size());
-            size_t remapVertexCount = meshopt_generateVertexRemapMulti(remap.data(), indices.data(), indices.size(), inputVertexCount, streams, 3);
+            meshopt_optimizeVertexCache(meshData.indices.data(), meshData.indices.data(), meshData.indices.size(), remapVertexCount);
 
-            meshopt_remapIndexBuffer(indices.data(), indices.data(), indices.size(), remap.data());
-            meshopt_remapVertexBuffer(positions.data(), positions.data(), inputVertexCount, sizeof(glm::vec3), remap.data());
-            positions.resize(remapVertexCount);
-            meshopt_remapVertexBuffer(normals.data(), normals.data(), inputVertexCount, sizeof(glm::vec3), remap.data());
-            normals.resize(remapVertexCount);
-            meshopt_remapVertexBuffer(texcoords.data(), texcoords.data(), inputVertexCount, sizeof(glm::vec2), remap.data());
-            texcoords.resize(remapVertexCount);
-            tangents = remapTangentAverages(tangents, inputVertexCount, remap, remapVertexCount);
 
-            std::vector<uint16_t> packedIndices(indices.size());
-            std::transform(indices.begin(), indices.end(), packedIndices.begin(), [](uint32_t i) {
+            std::vector<uint16_t> packedIndices(meshData.indices.size());
+            std::transform(meshData.indices.begin(), meshData.indices.end(), packedIndices.begin(), [](uint32_t i) {
                 return (uint16_t)i;
             });
 
-            std::vector<packedVec3> packedNormals(normals.size());
-            std::transform(normals.cbegin(), normals.cend(), packedNormals.begin(), [](glm::vec3 n) {
+            std::vector<packedVec3> packedNormals(meshData.normals.size());
+            std::transform(meshData.normals.cbegin(), meshData.normals.cend(), packedNormals.begin(), [](glm::vec3 n) {
                 return packedVec3(n);
             });
 
-            std::vector<uint32_t> packedTexcoods(texcoords.size());
-            std::transform(texcoords.cbegin(), texcoords.cend(), packedTexcoods.begin(), [](glm::vec2 t){
+            std::vector<uint32_t> packedTexcoods(meshData.texcoords.size());
+            std::transform(meshData.texcoords.cbegin(), meshData.texcoords.cend(), packedTexcoods.begin(), [](glm::vec2 t){
                 return glm::packUnorm2x16(t);
             });
 
-            std::vector<packedVec3> packedTangents(tangents.size());
-            std::transform(tangents.cbegin(), tangents.cend(), packedTangents.begin(), [](glm::vec4 t) {
+            std::vector<packedVec3> packedTangents(meshData.tangents.size());
+            std::transform(meshData.tangents.cbegin(), meshData.tangents.cend(), packedTangents.begin(), [](glm::vec4 t) {
                 return packedVec3(t);
             });
 
+
+
+            auto meshletBuffer = createMeshlets(meshData);
+            auto packedMeshletBuffer = packMeshlets(meshletBuffer);
+            auto meshletBufferOut = writeMeshletBuffer(fbb, packedMeshletBuffer);
+
+
             auto indexBuffer = fbb.CreateVector((uint8_t*)packedIndices.data(), packedIndices.size() * sizeof(uint16_t));
-            auto positionBuffer = fbb.CreateVector((uint8_t*)positions.data(), positions.size() * sizeof(glm::vec3));
+            auto positionBuffer = fbb.CreateVector((uint8_t*)meshData.positions.data(), meshData.positions.size() * sizeof(glm::vec3));
             auto normalBuffer = fbb.CreateVector((uint8_t*)packedNormals.data(), packedNormals.size() * sizeof(uint32_t));
             auto texcoordBuffer = fbb.CreateVector((uint8_t*)packedTexcoods.data(), packedTexcoods.size() * sizeof(uint32_t));
             auto tangentBuffer = fbb.CreateVector((uint8_t*)packedTangents.data(), packedTangents.size() * sizeof(uint32_t));
@@ -267,7 +441,7 @@ int main(int argc, char* argv[]) {
             auto matRef = materialReferences[primitive.material];
             primitives.push_back(gear::assets::CreateMeshPrimitive(fbb, model.accessors[primitive.indices].count, remapVertexCount,
                                                                          indexBuffer, positionBuffer, texcoordBuffer, normalBuffer, tangentBuffer,
-                                                                         matRef));
+                                                                         matRef, meshletBufferOut));
         }
 
         auto meshBin = gear::assets::CreateMeshDirect(fbb, &primitives);

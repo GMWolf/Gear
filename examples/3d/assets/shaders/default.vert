@@ -7,6 +7,7 @@ layout(location = 0) out vec2 texCoord;
 layout(location = 1) out vec3 normal;
 layout(location = 2) out vec4 tangent;
 layout(location = 3) out vec3 viewDir;
+layout(location = 4) out flat int drawID;
 
 struct Transform {
     vec3 position;
@@ -41,6 +42,8 @@ Transform inverseTransform(Transform transform) {
     return result;
 }
 
+
+
 void main() {
     texCoord = texCoordin;
     texCoord.y = -texCoord.y;
@@ -51,4 +54,5 @@ void main() {
     vec3 vPos = applyTransform(tPos, inverseTransform(cameraTransform));
     gl_Position = projection * vec4(vPos, 1.0);
     viewDir = cameraTransform.position - tPos;
+    drawID = gl_DrawID;
 }
