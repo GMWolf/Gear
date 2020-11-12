@@ -16,15 +16,15 @@ gear::g3d::MeshCache::MeshCache() :
 
     glCreateVertexArrays(1, &vao);
 
-    glVertexArrayAttribFormat(vao, 0, 3, GL_FLOAT, GL_FALSE, 0); //pos
-    glVertexArrayAttribFormat(vao, 1, 3, GL_FLOAT, GL_FALSE, 0); //norm
-    glVertexArrayAttribFormat(vao, 2, 2, GL_FLOAT, GL_FALSE, 0); //texcoord
-    glVertexArrayAttribFormat(vao, 3, 4, GL_FLOAT, GL_FALSE, 0); //tangent
+    glVertexArrayAttribFormat(vao, 0, 3, GL_FLOAT, GL_FALSE, 0); //positions
+    glVertexArrayAttribFormat(vao, 1, 4, GL_INT_2_10_10_10_REV, GL_TRUE, 0); //normals
+    glVertexArrayAttribFormat(vao, 2, 2, GL_UNSIGNED_SHORT, GL_TRUE, 0); //texcoord
+    glVertexArrayAttribFormat(vao, 3, 4, GL_INT_2_10_10_10_REV, GL_TRUE, 0); //tangent
 
     glVertexArrayVertexBuffer(vao, 0, positions.vbo, 0, 3 * sizeof(float));
-    glVertexArrayVertexBuffer(vao, 1, normals.vbo, 0, 3 * sizeof(float));
-    glVertexArrayVertexBuffer(vao, 2, texcoord.vbo, 0, 2 * sizeof(float));
-    glVertexArrayVertexBuffer(vao, 3, tangents.vbo, 0, 4 * sizeof(float));
+    glVertexArrayVertexBuffer(vao, 1, normals.vbo, 0, sizeof(uint32_t));
+    glVertexArrayVertexBuffer(vao, 2, texcoord.vbo, 0, sizeof(uint32_t));
+    glVertexArrayVertexBuffer(vao, 3, tangents.vbo, 0, sizeof(uint32_t));
     glVertexArrayAttribBinding(vao, 0, 0);
     glVertexArrayAttribBinding(vao, 1, 1);
     glVertexArrayAttribBinding(vao, 2, 2);

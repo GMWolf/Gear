@@ -48,6 +48,7 @@ add_subdirectory(deps/spirv-cross)
 set(CUTTLEFISH_SHARED OFF CACHE BOOL "" FORCE)
 add_subdirectory(deps/Cuttlefish)
 add_subdirectory(deps/tinygltf)
+add_subdirectory(deps/meshoptimizer)
 
 add_subdirectory(gear)
 

@@ -1,6 +1,6 @@
 
 add_executable(mesh_packer mesh_packer.cpp)
-target_link_libraries(mesh_packer PUBLIC tinygltf gear-assets-fbs stb)
+target_link_libraries(mesh_packer PUBLIC tinygltf gear-assets-fbs stb meshoptimizer glm)
 
 function(add_mesh input)
     add_custom_command(
