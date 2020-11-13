@@ -1,5 +1,5 @@
 add_executable(3dexample src/main.cpp)
-target_link_libraries(3dexample PUBLIC gear-core gear-app gear-g3d)
+target_link_libraries(3dexample PUBLIC gear-core gear-app gear-g3d imgui_ogl3 imgui_glfw imgui)
 
 add_subdirectory(assets/models/SciFiHelmet)
 add_subdirectory(assets/models/Corset)

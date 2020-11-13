@@ -21,6 +21,7 @@ void gear::ui::initialize(GLFWwindow *window) {
 
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init();
+
 }
 
 void gear::ui::begin() {

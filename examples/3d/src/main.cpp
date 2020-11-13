@@ -12,6 +12,10 @@
 #include <gear/View.h>
 #include <gear/Input.h>
 #include <gear/mesh_generated.h>
+#include <glm/gtc/random.hpp>
+#include <imgui.h>
+#include <imgui_impl_opengl3.h>
+#include <imgui_impl_glfw.h>
 
 class Game : public gear::ApplicationAdapter {
 public:
@@ -20,6 +24,11 @@ public:
         application = app;
 
         g3d = new gear::G3DInstance();
+        ImGui::CreateContext();
+        ImGui::StyleColorsDark();
+        ImGui_ImplGlfw_InitForOpenGL(app->window, true);
+        ImGui_ImplOpenGL3_Init();
+
         assets.emplace();
 
         assets->loadBundle("assets.bin");
@@ -40,11 +49,14 @@ public:
             cam = cmd.createEntity(transform, camera);
         }
 
+        for(int i = 0; i < 50; i++)
         {
             gear::Transform3 transform{};
-            transform.position = {0,0,0};
+            auto p = glm::diskRand(25.0f);
+            transform.position = {p.x,0,p.y};
             transform.scale = 1;
-            transform.orientation = glm::quatLookAt(glm::vec3{0,0,-1}, glm::vec3{0,1,0});
+            p = glm::diskRand(1.0f);
+            transform.orientation = glm::quatLookAt(glm::normalize(glm::vec3(p.x, 0, p.y)), glm::vec3{0,1,0});
 
             gear::MeshInstance meshInstance{};
             meshInstance.mesh = assets->getMesh("SciFiHelmet");
@@ -53,9 +65,11 @@ public:
             mesh = cmd.createEntity(transform, meshInstance);
         }
 
+        for(int i = 0; i < 50; i++)
         {
             gear::Transform3 transform{};
-            transform.position = {5,-2,0};
+            auto p = glm::diskRand(25.0f);
+            transform.position = {p.x,-2,p.y};
             transform.scale = 75;
             transform.orientation = glm::quatLookAt(glm::vec3{0,0,1}, glm::vec3{0,1,0});
 
@@ -72,7 +86,7 @@ public:
     void update() override {
         g3d->clearBuffer({0,0,0,1}, 1);
         g3d->renderScene(world);
-
+        drawUI();
         {
             static float yaw = 0;
             auto[ct] = cam.get<gear::Transform3>();
@@ -102,11 +116,31 @@ public:
             yaw += 0.002f;
             t.orientation = glm::quat(glm::vec3(0, yaw, 0));
         }
+
     }
 
     void end() override {
+        ImGui_ImplOpenGL3_Shutdown();
+        ImGui_ImplGlfw_Shutdown();
+        ImGui::DestroyContext();
+
         assets.reset();
         delete g3d;
+
+    }
+
+    void drawUI() {
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        ImGui::Begin("FPS");
+        ImGui::Text("%03.1f", 1./application->frameTime);
+        //ImGui::PlotHistogram("frame time", data.plot.data(), data.plot.size());
+        ImGui::End();
+
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     }
 
 private:

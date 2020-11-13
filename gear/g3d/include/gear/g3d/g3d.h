@@ -10,7 +10,9 @@
 #include <memory>
 #include <glm/vec4.hpp>
 
+
 namespace gear {
+
     const Gapi* g3dGetGapi();
 
     namespace g3d {
@@ -36,6 +38,7 @@ namespace gear {
         std::unique_ptr<g3d::TextureCache> textureCache;
         std::unique_ptr<g3d::ShaderCache> shaderCache;
         std::unique_ptr<g3d::MeshCache> meshCache;
+
         void debugTexture(const assets::Texture* texture, const assets::Shader* shader);
         void debugMesh(const assets::Mesh* mesh, const assets::Texture* texture, const assets::Shader* shader);
         void clearBuffer(glm::vec4 color, float depth);

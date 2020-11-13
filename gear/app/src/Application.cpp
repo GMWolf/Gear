@@ -86,7 +86,7 @@ gear::Application::Application(const AppConfig& config) {
             return;
         }
     }
-    glfwSwapInterval(1);
+    glfwSwapInterval(0);
 
     initialized = true;
 }
