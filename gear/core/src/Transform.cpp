@@ -40,6 +40,10 @@ namespace gear {
         return result;
     }
 
+    glm::vec3 Transform3::apply(const glm::vec3 &p) const {
+        return (orientation * p) * scale + position;
+    }
+
     Transform3 Transform3::inverse() const {
         //TODO scale
         Transform3 result;
@@ -48,4 +52,6 @@ namespace gear {
         result.scale = 1.0f;
         return result;
     }
+
+
 }

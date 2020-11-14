@@ -11,6 +11,12 @@ struct ivec2 {
     y: int;
 }
 
+struct fvec3 {
+    x: float;
+    y: float;
+    z: float;
+}
+
 table Ref {
     type: uint8;
     ptr: uint64 (hash: "fnv1_64");

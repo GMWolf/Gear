@@ -51,27 +51,98 @@ namespace gear {
     }
 
 
+    struct MultiDrawCmdBuffer {
+        static const size_t capacity = 1024;
+        size_t drawCount;
 
-    static void submitMeshlets(G3DInstance& g3d, const assets::MeshPrimitive* prim) {
+        GLsizei indexCount[capacity];
+        const void* indices[capacity];
+        GLint baseVertex[capacity];
+    };
 
-        auto thingy = g3d.meshCache->getMeshletPrimitive(prim);
+
+
+
+    bool meshletInView(const Transform3& cameraTransform, const Camera& camera, const assets::MeshletBounds* bounds, Transform3& transform) {
+
+        glm::vec3 pos = transform.apply({bounds->center().x(), bounds->center().y(), bounds->center().z()});
+        float radius = bounds->radius() * transform.scale;
+        pos = cameraTransform.inverse().apply(pos);
+
+        float tang = tanf(camera.fov * 0.5f);
+        float aspect = camera.viewPort.size.x / (float) camera.viewPort.size.y;
+        glm::vec2 sphereFactor;
+        float fovx = atanf(tang*aspect);
+        sphereFactor.x = 1.0f / cosf( fovx );
+        sphereFactor.y = 1.0f / cosf(camera.fov * 0.5f);
+
+        /*
+        glm::vec3 v = pos - cameraTransform.position;
+        float pcz = -pos.z;//glm::dot(v, -cameraBasisZ);
+        if (pcz > camera.far || pcz < camera.near) {
+            return false;
+        }
+
+        float pcy = pos.y;//glm::dot(v, cameraBasisY);
+        float aux = pcz * tang;
+        if (pcy > aux || pcy < -aux) {
+            return false;
+        }
+
+        float pcx = pos.x;//glm::dot(v, cameraBasisX);
+        aux = aux * aspect;
+        if (pcx > aux || pcx < -aux) {
+            return false;
+        }
+
+        return true;
+         */
+
+
+        //float height = camera.near * tang;
+        //float width = height * aspect;
+
+        if (-pos.z > camera.far + radius || -pos.z < camera.near - radius) {
+            return false;
+        }
+
+        glm::vec2 d = sphereFactor * radius;
+
+        float az = -pos.z * tang;
+        if (pos.y > az + d.y || pos.y < -az-d.y) {
+            return false;
+        }
+
+        az *= aspect;
+        if (pos.x > az+d.x || pos.x < -az-d.x) {
+            return false;
+        }
+
+
+        return true;
+
+    }
+
+    static void appendMeshletCmd(MultiDrawCmdBuffer& cmds, const assets::MeshletBuffer* meshletBuffer, size_t index, size_t indexOffset, size_t baseVertex) {
+
+        cmds.indexCount[cmds.drawCount] = meshletBuffer->indexCounts()->Get(index);
+        cmds.baseVertex[cmds.drawCount] = meshletBuffer->vertexOffsets()->Get(index) + baseVertex;
+        cmds.indices[cmds.drawCount] = (const void*)(uint64_t)(meshletBuffer->indexOffsets()->Get(index) + indexOffset);
+
+        cmds.drawCount++;
+    }
+
+
+    static void submitMeshletsCmds(MultiDrawCmdBuffer& cmds) {
 
         glMultiDrawElementsBaseVertex(
                 GL_TRIANGLES,
-                thingy.count.data(),
+                cmds.indexCount,
                 GL_UNSIGNED_BYTE,
-                thingy.indices.data(),
-                thingy.count.size(),
-                thingy.baseVertex.data()
+                cmds.indices,
+                cmds.drawCount,
+                cmds.baseVertex
                 );
-
-        //for(int i = 0; i < thingy.count.size(); i++) {
-        //glDrawElementsBaseVertex(GL_TRIANGLES,
-        //               thingy.count[i],
-        //               GL_UNSIGNED_BYTE,
-        //               thingy.indices[i],
-        //               thingy.baseVertex[i]);
-        //}
 
     }
 
@@ -117,16 +188,27 @@ namespace gear {
                     glBindBufferBase(GL_UNIFORM_BUFFER, binding, ubo);
                 }
 
+
+                MultiDrawCmdBuffer multiDrawCmdBuffer;
+
                 for(const auto& prim : *meshInstance.mesh->primitives()) {
-
                     bindMaterial((const assets::Material*)prim->material()->ptr(), *g3d.textureCache, textureBindings);
-                    submitMeshlets(g3d, prim);
+
+                    auto primThing = g3d.meshCache->getMeshletPrimitive(prim);
+                    multiDrawCmdBuffer.drawCount = 0;
+                    for(int i = 0; i < prim->meshlets()->indexCounts()->size(); i++) {
+                        if (meshletInView(cameraTransform, camera, prim->meshlets()->bounds()->Get(i), transform)) {
+                            appendMeshletCmd(multiDrawCmdBuffer, prim->meshlets(), i, primThing.indexOffset,
+                                             primThing.baseVertex);
+                        }
+                    }
+                    submitMeshletsCmds(multiDrawCmdBuffer);
                 }
 
-                for(const auto& prim : mesh.primitives) {
-                    bindMaterial(prim.material, *g3d.textureCache, textureBindings);
-                    //glDrawElementsBaseVertex(GL_TRIANGLES, prim.indexCount, GL_UNSIGNED_SHORT, (void*)prim.indexOffset, prim.baseVertex);
-                }
+                //for(const auto& prim : mesh.primitives) {
+                //    bindMaterial(prim.material, *g3d.textureCache, textureBindings);
+                //    //glDrawElementsBaseVertex(GL_TRIANGLES, prim.indexCount, GL_UNSIGNED_SHORT, (void*)prim.indexOffset, prim.baseVertex);
+                //}
 
             }
         }

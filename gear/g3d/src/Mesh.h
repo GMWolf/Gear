@@ -47,9 +47,8 @@ namespace gear::g3d {
         GLuint meshletVAO;
 
         struct MeshletPrimitive {
-            std::vector<GLsizei> count;
-            std::vector<const void*> indices;
-            std::vector<GLint> baseVertex;
+            size_t baseVertex;
+            size_t indexOffset;
         };
 
         uint32_t meshletVertexOffset = 0;

@@ -14,6 +14,8 @@ namespace assets {
 struct Material;
 struct MaterialBuilder;
 
+struct MeshletBounds;
+
 struct MeshletBuffer;
 struct MeshletBufferBuilder;
 
@@ -22,6 +24,58 @@ struct MeshPrimitiveBuilder;
 
 struct Mesh;
 struct MeshBuilder;
+
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) MeshletBounds FLATBUFFERS_FINAL_CLASS {
+ private:
+  gear::assets::fvec3 center_;
+  float radius_;
+  gear::assets::fvec3 coneApex_;
+  gear::assets::fvec3 coneAxis_;
+  float coneCutoff_;
+
+ public:
+  MeshletBounds() {
+    memset(static_cast<void *>(this), 0, sizeof(MeshletBounds));
+  }
+  MeshletBounds(const gear::assets::fvec3 &_center, float _radius, const gear::assets::fvec3 &_coneApex, const gear::assets::fvec3 &_coneAxis, float _coneCutoff)
+      : center_(_center),
+        radius_(flatbuffers::EndianScalar(_radius)),
+        coneApex_(_coneApex),
+        coneAxis_(_coneAxis),
+        coneCutoff_(flatbuffers::EndianScalar(_coneCutoff)) {
+  }
+  const gear::assets::fvec3 &center() const {
+    return center_;
+  }
+  gear::assets::fvec3 &mutable_center() {
+    return center_;
+  }
+  float radius() const {
+    return flatbuffers::EndianScalar(radius_);
+  }
+  void mutate_radius(float _radius) {
+    flatbuffers::WriteScalar(&radius_, _radius);
+  }
+  const gear::assets::fvec3 &coneApex() const {
+    return coneApex_;
+  }
+  gear::assets::fvec3 &mutable_coneApex() {
+    return coneApex_;
+  }
+  const gear::assets::fvec3 &coneAxis() const {
+    return coneAxis_;
+  }
+  gear::assets::fvec3 &mutable_coneAxis() {
+    return coneAxis_;
+  }
+  float coneCutoff() const {
+    return flatbuffers::EndianScalar(coneCutoff_);
+  }
+  void mutate_coneCutoff(float _coneCutoff) {
+    flatbuffers::WriteScalar(&coneCutoff_, _coneCutoff);
+  }
+};
+FLATBUFFERS_STRUCT_END(MeshletBounds, 44);
 
 struct Material FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef MaterialBuilder Builder;
@@ -129,7 +183,8 @@ struct MeshletBuffer FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_VERTEXCOUNT = 14,
     VT_VERTEXOFFSETS = 16,
     VT_INDEXOFFSETS = 18,
-    VT_INDEXCOUNTS = 20
+    VT_INDEXCOUNTS = 20,
+    VT_BOUNDS = 22
   };
   const flatbuffers::Vector<uint8_t> *indices() const {
     return GetPointer<const flatbuffers::Vector<uint8_t> *>(VT_INDICES);
@@ -185,6 +240,12 @@ struct MeshletBuffer FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   flatbuffers::Vector<int32_t> *mutable_indexCounts() {
     return GetPointer<flatbuffers::Vector<int32_t> *>(VT_INDEXCOUNTS);
   }
+  const flatbuffers::Vector<const gear::assets::MeshletBounds *> *bounds() const {
+    return GetPointer<const flatbuffers::Vector<const gear::assets::MeshletBounds *> *>(VT_BOUNDS);
+  }
+  flatbuffers::Vector<const gear::assets::MeshletBounds *> *mutable_bounds() {
+    return GetPointer<flatbuffers::Vector<const gear::assets::MeshletBounds *> *>(VT_BOUNDS);
+  }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyOffset(verifier, VT_INDICES) &&
@@ -204,6 +265,8 @@ struct MeshletBuffer FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            verifier.VerifyVector(indexOffsets()) &&
            VerifyOffset(verifier, VT_INDEXCOUNTS) &&
            verifier.VerifyVector(indexCounts()) &&
+           VerifyOffset(verifier, VT_BOUNDS) &&
+           verifier.VerifyVector(bounds()) &&
            verifier.EndTable();
   }
 };
@@ -239,6 +302,9 @@ struct MeshletBufferBuilder {
   void add_indexCounts(flatbuffers::Offset<flatbuffers::Vector<int32_t>> indexCounts) {
     fbb_.AddOffset(MeshletBuffer::VT_INDEXCOUNTS, indexCounts);
   }
+  void add_bounds(flatbuffers::Offset<flatbuffers::Vector<const gear::assets::MeshletBounds *>> bounds) {
+    fbb_.AddOffset(MeshletBuffer::VT_BOUNDS, bounds);
+  }
   explicit MeshletBufferBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
@@ -261,8 +327,10 @@ inline flatbuffers::Offset<MeshletBuffer> CreateMeshletBuffer(
     uint16_t vertexCount = 0,
     flatbuffers::Offset<flatbuffers::Vector<int32_t>> vertexOffsets = 0,
     flatbuffers::Offset<flatbuffers::Vector<uint32_t>> indexOffsets = 0,
-    flatbuffers::Offset<flatbuffers::Vector<int32_t>> indexCounts = 0) {
+    flatbuffers::Offset<flatbuffers::Vector<int32_t>> indexCounts = 0,
+    flatbuffers::Offset<flatbuffers::Vector<const gear::assets::MeshletBounds *>> bounds = 0) {
   MeshletBufferBuilder builder_(_fbb);
+  builder_.add_bounds(bounds);
   builder_.add_indexCounts(indexCounts);
   builder_.add_indexOffsets(indexOffsets);
   builder_.add_vertexOffsets(vertexOffsets);
@@ -290,7 +358,8 @@ inline flatbuffers::Offset<MeshletBuffer> CreateMeshletBufferDirect(
     uint16_t vertexCount = 0,
     const std::vector<int32_t> *vertexOffsets = nullptr,
     const std::vector<uint32_t> *indexOffsets = nullptr,
-    const std::vector<int32_t> *indexCounts = nullptr) {
+    const std::vector<int32_t> *indexCounts = nullptr,
+    const std::vector<gear::assets::MeshletBounds> *bounds = nullptr) {
   auto indices__ = indices ? _fbb.CreateVector<uint8_t>(*indices) : 0;
   auto positions__ = positions ? _fbb.CreateVector<uint8_t>(*positions) : 0;
   auto texcoords__ = texcoords ? _fbb.CreateVector<uint8_t>(*texcoords) : 0;
@@ -299,6 +368,7 @@ inline flatbuffers::Offset<MeshletBuffer> CreateMeshletBufferDirect(
   auto vertexOffsets__ = vertexOffsets ? _fbb.CreateVector<int32_t>(*vertexOffsets) : 0;
   auto indexOffsets__ = indexOffsets ? _fbb.CreateVector<uint32_t>(*indexOffsets) : 0;
   auto indexCounts__ = indexCounts ? _fbb.CreateVector<int32_t>(*indexCounts) : 0;
+  auto bounds__ = bounds ? _fbb.CreateVectorOfStructs<gear::assets::MeshletBounds>(*bounds) : 0;
   return gear::assets::CreateMeshletBuffer(
       _fbb,
       indices__,
@@ -309,7 +379,8 @@ inline flatbuffers::Offset<MeshletBuffer> CreateMeshletBufferDirect(
       vertexCount,
       vertexOffsets__,
       indexOffsets__,
-      indexCounts__);
+      indexCounts__,
+      bounds__);
 }
 
 struct MeshPrimitive FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {

@@ -134,18 +134,10 @@ gear::g3d::MeshCache::MeshletPrimitive gear::g3d::MeshCache::addMeshlets(const g
     meshletBuffer.indices.offset += meshlets->indices()->size();
 
     MeshletPrimitive mp{};
-    for(auto c : *meshPrim->meshlets()->indexCounts()) {
-        mp.count.push_back(c);
-    }
-    for(auto vo : *meshPrim->meshlets()->vertexOffsets()) {
-        mp.baseVertex.push_back(vo + meshletVertexOffset);
-    }
+    mp.baseVertex = meshletVertexOffset;
     meshletVertexOffset += meshlets->vertexCount();
-    for(auto i : *meshPrim->meshlets()->indexOffsets()) {
-        mp.indices.push_back((const void*) (uint64_t )(i + meshletIndexOffset));
-    }
+    mp.indexOffset = meshletIndexOffset;
     meshletIndexOffset = meshletBuffer.indices.offset;
-
     return mp;
 }
 

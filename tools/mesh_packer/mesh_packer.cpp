@@ -166,6 +166,8 @@ struct MeshletBuffer {
     std::vector<uint32_t> vertexOffsets;
     std::vector<uint32_t> indexOffsets;
     std::vector<uint32_t> triangleCounts;
+
+    std::vector<meshopt_Bounds> bounds;
 };
 
 struct PackedMeshletBuffer {
@@ -178,6 +180,8 @@ struct PackedMeshletBuffer {
     std::vector<int32_t> vertexOffsets;
     std::vector<uint32_t> indexOffsets;
     std::vector<int32_t> indexCounts;
+
+    std::vector<meshopt_Bounds> bounds;
 };
 
 struct MeshData {
@@ -205,6 +209,7 @@ MeshletBuffer createMeshlets(const MeshData& meshData) {
     meshletBuffer.vertexOffsets.reserve(meshletCount);
     meshletBuffer.indexOffsets.reserve(meshletCount);
     meshletBuffer.triangleCounts.reserve(meshletCount);
+    meshletBuffer.bounds.reserve(meshletCount);
 
     for(auto& meshlet : meshlets) {
         meshletBuffer.triangleCounts.push_back(meshlet.triangle_count);
@@ -227,6 +232,9 @@ MeshletBuffer createMeshlets(const MeshData& meshData) {
                 meshletBuffer.indices.push_back(index);
             }
         }
+
+        //compute bounds
+        meshletBuffer.bounds.push_back(meshopt_computeMeshletBounds(&meshlet, &meshData.positions[0].x, meshData.positions.size(), sizeof(glm::vec3)));
     }
 
     return meshletBuffer;
@@ -277,6 +285,7 @@ PackedMeshletBuffer packMeshlets(const MeshletBuffer& meshletBuffer) {
         return i;
     });
 
+    packedBuffer.bounds = meshletBuffer.bounds;
 
     return packedBuffer;
 }
@@ -285,6 +294,17 @@ PackedMeshletBuffer packMeshlets(const MeshletBuffer& meshletBuffer) {
 template<class T>
 flatbuffers::Offset<flatbuffers::Vector<uint8_t>> writeAsBytes(flatbuffers::FlatBufferBuilder& fbb, const std::vector<T>& vec) {
     return fbb.CreateVector((uint8_t*)vec.data(), vec.size() * sizeof(T));
+}
+
+static void set(gear::assets::fvec3& fv, const glm::vec3& v) {
+    fv.mutate_x(v.x);
+    fv.mutate_y(v.y);
+    fv.mutate_z(v.z);
+}
+static void set(gear::assets::fvec3& fv, float v[3]) {
+    fv.mutate_x(v[0]);
+    fv.mutate_y(v[1]);
+    fv.mutate_z(v[2]);
 }
 
 flatbuffers::Offset<gear::assets::MeshletBuffer> writeMeshletBuffer(flatbuffers::FlatBufferBuilder& fbb, const PackedMeshletBuffer& meshletBuffer) {
@@ -298,6 +318,20 @@ flatbuffers::Offset<gear::assets::MeshletBuffer> writeMeshletBuffer(flatbuffers:
     auto vertexOffsetsBuffer = fbb.CreateVector(meshletBuffer.vertexOffsets);
     auto indexCountsBuffer = fbb.CreateVector(meshletBuffer.indexCounts);
 
+    std::vector<gear::assets::MeshletBounds> boundsVec;
+    boundsVec.reserve(meshletBuffer.bounds.size());
+    for(auto bounds : meshletBuffer.bounds) {
+        gear::assets::MeshletBounds meshletBounds;
+        set(meshletBounds.mutable_center(), bounds.center);
+        meshletBounds.mutate_radius(bounds.radius);
+        set(meshletBounds.mutable_coneApex(), bounds.cone_apex);
+        set(meshletBounds.mutable_coneAxis(), bounds.cone_axis);
+        meshletBounds.mutate_coneCutoff(bounds.cone_cutoff);
+        boundsVec.push_back(meshletBounds);
+    }
+    auto boundsBuffer = fbb.CreateVectorOfStructs(boundsVec);
+
+
     gear::assets::MeshletBufferBuilder builder(fbb);
     builder.add_indices(indexBuffer);
     builder.add_positions(positionBuffer);
@@ -308,6 +342,7 @@ flatbuffers::Offset<gear::assets::MeshletBuffer> writeMeshletBuffer(flatbuffers:
     builder.add_vertexOffsets(vertexOffsetsBuffer);
     builder.add_indexCounts(indexCountsBuffer);
     builder.add_vertexCount(meshletBuffer.positions.size());
+    builder.add_bounds(boundsBuffer);
     return builder.Finish();
 }
 

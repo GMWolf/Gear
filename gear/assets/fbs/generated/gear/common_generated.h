@@ -13,6 +13,8 @@ struct fvec2;
 
 struct ivec2;
 
+struct fvec3;
+
 struct Ref;
 struct RefBuilder;
 
@@ -71,6 +73,42 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) ivec2 FLATBUFFERS_FINAL_CLASS {
   }
 };
 FLATBUFFERS_STRUCT_END(ivec2, 8);
+
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) fvec3 FLATBUFFERS_FINAL_CLASS {
+ private:
+  float x_;
+  float y_;
+  float z_;
+
+ public:
+  fvec3() {
+    memset(static_cast<void *>(this), 0, sizeof(fvec3));
+  }
+  fvec3(float _x, float _y, float _z)
+      : x_(flatbuffers::EndianScalar(_x)),
+        y_(flatbuffers::EndianScalar(_y)),
+        z_(flatbuffers::EndianScalar(_z)) {
+  }
+  float x() const {
+    return flatbuffers::EndianScalar(x_);
+  }
+  void mutate_x(float _x) {
+    flatbuffers::WriteScalar(&x_, _x);
+  }
+  float y() const {
+    return flatbuffers::EndianScalar(y_);
+  }
+  void mutate_y(float _y) {
+    flatbuffers::WriteScalar(&y_, _y);
+  }
+  float z() const {
+    return flatbuffers::EndianScalar(z_);
+  }
+  void mutate_z(float _z) {
+    flatbuffers::WriteScalar(&z_, _z);
+  }
+};
+FLATBUFFERS_STRUCT_END(fvec3, 12);
 
 struct Ref FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef RefBuilder Builder;

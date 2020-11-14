@@ -15,8 +15,7 @@ set(GEAR_G3D_SOURCES
         src/Texture.cpp
         src/Shader.cpp
         src/Mesh.cpp
-        src/DrawScene.cpp
-        )
+        src/DrawScene.cpp)
 
 add_library(gear-g3d ${GEAR_G3D_PUBLIC} ${GEAR_G3D_HEADERS} ${GEAR_G3D_SOURCES})
 

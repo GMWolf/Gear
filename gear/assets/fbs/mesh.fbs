@@ -10,6 +10,14 @@ table Material {
 }
 
 
+struct MeshletBounds {
+    center: fvec3;
+    radius: float;
+    coneApex: fvec3;
+    coneAxis: fvec3;
+    coneCutoff: float;
+}
+
 table MeshletBuffer {
     indices: [ubyte];
     positions: [ubyte];
@@ -21,6 +29,7 @@ table MeshletBuffer {
     vertexOffsets: [int32];
     indexOffsets: [uint32];
     indexCounts: [int32];
+    bounds: [MeshletBounds];
 }
 
 table MeshPrimitive {

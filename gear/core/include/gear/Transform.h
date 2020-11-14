@@ -21,6 +21,7 @@ namespace gear {
 
         glm::mat4x3 matrix() const;
 
+        glm::vec3 apply(const glm::vec3& transform3) const;
         Transform3 apply(const Transform3& transform3) const;
         Transform3 inverse() const;
     };

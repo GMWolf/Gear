@@ -88,25 +88,27 @@ public:
         g3d->renderScene(world);
         drawUI();
         {
+
+            float dt = (float)application->frameTime;
             static float yaw = 0;
             auto[ct] = cam.get<gear::Transform3>();
             if (application->getInputState().keyDown(gear::KEYS::W)) {
-                ct.position += ct.orientation * glm::vec3(0, 0, -1) * 0.05f;
+                ct.position += ct.orientation * glm::vec3(0, 0, -1) * dt * 4.0f;
             }
             if (application->getInputState().keyDown(gear::KEYS::S)) {
-                ct.position += ct.orientation * glm::vec3(0, 0, 1) * 0.05f;
+                ct.position += ct.orientation * glm::vec3(0, 0, 1) * dt * 4.0f;
             }
             if (application->getInputState().keyDown(gear::KEYS::A)) {
-                ct.position += ct.orientation * glm::vec3(-1, 0, 0) * 0.05f;
+                ct.position += ct.orientation * glm::vec3(-1, 0, 0) * dt * 4.0f;
             }
             if (application->getInputState().keyDown(gear::KEYS::D)) {
-                ct.position += ct.orientation * glm::vec3(1, 0, 0) * 0.05f;
+                ct.position += ct.orientation * glm::vec3(1, 0, 0) * dt * 4.0f;
             }
             if (application->getInputState().keyDown(gear::KEYS::Q)) {
-                yaw += 0.01f;
+                yaw += dt;
             }
             if (application->getInputState().keyDown(gear::KEYS::E)) {
-                yaw -= 0.01f;
+                yaw -= dt;
             }
             ct.orientation = glm::quat(glm::vec3(0, yaw, 0));
         }
