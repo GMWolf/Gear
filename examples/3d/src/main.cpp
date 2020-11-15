@@ -26,6 +26,7 @@ public:
         application = app;
 
         {
+            _rmt_Settings()->reuse_open_port = true;
             auto error = rmt_CreateGlobalInstance(&rmt);
             if (error != RMT_ERROR_NONE) {
                 std::cerr << "Error launching remotery " << error << "\n";

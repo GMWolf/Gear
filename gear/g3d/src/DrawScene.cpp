@@ -48,41 +48,55 @@ namespace gear::g3d {
         bindTexture(textureBindings.metallicRoughness, metalRoughnessTex, textureCache);
     }
 
+    struct CameraCullData {
+        Transform3 cameraInverse;
+        glm::vec2 sphereFactor;
+        float tang;
+        float aspect;
+        float near;
+        float far;
+    };
 
-    static bool meshletInView(const Transform3& cameraTransform, const Camera& camera, const assets::MeshletBounds* bounds, Transform3& transform) {
 
-        //rmt_ScopedCPUSample(MeshletInView, 0);
+    static CameraCullData buildCameraCullData(const Transform3& cameraTransform, const Camera& camera)
+    {
+        CameraCullData data;
+        data.cameraInverse = cameraTransform.inverse();
+        data.tang = tanf(camera.fov * 0.5f);
+        data.aspect = camera.viewPort.size.x / (float) camera.viewPort.size.y;
+        float fovx = atanf(data.tang * data.aspect);
+        data.sphereFactor.x = 1.0f / cosf(fovx);
+        data.sphereFactor.y = 1.0f / cosf(camera.fov * 0.5f);
+        data.near = camera.near;
+        data.far = camera.far;
+        return data;
+    }
+
+    static bool meshletInView(const CameraCullData& cc, const assets::MeshletBounds* bounds, Transform3& transform) {
+
+       // rmt_ScopedCPUSample(MeshletInView, RMTSF_Aggregate);
 
         glm::vec3 pos = transform.apply({bounds->center().x(), bounds->center().y(), bounds->center().z()});
         float radius = bounds->radius() * transform.scale;
-        pos = cameraTransform.inverse().apply(pos);
+        pos = cc.cameraInverse.apply(pos);
 
-        float tang = tanf(camera.fov * 0.5f);
-        float aspect = camera.viewPort.size.x / (float) camera.viewPort.size.y;
-        glm::vec2 sphereFactor;
-        float fovx = atanf(tang*aspect);
-        sphereFactor.x = 1.0f / cosf( fovx );
-        sphereFactor.y = 1.0f / cosf(camera.fov * 0.5f);
-
-        if (-pos.z > camera.far + radius || -pos.z < camera.near - radius) {
+        if (-pos.z > cc.far + radius || -pos.z < cc.near - radius) {
             return false;
         }
 
-        glm::vec2 d = sphereFactor * radius;
+        glm::vec2 d = cc.sphereFactor * radius;
 
-        float az = -pos.z * tang;
+        float az = -pos.z * cc.tang;
         if (pos.y > az + d.y || pos.y < -az-d.y) {
             return false;
         }
 
-        az *= aspect;
+        az *= cc.aspect;
         if (pos.x > az+d.x || pos.x < -az-d.x) {
             return false;
         }
 
-
         return true;
-
     }
 
 
@@ -149,7 +163,6 @@ namespace gear::g3d {
 
         glViewport(camera.viewPort.pos.x, camera.viewPort.pos.y, camera.viewPort.size.x, camera.viewPort.size.y);
 
-        //glBindVertexArray(g3d.meshCache->vao);
         glBindVertexArray(g3d.meshCache->meshletVAO);
 
         GLsync* cameraUniformSync;
@@ -160,6 +173,8 @@ namespace gear::g3d {
             g3d.batchBuffers->cameraBuffer.bind(0);
             cameraUniformSync = g3d.batchBuffers->cameraBuffer.end();
         }
+
+        CameraCullData cc = buildCameraCullData(cameraTransform, camera);
 
         auto meshQuery = registry.query().all<Transform3, MeshInstance>();
 
@@ -193,10 +208,8 @@ namespace gear::g3d {
                 for(const auto& prim : *meshInstance.mesh->primitives()) {
                     auto primThing = g3d.meshCache->getMeshletPrimitive(prim);
 
-                    size_t primCount = prim->meshlets()->indexCounts()->size();
-
                     for(int i = 0; i < prim->meshlets()->indexCounts()->size(); i++) {
-                        if (meshletInView(cameraTransform, camera, prim->meshlets()->bounds()->Get(i), transform)) {
+                        if (meshletInView(cc, prim->meshlets()->bounds()->Get(i), transform)) {
                             batchAppendMeshlet(batch, prim->meshlets(), i, primThing.indexOffset,
                                              primThing.baseVertex, transform);
                             if (batch.drawCount == gear::g3d::MeshletBatch::capacity) {
