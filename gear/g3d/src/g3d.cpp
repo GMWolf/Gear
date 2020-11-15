@@ -7,6 +7,8 @@
 #include "Texture.h"
 #include "Shader.h"
 #include "Mesh.h"
+#include <Remotery.h>
+#include "DrawScene.h"
 
 namespace gear {
     const Gapi *g3dGetGapi() {
@@ -25,8 +27,12 @@ namespace gear {
         shaderCache = std::make_unique<g3d::ShaderCache>();
         textureCache = std::make_unique<g3d::TextureCache>();
         meshCache = std::make_unique<g3d::MeshCache>();
+        multidrawCmdBuffer = std::make_unique<g3d::MultiDrawCmdBuffer>();
+        rmt_BindOpenGL();
     }
-    G3DInstance::~G3DInstance() = default;
+    G3DInstance::~G3DInstance() {
+        rmt_UnbindOpenGL();
+    }
 
 
     void G3DInstance::debugTexture(const assets::Texture *texture, const assets::Shader *shader) {

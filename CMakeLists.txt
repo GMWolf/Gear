@@ -49,6 +49,7 @@ set(CUTTLEFISH_SHARED OFF CACHE BOOL "" FORCE)
 add_subdirectory(deps/Cuttlefish)
 add_subdirectory(deps/tinygltf)
 add_subdirectory(deps/meshoptimizer)
+include(cmake/remotery.cmake)
 
 add_subdirectory(gear)
 

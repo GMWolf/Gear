@@ -7,3 +7,6 @@
 [submodule "deps/meshoptimizer"]
 	path = deps/meshoptimizer
 	url = https://github.com/zeux/meshoptimizer.git
+[submodule "deps/Remotery"]
+	path = deps/Remotery
+	url = https://github.com/Celtoys/Remotery.git

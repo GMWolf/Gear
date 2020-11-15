@@ -1,6 +1,7 @@
 //
 // Created by felix on 09/11/2020.
 //
+#include "DrawScene.h"
 #include <gear/g3d/g3d.h>
 #include <gear/ecs/ECS.h>
 #include <gear/View.h>
@@ -8,15 +9,12 @@
 #include "Mesh.h"
 #include "Shader.h"
 #include "Texture.h"
+#include "Remotery.h"
+#include "StreamBuffer.h"
 
-namespace gear {
 
+namespace gear::g3d {
 
-    struct SceneBuffer {
-        Transform3 cameraTransform;
-        Transform3 transform;
-        glm::mat4 projection;
-    };
 
     struct TextureBindings {
         int albedo;
@@ -51,19 +49,9 @@ namespace gear {
     }
 
 
-    struct MultiDrawCmdBuffer {
-        static const size_t capacity = 1024;
-        size_t drawCount;
+    static bool meshletInView(const Transform3& cameraTransform, const Camera& camera, const assets::MeshletBounds* bounds, Transform3& transform) {
 
-        GLsizei indexCount[capacity];
-        const void* indices[capacity];
-        GLint baseVertex[capacity];
-    };
-
-
-
-
-    bool meshletInView(const Transform3& cameraTransform, const Camera& camera, const assets::MeshletBounds* bounds, Transform3& transform) {
+        //rmt_ScopedCPUSample(MeshletInView, 0);
 
         glm::vec3 pos = transform.apply({bounds->center().x(), bounds->center().y(), bounds->center().z()});
         float radius = bounds->radius() * transform.scale;
@@ -75,32 +63,6 @@ namespace gear {
         float fovx = atanf(tang*aspect);
         sphereFactor.x = 1.0f / cosf( fovx );
         sphereFactor.y = 1.0f / cosf(camera.fov * 0.5f);
-
-        /*
-        glm::vec3 v = pos - cameraTransform.position;
-        float pcz = -pos.z;//glm::dot(v, -cameraBasisZ);
-        if (pcz > camera.far || pcz < camera.near) {
-            return false;
-        }
-
-        float pcy = pos.y;//glm::dot(v, cameraBasisY);
-        float aux = pcz * tang;
-        if (pcy > aux || pcy < -aux) {
-            return false;
-        }
-
-        float pcx = pos.x;//glm::dot(v, cameraBasisX);
-        aux = aux * aspect;
-        if (pcx > aux || pcx < -aux) {
-            return false;
-        }
-
-        return true;
-         */
-
-
-        //float height = camera.near * tang;
-        //float width = height * aspect;
 
         if (-pos.z > camera.far + radius || -pos.z < camera.near - radius) {
             return false;
@@ -135,38 +97,67 @@ namespace gear {
 
     static void submitMeshletsCmds(MultiDrawCmdBuffer& cmds) {
 
-        glMultiDrawElementsBaseVertex(
-                GL_TRIANGLES,
-                cmds.indexCount,
-                GL_UNSIGNED_BYTE,
-                cmds.indices,
-                cmds.drawCount,
-                cmds.baseVertex
-                );
+        rmt_ScopedOpenGLSample(SubmitMeshlets);
+
+        if (cmds.drawCount > 0) {
+            auto transformRegion = cmds.transformBuffer.finishWrite();
+            glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 1, cmds.transformBuffer.id, transformRegion->start,
+                              transformRegion->size);
+
+            glMultiDrawElementsBaseVertex(
+                    GL_TRIANGLES,
+                    cmds.indexCount,
+                    GL_UNSIGNED_BYTE,
+                    cmds.indices,
+                    cmds.drawCount,
+                    cmds.baseVertex
+            );
+
+            transformRegion->sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+
+            cmds.drawCount = 0;
+        }
 
     }
 
     static void renderSceneCamera(G3DInstance &g3d, ecs::Registry &registry, Camera &camera,
                                   Transform3 &cameraTransform) {
 
+        rmt_ScopedCPUSample(RenderScene, 0);
+
         glViewport(camera.viewPort.pos.x, camera.viewPort.pos.y, camera.viewPort.size.x, camera.viewPort.size.y);
-
-        static GLuint ubo = 0;
-        if (ubo == 0) {
-            glCreateBuffers(1, &ubo);
-            glNamedBufferStorage(ubo, sizeof(SceneBuffer), nullptr,  GL_MAP_WRITE_BIT);
-        }
-
 
         //glBindVertexArray(g3d.meshCache->vao);
         glBindVertexArray(g3d.meshCache->meshletVAO);
 
-        auto meshQuery = registry.query().all<Transform3, MeshInstance>();
-        for(auto meshChunk : meshQuery) {
-            for(auto [transform, meshInstance] : ecs::ChunkView<Transform3, MeshInstance>(*meshChunk)) {
+        MultiDrawCmdBuffer& cmdBuffer = *g3d.multidrawCmdBuffer;
 
-                const auto& shader = g3d.shaderCache->get(meshInstance.shader);
-                const auto& mesh = g3d.meshCache->get(meshInstance.mesh);
+
+        StreamBuffer::BufferRegion* cameraRegion;
+        {
+            if (cmdBuffer.cameraBuffer.space() < sizeof(CameraBufferData)) {
+                cmdBuffer.cameraBuffer.clientWaitAndResetHead();
+            }
+            cmdBuffer.cameraBuffer.clientWaitUntilAvailable(sizeof(CameraBufferData));
+            auto* cameraData = static_cast<CameraBufferData *>(cmdBuffer.cameraBuffer.ptr());
+            cameraData->cameraTransform = cameraTransform;
+            float aspect = camera.viewPort.size.x / (float) camera.viewPort.size.y;
+            cameraData->projection = glm::perspective(camera.fov, aspect, camera.near, camera.far);
+            cmdBuffer.cameraBuffer.advanceHead(sizeof(CameraBufferData));
+            cameraRegion = cmdBuffer.cameraBuffer.finishWrite();
+
+            glBindBufferRange(GL_UNIFORM_BUFFER, 0, cmdBuffer.cameraBuffer.id, cameraRegion->start, cameraRegion->size);
+        }
+
+        auto meshQuery = registry.query().all<Transform3, MeshInstance>();
+
+        //temp only bind material for very first instance
+        {
+            if (meshQuery.begin() != meshQuery.end()) {
+                auto c = *meshQuery.begin();
+                auto *meshInstance = static_cast<MeshInstance *>(c->get(ecs::Component<MeshInstance>::ID(), 0));
+                const auto &shader = g3d.shaderCache->get(meshInstance->shader);
+                const auto &mesh = g3d.meshCache->get(meshInstance->mesh);
 
                 glUseProgram(shader.id);
                 TextureBindings textureBindings{};
@@ -175,34 +166,49 @@ namespace gear {
                 textureBindings.normal = getShaderBinding(shader, "normalMap");
                 textureBindings.metallicRoughness = getShaderBinding(shader, "metallicRoughness");
 
-                { // update scene buffer
-                    auto sceneBuffer = static_cast<SceneBuffer *>(glMapNamedBuffer(ubo, GL_WRITE_ONLY));
-                    sceneBuffer->cameraTransform = cameraTransform;
-                    sceneBuffer->transform = transform;
-                    float aspect = camera.viewPort.size.x / (float) camera.viewPort.size.y;
-                    sceneBuffer->projection = glm::perspective(camera.fov, aspect, camera.near, camera.far);
-                    glUnmapNamedBuffer(ubo);
-                }
-                { //set scene buffer
-                    auto binding = shader.shaderDef->resources()->LookupByKey("SceneBuffer")->binding();
-                    glBindBufferBase(GL_UNIFORM_BUFFER, binding, ubo);
-                }
+                bindMaterial((const assets::Material *) meshInstance->mesh->primitives()->Get(0)->material()->ptr(),
+                             *g3d.textureCache, textureBindings);
+            }
+        }
 
 
-                MultiDrawCmdBuffer multiDrawCmdBuffer;
+
+        for(auto meshChunk : meshQuery) {
+            for(auto [transform, meshInstance] : ecs::ChunkView<Transform3, MeshInstance>(*meshChunk)) {
+
+                const auto& mesh = g3d.meshCache->get(meshInstance.mesh);
 
                 for(const auto& prim : *meshInstance.mesh->primitives()) {
-                    bindMaterial((const assets::Material*)prim->material()->ptr(), *g3d.textureCache, textureBindings);
-
                     auto primThing = g3d.meshCache->getMeshletPrimitive(prim);
-                    multiDrawCmdBuffer.drawCount = 0;
+
+                    size_t primCount = prim->meshlets()->indexCounts()->size();
+                    size_t transformBytes = sizeof(Transform3) * primCount;
+
+                    if (cmdBuffer.transformBuffer.space() < transformBytes) {
+                        //submit what we have so far
+                        submitMeshletsCmds(cmdBuffer);
+                        cmdBuffer.transformBuffer.clientWaitAndResetHead();
+                    }
+
+                    if (cmdBuffer.drawCount + primCount > cmdBuffer.capacity) {
+                        submitMeshletsCmds(cmdBuffer);
+                    }
+
+                    cmdBuffer.transformBuffer.clientWaitUntilAvailable(transformBytes);
                     for(int i = 0; i < prim->meshlets()->indexCounts()->size(); i++) {
                         if (meshletInView(cameraTransform, camera, prim->meshlets()->bounds()->Get(i), transform)) {
-                            appendMeshletCmd(multiDrawCmdBuffer, prim->meshlets(), i, primThing.indexOffset,
+                            appendMeshletCmd(cmdBuffer, prim->meshlets(), i, primThing.indexOffset,
                                              primThing.baseVertex);
+                            *static_cast<Transform3 *>(cmdBuffer.transformBuffer.ptr()) = transform;
+                            cmdBuffer.transformBuffer.advanceHead(sizeof(Transform3));
                         }
                     }
-                    submitMeshletsCmds(multiDrawCmdBuffer);
+
+                    if (cmdBuffer.drawCount) {
+                        submitMeshletsCmds(cmdBuffer);
+                        cmdBuffer.transformBuffer.clientWaitAndResetHead();
+                    }
+
                 }
 
                 //for(const auto& prim : mesh.primitives) {
@@ -212,9 +218,15 @@ namespace gear {
 
             }
         }
+        if (cmdBuffer.drawCount) {
+            submitMeshletsCmds(cmdBuffer);
+        }
+        cameraRegion->sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 
     }
+}
 
+namespace gear {
     void G3DInstance::renderScene(ecs::Registry &registry) {
 
         glEnable(GL_DEPTH_TEST);
@@ -223,7 +235,7 @@ namespace gear {
 
         for (auto cameraChunk : cameraQuery) {
             for (auto [transform, camera] : ecs::ChunkView<Transform3, Camera>(*cameraChunk)) {
-                renderSceneCamera(*this, registry, camera, transform);
+                g3d::renderSceneCamera(*this, registry, camera, transform);
             }
         }
     }

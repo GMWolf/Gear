@@ -16,12 +16,21 @@
 #include <imgui.h>
 #include <imgui_impl_opengl3.h>
 #include <imgui_impl_glfw.h>
+#include <Remotery.h>
+#include <iostream>
 
 class Game : public gear::ApplicationAdapter {
 public:
 
     void init(gear::Application *app) override {
         application = app;
+
+        {
+            auto error = rmt_CreateGlobalInstance(&rmt);
+            if (error != RMT_ERROR_NONE) {
+                std::cerr << "Error launching remotery " << error << "\n";
+            }
+        }
 
         g3d = new gear::G3DInstance();
         ImGui::CreateContext();
@@ -84,10 +93,16 @@ public:
     }
 
     void update() override {
+
+        rmt_ScopedCPUSample(GameUpdate, 0);
+        rmt_ScopedOpenGLSample(GameRender);
+
         g3d->clearBuffer({0,0,0,1}, 1);
         g3d->renderScene(world);
         drawUI();
         {
+            rmt_ScopedCPUSample(CameraMovement, 0);
+
 
             float dt = (float)application->frameTime;
             static float yaw = 0;
@@ -129,6 +144,8 @@ public:
         assets.reset();
         delete g3d;
 
+        rmt_DestroyGlobalInstance(rmt);
+
     }
 
     void drawUI() {
@@ -155,6 +172,8 @@ private:
 
     gear::ecs::EntityRef cam;
     gear::ecs::EntityRef mesh;
+
+    Remotery* rmt;
 
     gear::Application* application;
 };

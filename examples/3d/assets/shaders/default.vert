@@ -15,10 +15,13 @@ struct Transform {
     vec4 rotation;
 };
 
-layout(binding = 0) uniform SceneBuffer {
+layout(binding = 0) uniform CameraBuffer {
     Transform cameraTransform;
-    Transform transform;
     mat4 projection;
+};
+
+layout(std430, binding = 1) buffer TransformBuffer {
+    Transform objectTransforms[];
 };
 
 vec3 rotate(vec3 vec, vec4 quat) {
@@ -45,6 +48,9 @@ Transform inverseTransform(Transform transform) {
 
 
 void main() {
+
+    Transform transform = objectTransforms[gl_DrawID];
+
     texCoord = texCoordin;
     texCoord.y = -texCoord.y;
     normal = rotate(normalIn, transform.rotation);
