@@ -59,10 +59,10 @@ public:
             cam = cmd.createEntity(transform, camera);
         }
 
-        for(int i = 0; i < 50; i++)
+        for(int i = 0; i < 100; i++)
         {
             gear::Transform3 transform{};
-            auto p = glm::diskRand(25.0f);
+            auto p = glm::diskRand(30.0f);
             transform.position = {p.x,0,p.y};
             transform.scale = 1;
             p = glm::diskRand(1.0f);
@@ -75,10 +75,10 @@ public:
             mesh = cmd.createEntity(transform, meshInstance);
         }
 
-        for(int i = 0; i < 50; i++)
+        for(int i = 0; i < 100; i++)
         {
             gear::Transform3 transform{};
-            auto p = glm::diskRand(25.0f);
+            auto p = glm::diskRand(30.0f);
             transform.position = {p.x,-2,p.y};
             transform.scale = 75;
             transform.orientation = glm::quatLookAt(glm::vec3{0,0,1}, glm::vec3{0,1,0});

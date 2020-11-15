@@ -6,6 +6,7 @@
 #include <gear/ecs/ECS.h>
 #include <gear/View.h>
 #include <gear/Transform.h>
+#include <iostream>
 #include "Mesh.h"
 #include "Shader.h"
 #include "Texture.h"
@@ -29,8 +30,8 @@ namespace gear::g3d {
         }
     }
 
-    static int getShaderBinding(const g3d::Shader& shd, const char* name) {
-        auto resource = shd.shaderDef->resources()->LookupByKey(name);
+    static int getShaderBinding(const assets::Shader* shd, const char* name) {
+        auto resource = shd->resources()->LookupByKey(name);
         if (resource) {
             return resource->binding();
         }
@@ -49,7 +50,7 @@ namespace gear::g3d {
     }
 
     struct CameraCullData {
-        Transform3 cameraInverse;
+        Transform3 cameraTransform;
         glm::vec2 sphereFactor;
         float tang;
         float aspect;
@@ -61,7 +62,7 @@ namespace gear::g3d {
     static CameraCullData buildCameraCullData(const Transform3& cameraTransform, const Camera& camera)
     {
         CameraCullData data;
-        data.cameraInverse = cameraTransform.inverse();
+        data.cameraTransform = cameraTransform;
         data.tang = tanf(camera.fov * 0.5f);
         data.aspect = camera.viewPort.size.x / (float) camera.viewPort.size.y;
         float fovx = atanf(data.tang * data.aspect);
@@ -78,8 +79,9 @@ namespace gear::g3d {
 
         glm::vec3 pos = transform.apply({bounds->center().x(), bounds->center().y(), bounds->center().z()});
         float radius = bounds->radius() * transform.scale;
-        pos = cc.cameraInverse.apply(pos);
+        pos = cc.cameraTransform.inverse().apply(pos);
 
+        // Frustum culling
         if (-pos.z > cc.far + radius || -pos.z < cc.near - radius) {
             return false;
         }
@@ -93,6 +95,14 @@ namespace gear::g3d {
 
         az *= cc.aspect;
         if (pos.x > az+d.x || pos.x < -az-d.x) {
+            return false;
+        }
+
+        // cone backface culling
+        glm::vec3 coneApex = glm::vec3{bounds->coneApex().x(), bounds->coneApex().y(), bounds->coneApex().z()};
+        glm::vec3 localCamPos = transform.inverse().apply(cc.cameraTransform.position);
+        glm::vec3 coneAxis = glm::vec3{bounds->coneAxis().x(), bounds->coneAxis().y(), bounds->coneAxis().z()};
+        if (glm::dot(normalize(coneAxis - localCamPos), coneAxis) >= bounds->coneCutoff()) {
             return false;
         }
 
@@ -162,6 +172,8 @@ namespace gear::g3d {
         rmt_ScopedCPUSample(RenderScene, 0);
 
         glViewport(camera.viewPort.pos.x, camera.viewPort.pos.y, camera.viewPort.size.x, camera.viewPort.size.y);
+        glEnable(GL_CULL_FACE);
+
 
         glBindVertexArray(g3d.meshCache->meshletVAO);
 
@@ -175,30 +187,13 @@ namespace gear::g3d {
         }
 
         CameraCullData cc = buildCameraCullData(cameraTransform, camera);
+        int count = 0;
 
         auto meshQuery = registry.query().all<Transform3, MeshInstance>();
 
-        //temp only bind material for very first instance
-        {
-            if (meshQuery.begin() != meshQuery.end()) {
-                auto c = *meshQuery.begin();
-                auto *meshInstance = static_cast<MeshInstance *>(c->get(ecs::Component<MeshInstance>::ID(), 0));
-                const auto &shader = g3d.shaderCache->get(meshInstance->shader);
-                const auto &mesh = g3d.meshCache->get(meshInstance->mesh);
-
-                glUseProgram(shader.id);
-                TextureBindings textureBindings{};
-                textureBindings.albedo = getShaderBinding(shader, "albedo");
-                textureBindings.occlusion = getShaderBinding(shader, "occlusion");
-                textureBindings.normal = getShaderBinding(shader, "normalMap");
-                textureBindings.metallicRoughness = getShaderBinding(shader, "metallicRoughness");
-
-                bindMaterial((const assets::Material *) meshInstance->mesh->primitives()->Get(0)->material()->ptr(),
-                             *g3d.textureCache, textureBindings);
-            }
-        }
-
         MeshletBatch batch = newMeshletBatch(g3d);
+        const assets::Shader* shader = nullptr;
+        const assets::Material* material = nullptr;
 
         for(auto meshChunk : meshQuery) {
             for(auto [transform, meshInstance] : ecs::ChunkView<Transform3, MeshInstance>(*meshChunk)) {
@@ -206,12 +201,31 @@ namespace gear::g3d {
                 const auto& mesh = g3d.meshCache->get(meshInstance.mesh);
 
                 for(const auto& prim : *meshInstance.mesh->primitives()) {
+
+                    if (reinterpret_cast<const assets::Material *>(prim->material()->ptr()) != material
+                    || meshInstance.shader != shader) {
+                        if (batch.drawCount) {
+                            submitMehsletBatch(g3d, batch);
+                            batch = newMeshletBatch(g3d);
+                        }
+                        shader = meshInstance.shader;
+                        material = reinterpret_cast<const assets::Material *>(prim->material()->ptr());
+                        glUseProgram(g3d.shaderCache->get(shader).id);
+                        TextureBindings textureBindings{};
+                        textureBindings.albedo = getShaderBinding(shader, "albedo");
+                        textureBindings.occlusion = getShaderBinding(shader, "occlusion");
+                        textureBindings.normal = getShaderBinding(shader, "normalMap");
+                        textureBindings.metallicRoughness = getShaderBinding(shader, "metallicRoughness");
+                        bindMaterial(material,*g3d.textureCache, textureBindings);
+                    }
+
                     auto primThing = g3d.meshCache->getMeshletPrimitive(prim);
 
                     for(int i = 0; i < prim->meshlets()->indexCounts()->size(); i++) {
                         if (meshletInView(cc, prim->meshlets()->bounds()->Get(i), transform)) {
                             batchAppendMeshlet(batch, prim->meshlets(), i, primThing.indexOffset,
                                              primThing.baseVertex, transform);
+                            count++;
                             if (batch.drawCount == gear::g3d::MeshletBatch::capacity) {
                                 submitMehsletBatch(g3d, batch);
                                 batch = newMeshletBatch(g3d);
