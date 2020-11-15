@@ -27,7 +27,7 @@ namespace gear {
         shaderCache = std::make_unique<g3d::ShaderCache>();
         textureCache = std::make_unique<g3d::TextureCache>();
         meshCache = std::make_unique<g3d::MeshCache>();
-        multidrawCmdBuffer = std::make_unique<g3d::MultiDrawCmdBuffer>();
+        batchBuffers = std::make_unique<g3d::BatchBuffers>();
         rmt_BindOpenGL();
     }
     G3DInstance::~G3DInstance() {

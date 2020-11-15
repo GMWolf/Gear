@@ -19,7 +19,7 @@ namespace gear {
         struct TextureCache;
         struct ShaderCache;
         struct MeshCache;
-        struct MultiDrawCmdBuffer;
+        struct BatchBuffers;
     }
 
     namespace ecs {
@@ -39,7 +39,7 @@ namespace gear {
         std::unique_ptr<g3d::TextureCache> textureCache;
         std::unique_ptr<g3d::ShaderCache> shaderCache;
         std::unique_ptr<g3d::MeshCache> meshCache;
-        std::unique_ptr<g3d::MultiDrawCmdBuffer> multidrawCmdBuffer;
+        std::unique_ptr<g3d::BatchBuffers> batchBuffers;
 
         void debugTexture(const assets::Texture* texture, const assets::Shader* shader);
         void debugMesh(const assets::Mesh* mesh, const assets::Texture* texture, const assets::Shader* shader);

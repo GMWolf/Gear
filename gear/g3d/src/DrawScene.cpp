@@ -10,7 +10,7 @@
 #include "Shader.h"
 #include "Texture.h"
 #include "Remotery.h"
-#include "StreamBuffer.h"
+#include "Buffer.h"
 
 
 namespace gear::g3d {
@@ -85,40 +85,62 @@ namespace gear::g3d {
 
     }
 
-    static void appendMeshletCmd(MultiDrawCmdBuffer& cmds, const assets::MeshletBuffer* meshletBuffer, size_t index, size_t indexOffset, size_t baseVertex) {
 
-        cmds.indexCount[cmds.drawCount] = meshletBuffer->indexCounts()->Get(index);
-        cmds.baseVertex[cmds.drawCount] = meshletBuffer->vertexOffsets()->Get(index) + baseVertex;
-        cmds.indices[cmds.drawCount] = (const void*)(uint64_t)(meshletBuffer->indexOffsets()->Get(index) + indexOffset);
+    struct MeshletBatch {
+        static const size_t capacity = 1024 * 4;
+        size_t drawCount;
+        GLsizei indexCount[capacity];
+        const void* indices[capacity];
+        GLint baseVertex[capacity];
+        g3d::RingBuffer::Block transformBlock;
+        Transform3* transforms;
+    };
 
-        cmds.drawCount++;
+    static void batchAppendMeshlet(MeshletBatch& batch, const assets::MeshletBuffer* meshletBuffer, size_t index, size_t indexOffset, size_t baseVertex, const Transform3& transform) {
+
+        batch.indexCount[batch.drawCount] = meshletBuffer->indexCounts()->Get(index);
+        batch.baseVertex[batch.drawCount] = meshletBuffer->vertexOffsets()->Get(index) + baseVertex;
+        batch.indices[batch.drawCount] = (const void*)(uint64_t)(meshletBuffer->indexOffsets()->Get(index) + indexOffset);
+
+        batch.transforms[batch.drawCount] = transform;
+        batch.drawCount++;
     }
 
 
-    static void submitMeshletsCmds(MultiDrawCmdBuffer& cmds) {
+    static void submitMehsletBatch(G3DInstance& g3d, MeshletBatch& batch) {
 
         rmt_ScopedOpenGLSample(SubmitMeshlets);
 
-        if (cmds.drawCount > 0) {
-            auto transformRegion = cmds.transformBuffer.finishWrite();
-            glBindBufferRange(GL_SHADER_STORAGE_BUFFER, 1, cmds.transformBuffer.id, transformRegion->start,
-                              transformRegion->size);
+        if (batch.drawCount > 0) {
+
+            g3d.batchBuffers->transformBuffer.bind(GL_SHADER_STORAGE_BUFFER, 1, batch.transformBlock);
 
             glMultiDrawElementsBaseVertex(
                     GL_TRIANGLES,
-                    cmds.indexCount,
+                    batch.indexCount,
                     GL_UNSIGNED_BYTE,
-                    cmds.indices,
-                    cmds.drawCount,
-                    cmds.baseVertex
+                    batch.indices,
+                    batch.drawCount,
+                    batch.baseVertex
             );
 
-            transformRegion->sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+            *batch.transformBlock.sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 
-            cmds.drawCount = 0;
+            batch.drawCount = 0;
         }
 
     }
+
+
+    static MeshletBatch newMeshletBatch(G3DInstance& g3d) {
+
+        MeshletBatch batch{};
+        batch.drawCount = 0;
+        batch.transformBlock = g3d.batchBuffers->transformBuffer.allocateBlock(MeshletBatch::capacity * sizeof(Transform3), 0);
+        batch.transforms = static_cast<Transform3 *>(batch.transformBlock.ptr);
+        return batch;
+    }
+
 
     static void renderSceneCamera(G3DInstance &g3d, ecs::Registry &registry, Camera &camera,
                                   Transform3 &cameraTransform) {
@@ -130,23 +152,13 @@ namespace gear::g3d {
         //glBindVertexArray(g3d.meshCache->vao);
         glBindVertexArray(g3d.meshCache->meshletVAO);
 
-        MultiDrawCmdBuffer& cmdBuffer = *g3d.multidrawCmdBuffer;
-
-
-        StreamBuffer::BufferRegion* cameraRegion;
+        GLsync* cameraUniformSync;
         {
-            if (cmdBuffer.cameraBuffer.space() < sizeof(CameraBufferData)) {
-                cmdBuffer.cameraBuffer.clientWaitAndResetHead();
-            }
-            cmdBuffer.cameraBuffer.clientWaitUntilAvailable(sizeof(CameraBufferData));
-            auto* cameraData = static_cast<CameraBufferData *>(cmdBuffer.cameraBuffer.ptr());
-            cameraData->cameraTransform = cameraTransform;
+            g3d.batchBuffers->cameraBuffer->cameraTransform = cameraTransform;
             float aspect = camera.viewPort.size.x / (float) camera.viewPort.size.y;
-            cameraData->projection = glm::perspective(camera.fov, aspect, camera.near, camera.far);
-            cmdBuffer.cameraBuffer.advanceHead(sizeof(CameraBufferData));
-            cameraRegion = cmdBuffer.cameraBuffer.finishWrite();
-
-            glBindBufferRange(GL_UNIFORM_BUFFER, 0, cmdBuffer.cameraBuffer.id, cameraRegion->start, cameraRegion->size);
+            g3d.batchBuffers->cameraBuffer->projection = glm::perspective(camera.fov, aspect, camera.near, camera.far);
+            g3d.batchBuffers->cameraBuffer.bind(0);
+            cameraUniformSync = g3d.batchBuffers->cameraBuffer.end();
         }
 
         auto meshQuery = registry.query().all<Transform3, MeshInstance>();
@@ -171,7 +183,7 @@ namespace gear::g3d {
             }
         }
 
-
+        MeshletBatch batch = newMeshletBatch(g3d);
 
         for(auto meshChunk : meshQuery) {
             for(auto [transform, meshInstance] : ecs::ChunkView<Transform3, MeshInstance>(*meshChunk)) {
@@ -182,47 +194,28 @@ namespace gear::g3d {
                     auto primThing = g3d.meshCache->getMeshletPrimitive(prim);
 
                     size_t primCount = prim->meshlets()->indexCounts()->size();
-                    size_t transformBytes = sizeof(Transform3) * primCount;
 
-                    if (cmdBuffer.transformBuffer.space() < transformBytes) {
-                        //submit what we have so far
-                        submitMeshletsCmds(cmdBuffer);
-                        cmdBuffer.transformBuffer.clientWaitAndResetHead();
-                    }
-
-                    if (cmdBuffer.drawCount + primCount > cmdBuffer.capacity) {
-                        submitMeshletsCmds(cmdBuffer);
-                    }
-
-                    cmdBuffer.transformBuffer.clientWaitUntilAvailable(transformBytes);
                     for(int i = 0; i < prim->meshlets()->indexCounts()->size(); i++) {
                         if (meshletInView(cameraTransform, camera, prim->meshlets()->bounds()->Get(i), transform)) {
-                            appendMeshletCmd(cmdBuffer, prim->meshlets(), i, primThing.indexOffset,
-                                             primThing.baseVertex);
-                            *static_cast<Transform3 *>(cmdBuffer.transformBuffer.ptr()) = transform;
-                            cmdBuffer.transformBuffer.advanceHead(sizeof(Transform3));
+                            batchAppendMeshlet(batch, prim->meshlets(), i, primThing.indexOffset,
+                                             primThing.baseVertex, transform);
+                            if (batch.drawCount == gear::g3d::MeshletBatch::capacity) {
+                                submitMehsletBatch(g3d, batch);
+                                batch = newMeshletBatch(g3d);
+                            }
                         }
-                    }
-
-                    if (cmdBuffer.drawCount) {
-                        submitMeshletsCmds(cmdBuffer);
-                        cmdBuffer.transformBuffer.clientWaitAndResetHead();
                     }
 
                 }
 
-                //for(const auto& prim : mesh.primitives) {
-                //    bindMaterial(prim.material, *g3d.textureCache, textureBindings);
-                //    //glDrawElementsBaseVertex(GL_TRIANGLES, prim.indexCount, GL_UNSIGNED_SHORT, (void*)prim.indexOffset, prim.baseVertex);
-                //}
-
             }
         }
-        if (cmdBuffer.drawCount) {
-            submitMeshletsCmds(cmdBuffer);
-        }
-        cameraRegion->sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 
+        if (batch.drawCount) {
+            submitMehsletBatch(g3d, batch);
+        }
+
+        *cameraUniformSync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
     }
 }
 
